@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="persons()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedPersonIds()"
+  emptyMessage="No hay personas asociadas a este proyecto."
+  searchPlaceholder="Buscar persona..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

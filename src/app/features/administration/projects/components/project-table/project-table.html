@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="projects()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions()"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedProjectIds()"
+  [emptyMessage]="emptyMessage()"
+  [searchPlaceholder]="searchPlaceholder()"
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

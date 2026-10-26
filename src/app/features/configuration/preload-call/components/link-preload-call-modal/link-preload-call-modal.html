@@ -1,0 +1,69 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="mx-4 w-full max-w-lg p-6 sm:p-8"
+  (close)="onClose()"
+>
+  <h3 class="mb-2 text-xl font-semibold text-gray-800 dark:text-white">
+    {{ modalTitle() }}
+  </h3>
+  <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+    {{ modalDescription() }}
+    <span class="font-medium text-gray-700 dark:text-gray-300">
+      {{ preloadCall()?.nombre || preloadCall()?.descripcion || 'esta convocatoria' }}.
+    </span>
+  </p>
+
+  <div class="flex flex-col gap-2">
+    <app-label>{{ selectLabel() }}</app-label>
+    <app-select
+      [formControl]="idRelacionControl"
+      [options]="callOptions()"
+      [disabled]="isLoadingOptions() || isSaving()"
+      placeholder="Seleccione la convocatoria"
+      searchPlaceholder="Buscar convocatoria..."
+      [emptyText]="emptyText()"
+    />
+
+    @if (idRelacionControl.touched && idRelacionControl.invalid) {
+      <p class="text-xs font-medium text-red-600 dark:text-red-400">
+        Debe seleccionar una convocatoria.
+      </p>
+    }
+  </div>
+
+  <div
+    class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
+  >
+    <div>
+      @if (hasExistingLink()) {
+        <app-button
+          type="button"
+          variant="outline"
+          className="text-error-600 border-error-300 hover:bg-error-50"
+          [disabled]="isSaving()"
+          (btnClick)="onUnlink()"
+        >
+          Eliminar enlace
+        </app-button>
+      }
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <app-button
+        type="button"
+        variant="outline"
+        [disabled]="isSaving()"
+        (btnClick)="onClose()"
+      >
+        Cancelar
+      </app-button>
+      <app-button
+        type="button"
+        [disabled]="isSaving() || isLoadingOptions() || idRelacionControl.invalid"
+        (btnClick)="onSave()"
+      >
+        {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+      </app-button>
+    </div>
+  </div>
+</app-modal>

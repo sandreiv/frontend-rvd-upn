@@ -1,0 +1,103 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  class="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/3"
+>
+  <div class="mb-4 flex flex-col gap-1">
+    <h4
+      class="text-sm font-semibold text-gray-900 dark:text-white"
+    >
+      {{
+        item()
+          ? 'Editar puntos por vigencia'
+          : 'Nuevos puntos por vigencia'
+      }}
+    </h4>
+
+    <p
+      class="text-xs text-gray-500 dark:text-gray-400"
+    >
+      Define el año de vigencia y el valor correspondiente a un punto.
+    </p>
+  </div>
+
+  <div
+    class="grid grid-cols-1 gap-4 lg:grid-cols-2"
+  >
+    <div>
+      <app-label>Año</app-label>
+
+      <app-input-field
+        type="number"
+        formControlName="anio"
+        placeholder="Ej. 2026"
+        min="1"
+        [step]="1"
+      />
+
+      @if (
+        form.controls.anio.touched &&
+        form.controls.anio.invalid
+      ) {
+        <p
+          class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
+        >
+          El año es obligatorio y debe ser mayor a cero.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>
+        Valor punto
+      </app-label>
+
+      <app-input-field
+        type="number"
+        formControlName="valorPunto"
+        placeholder="Ingrese el valor del punto"
+        min="0.01"
+        [step]="0.01"
+      />
+
+      @if (
+        form.controls.valorPunto.touched &&
+        form.controls.valorPunto.invalid
+      ) {
+        <p
+          class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
+        >
+          El valor del punto es obligatorio y debe ser mayor a cero.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div
+    class="mt-5 flex justify-end gap-3"
+  >
+    <app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      (btnClick)="cancel.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button
+      type="submit"
+      size="sm"
+      [disabled]="
+        form.invalid ||
+        isSaving()
+      "
+    >
+      {{
+        isSaving()
+          ? 'Guardando...'
+          : 'Guardar'
+      }}
+    </app-button>
+  </div>
+</form>

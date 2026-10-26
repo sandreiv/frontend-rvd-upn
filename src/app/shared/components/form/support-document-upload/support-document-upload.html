@@ -1,0 +1,42 @@
+<div class="mt-5">
+  <h5 class="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">
+    {{ title }}
+  </h5>
+  <div class="rounded-2xl border border-dashed border-gray-300 p-4 dark:border-gray-700">
+    <input
+      #documentInput
+      type="file"
+      [accept]="accept"
+      class="hidden"
+      [disabled]="disabled"
+      (change)="handleFileSelected($event)"
+    />
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ uploadLabel }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          {{ helperText }}
+        </p>
+        @if (selectedFileName) {
+          <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+            Archivo seleccionado: {{ selectedFileName }}
+          </p>
+        }
+        @if (fileError) {
+          <p class="mt-1 text-xs text-error-600">{{ fileError }}</p>
+        }
+      </div>
+
+      <div class="flex gap-3 sm:justify-end">
+        <app-button size="sm" variant="outline" type="button" [disabled]="disabled" (btnClick)="triggerFilePicker()">
+          {{ selectedFileName ? changeButtonText : selectButtonText }}
+        </app-button>
+        <app-button size="sm" type="button" variant="outline" [disabled]="disabled" (btnClick)="resetFileSelection()">
+          {{ clearButtonText }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+</div>
+

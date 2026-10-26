@@ -1,0 +1,126 @@
+<div
+  class="grid gap-4"
+  [class.lg:grid-cols-2]="showPreloadCallForm() || showRestrictCoordination()"
+>
+  <div class="min-w-0">
+    <app-section-frame
+      title="Convocatoria precarga"
+      description="Administra la convocatoria de precarga."
+      iconName="call"
+      iconVariant="brand"
+    >
+      <div
+        sectionFrameHeaderActions
+        class="flex w-full items-center gap-2 sm:w-auto"
+      >
+        <div class="min-w-0 flex-1 sm:min-w-[16rem] sm:max-w-sm">
+          <app-select
+            [options]="periodOptions()"
+            [value]="selectedPeriodId()"
+            [disabled]="isLoadingPeriods()"
+            placeholder="Seleccione el periodo"
+            searchPlaceholder="Buscar periodo..."
+            emptyText="No hay periodos disponibles"
+            (valueChange)="onPeriodChange($event)"
+          />
+        </div>
+
+        <app-button
+          type="button"
+          size="sm"
+          className="h-11 shrink-0 whitespace-nowrap"
+          [disabled]="isLoadingPeriods() || isLoading()"
+          (btnClick)="onApplyPeriodFilter()"
+        >
+          Filtrar
+        </app-button>
+      </div>
+
+      <app-preload-call-table
+        [preloadCalls]="preloadCalls()"
+        [selectedPreloadCallIds]="selectedPreloadCallIds()"
+        [emptyMessage]="tableEmptyMessage()"
+        [showLinkCallAction]="isSecondPeriodFilter()"
+        (selectedPreloadCallIdsChange)="onSelectedPreloadCallIdsChange($event)"
+        (addPreloadCall)="openPreloadCallForm()"
+        (editPreloadCall)="openEditPreloadCallForm($event)"
+        (deletePreloadCall)="onDeletePreloadCall($event)"
+        (refreshPreloadCall)="onRefreshPreloadCallList()"
+        (deleteAllPreloadCall)="onDeleteAllPreloadCall($event)"
+        (restrictCoordination)="openRestrictCoordination($event)"
+        (linkPreloadCall)="openLinkPreloadCallModal($event)"
+        (linkPreassignment)="openLinkPreassignmentModal($event)"
+      />
+    </app-section-frame>
+  </div>
+
+  @if (showPreloadCallForm()) {
+    <div class="min-w-0">
+      <app-section-frame
+        [title]="formMode() === 'edit'
+          ? 'Editar convocatoria precarga'
+          : 'Formulario de convocatoria precarga'"
+        description="Complete los datos de la convocatoria de precarga."
+        iconName="plus"
+        iconVariant="brand"
+      >
+        <app-preload-call-form
+          [preloadCall]="selectedPreloadCall()"
+          [mode]="formMode()"
+          [isSaving]="isSaving()"
+          (closeForm)="closePreloadCallForm()"
+          (submitPreloadCall)="onSubmitPreloadCall($event)"
+        />
+      </app-section-frame>
+    </div>
+  } @else if (showRestrictCoordination()) {
+    <div class="min-w-0">
+      <app-restrict-coordination
+        [restrictCoordination]="restrictCoordinations()"
+        [preloadCall]="preloadCallForRestriction()"
+        [selectedRestrictCoordinationIds]="selectedRestrictCoordinationIds()"
+        [isSaving]="isSavingRestriction()"
+        (closeView)="closeRestrictCoordination()"
+        (saveRestriction)="onSaveRestriction($event)"
+        (refreshRestrictCoordination)="refreshRestrictCoordinations()"
+        (selectedRestrictCoordinationIdsChange)="onSelectedRestrictCoordinationIdsChange($event)"
+        (deleteRestrictCoordination)="onDeleteRestrictCoordination($event)"
+        (deleteAllRestrictCoordination)="onDeleteAllRestrictCoordination($event)"
+      />
+    </div>
+  }
+</div>
+
+<app-link-preload-call-modal
+  [isOpen]="isLinkModalOpen()"
+  [preloadCall]="preloadCallToLink()"
+  [calls]="linkModalCalls()"
+  [linkKind]="linkKind()"
+  [isLoadingOptions]="isLoadingLinkOptions()"
+  [isSaving]="isSavingLink()"
+  (close)="closeLinkModal()"
+  (save)="onSavePreloadCallLink($event)"
+  (unlink)="onUnlinkPreloadCall()"
+/>
+
+<app-new-modal
+  [isOpen]="isDeleteModalOpen()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>
+
+<app-new-modal
+  [isOpen]="isRestrictionDeleteModalOpen()"
+  [title]="restrictionDeleteModalTitle()"
+  [message]="restrictionDeleteModalMessage()"
+  [buttonText]="restrictionDeleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmRestrictionDelete()"
+  (close)="closeRestrictionDeleteModal()"
+/>

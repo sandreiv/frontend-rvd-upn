@@ -1,0 +1,153 @@
+@if (embedded()) {
+  <ng-container [ngTemplateOutlet]="formBody" />
+} @else {
+  <app-modal
+    [isOpen]="isOpen()"
+    className="mx-4 w-full max-w-4xl p-0"
+    (close)="close.emit()"
+  >
+    <div class="flex items-start gap-3 px-6 py-6 sm:px-8">
+      <span class="inline-flex size-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+        <app-icon name="userCircle" size="sm" />
+      </span>
+      <div>
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+          Agregr nuevo docente
+        </h3>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          Agregar un docente nuevo a la precarga
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-6 border-t border-gray-200 px-6 py-6 sm:px-8 dark:border-white/10">
+      <ng-container [ngTemplateOutlet]="formBody" />
+    </div>
+
+    <div class="flex justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10">
+      <app-button type="button" variant="outline" (btnClick)="close.emit()">
+        Cancelar
+      </app-button>
+      <app-button
+        type="button"
+        [disabled]="isSaving() || !canSubmitProfessor()"
+        (btnClick)="onSubmit()"
+      >
+        {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+      </app-button>
+    </div>
+  </app-modal>
+}
+
+<ng-template #formBody>
+  <section class="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 lg:p-6">
+    <div class="flex items-center justify-between gap-3">
+      <label class="inline-flex items-center gap-2">
+        <input
+          type="checkbox"
+          [checked]="isProfessorActive()"
+          (change)="isProfessorActive.set(!isProfessorActive())"
+          class="w-5 h-5 appearance-none cursor-pointer dark:border-gray-700 border border-gray-300 checked:border-transparent rounded-md checked:bg-brand-500 disabled:opacity-60"
+        />
+        <span class="text-sm font-medium text-gray-800 dark:text-white/90">
+          Definir docente
+        </span>
+        <app-icon
+          name="infoCircle"
+          size="xs"
+          classes="text-gray-400 cursor-help"
+          appTooltip="Esta opción permite definir el docente a contratar"
+        />
+      </label>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 lg:p-6">
+    <div class="-mx-5 mb-4 flex items-center gap-2 border-b border-gray-200 px-5 pb-4 lg:-mx-6 lg:px-6 dark:border-white/10">
+      <app-icon name="academicCap" size="sm" classes="text-gray-500" />
+      <h4 class="text-sm font-semibold text-gray-800 dark:text-white/90">
+        Selección de docente
+      </h4>
+    </div>
+    @if (isOpen() && isProfessorActive()) {
+      <div class="mb-4">
+          <app-label>Buscar docente</app-label>
+          <app-typeahead-select
+            [items]="searchResults()"
+            [optionAdapter]="professorOptionAdapter"
+            [loading]="isSearching()"
+            placeholder="Documento o nombre..."
+            emptyText="Sin resultados"
+            (queryChange)="onSearchProfessor($event)"
+            (optionSelected)="onProfessorSelected($event)"
+          />
+      </div>
+    }
+    @if (modalityKind() === 'tiempoCompletoOcasional') {
+      <div class="mb-5 flex items-start gap-2 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10">
+          <app-icon name="infoCircle" size="sm" classes="text-warning-500" />
+          <p class="text-sm text-warning-700 dark:text-warning-400">
+          Los docentes de los cuales no se tiene definido un puntaje docente,
+          definir un mínimo de <span class="font-semibold">375 puntos</span>.
+          </p>
+      </div>
+    }
+    <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/5">
+      <p class="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Detalle de asignación
+        @if (!isProfessorActive()) {
+          <span class="text-gray-400">· NN</span>
+        } @else if (selectedProfessor(); as professor) {
+          <span class="text-gray-400">
+            · {{ professor.nombreCompleto }} · {{ professor.documentoIdentidad }}
+          </span>
+        } @else {
+          <span class="text-gray-400">· Seleccione un docente</span>
+        }
+      </p>
+      @if (fields().length) {
+        <div
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          [formGroup]="professorForm()"
+        >
+          @for (field of fields(); track field.key) {
+            <div [class.sm:col-span-2]="field.key === 'fechaLabor'">
+              <app-label>{{ field.label }}</app-label>
+              @switch (field.control) {
+                @case ('select') {
+                  @if (field.key === 'categoriaCatedratico') {
+                    <app-select
+                      [formControlName]="field.key"
+                      [options]="categoriaOptions()"
+                      [placeholder]="field.placeholder ?? ''"
+                      (valueChange)="onCategoriaChange($event)"
+                    />
+                  } @else {
+                    <app-select
+                      [formControlName]="field.key"
+                      [options]="fechaLaborOptions()"
+                      [placeholder]="field.placeholder ?? ''"
+                      (valueChange)="onFechaLaborChange($event)"
+                    />
+                  }
+                }
+                @default {
+                  <app-input-field
+                    [type]="field.control"
+                    [formControlName]="field.key"
+                    [min]="field.key === 'numeroPuntos' && !isProfessorActive() ? '375' : undefined"
+                    (valueChange)="field.key === 'numeroPuntos' && onNumeroPuntosChange($event)"
+                  />
+                }
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Seleccione una modalidad de contratación para ver los campos.
+        </p>
+      }
+    </div>
+  </section>
+</ng-template>

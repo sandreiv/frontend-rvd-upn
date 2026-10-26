@@ -1,0 +1,14 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="associations()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedAssociationIds()"
+  [emptyMessage]="emptyMessage()"
+  [canAdd]="canAdd()"
+  searchPlaceholder="Buscar asociación..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

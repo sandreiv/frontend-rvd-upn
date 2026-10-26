@@ -1,0 +1,293 @@
+<div
+  [class]="embedded
+    ? ''
+    : 'rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3'"
+>
+  @if (showToolbar) {
+    <div class="px-4 pt-4 sm:px-6">
+      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-2">
+          @if (enableSelection || enableBulkActions) {
+            <div class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1.5 shadow-theme-xs">
+              <app-checkbox
+                [checked]="areAllVisibleRowsSelected()"
+                [disabled]="!filteredRows().length"
+                (checkedChange)="onToggleAllSelection($event)"
+              />
+            </div>
+          }
+
+          @if (showRefreshButton) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50"
+              (click)="onToolbarAction('refresh')"
+            >
+              <app-icon name="arrowPath" size="sm" />
+            </button>
+          }
+
+          @if (showDeleteButton && (enableSelection || enableBulkActions)) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-theme-sm font-medium shadow-theme-xs disabled:cursor-not-allowed disabled:hover:bg-white"
+              [class.text-gray-400]="!canDelete()"
+              [class.text-red-500]="canDelete()"
+              [disabled]="!canDelete()"
+              (click)="onToolbarAction('deleteAll')"
+            >
+              <app-icon
+                name="delete"
+                size="sm"
+                [classes]="canDelete() ? 'text-red-500' : 'text-gray-400'"
+              />
+            </button>
+          }
+
+          @if (showAddButton) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-theme-sm font-medium shadow-theme-xs disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100"
+              [class.text-gray-700]="canAdd"
+              [class.hover:bg-gray-50]="canAdd"
+              [class.text-gray-400]="!canAdd"
+              [disabled]="!canAdd"
+              (click)="onToolbarAction('add')"
+            >
+              <app-icon
+                name="plus"
+                size="sm"
+                [classes]="canAdd ? 'text-gray-700' : 'text-gray-400'"
+              />
+            </button>
+          }
+        </div>
+
+        @if (showSearchInput) {
+          <div class="flex items-center gap-3">
+            <form>
+              <div class="relative">
+                <button class="absolute left-4 top-1/2 -translate-y-1/2" type="button">
+                  <app-icon name="search" size="sm" class="text-gray-500 dark:text-gray-400" />
+                </button>
+                <input
+                  type="text"
+                  [value]="searchTerm"
+                  [placeholder]="searchPlaceholder"
+                  (input)="onSearchInput($event)"
+                  class="dark:bg-dark-900 h-8.5 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10.5 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-75"
+                />
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <div
+    #scrollContainer
+    class="max-w-full overflow-x-auto"
+    [class.overflow-y-auto]="enableInfiniteScroll || filteredRows().length > 5"
+    [style.max-height]="enableInfiniteScroll ? tableMaxHeight : 'auto'"
+  >
+    <table class="min-w-full" [class.table-fixed]="useFixedLayout">
+      <thead class="sticky top-0 z-10 border-y border-gray-100 bg-gray-50 dark:border-white/5 dark:bg-gray-900">
+      <tr>
+        @if (enableSelection || enableBulkActions) {
+          <th scope="col" class="w-14 px-4 py-3"></th>
+        }
+
+        @for (column of columns; track column.id) {
+          <th
+            scope="col"
+            class="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            [class.whitespace-normal]="wrapCellText"
+            [class.break-words]="wrapCellText"
+            [class]="column.headerClassName"
+            [attr.aria-sort]="ariaSort(column)"
+          >
+            <button
+              type="button"
+              class="group inline-flex items-center gap-1 rounded-md text-left font-medium transition hover:text-brand-600 disabled:cursor-default disabled:hover:text-gray-500 dark:hover:text-brand-400 dark:disabled:hover:text-gray-400"
+              [disabled]="!isColumnSortable(column)"
+              [attr.aria-label]="sortAriaLabel(column)"
+              (click)="toggleSort(column)"
+            >
+              <span>{{ column.header }}</span>
+
+              @if (isColumnSorted(column)) {
+                <app-icon
+                  name="chevronDown"
+                  size="xs"
+                  [classes]="isColumnSortedAsc(column)
+                    ? 'text-brand-600 transition rotate-180 dark:text-brand-400'
+                    : 'text-brand-600 transition dark:text-brand-400'"
+                />
+              }
+            </button>
+          </th>
+        }
+
+        @if (rowActions.length || inlineIcons.length) {
+          <th scope="col" class="px-4 py-3 text-center text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+            Acciones
+          </th>
+        }
+      </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+        @if (filteredRows().length) {
+          @for (row of filteredRows(); track $index) {
+            @let rowKey = resolveFilteredRowKey(row, $index);
+            @let rowIndex = $index;
+            <tr>
+              @if (enableSelection || enableBulkActions) {
+                <td class="px-4 py-3 text-center align-middle">
+                  <div class="flex justify-center">
+                    <app-checkbox
+                      [checked]="isRowSelected(row, $index)"
+                      (checkedChange)="onToggleRowSelection(row, $index, $event)"
+                    />
+                  </div>
+                </td>
+              }
+
+              @for (column of columns; track column.id) {
+                <td
+                  class="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400"
+                  [class.whitespace-normal]="wrapCellText"
+                  [class.break-words]="wrapCellText"
+                  [class]="column.cellClassName"
+                >
+                  @if (column.cellKind === 'fileTypeIcon') {
+                    <div class="flex min-w-0 items-center">
+                      <button
+                        type="button"
+                        class="inline-flex shrink-0 rounded-md p-1 text-gray-600 transition hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-brand-500/30 dark:text-gray-300 dark:hover:bg-white/10"
+                        (click)="onFileTypeIconAction(column, row, rowIndex)"
+                        [attr.aria-label]="'Ver documento: ' + resolveCell(column, row)"
+                      >
+                        <img
+                          [src]="fileTypeIconPath(column, row)"
+                          [alt]="fileTypeIconAltText(column, row)"
+                          class="h-9 w-9"
+                        />
+                      </button>
+                    </div>
+                  } @else {
+                    @if (column.allowHtml) {
+                      <div [innerHTML]="resolveCell(column, row)"></div>
+                    } @else {
+                      {{ resolveCell(column, row) }}
+                    }
+                  }
+                </td>
+              }
+
+              @if (rowActions.length || inlineIcons.length) {
+                <td class="px-4 py-3 text-right">
+                  <div class="relative inline-flex items-center justify-end gap-2">
+                    @for (inlineIcon of inlineIcons; track inlineIcon.id) {
+                      @if (isInlineIconVisible(inlineIcon, row)) {
+                        <span
+                          class="inline-flex items-center justify-center rounded-md p-2 text-gray-500 dark:text-gray-400"
+                          [class]="inlineIcon.className"
+                          [attr.title]="inlineIcon.tooltip || ''"
+                          [attr.aria-label]="inlineIcon.tooltip || inlineIcon.id"
+                        >
+                          <app-icon [name]="inlineIcon.icon" size="sm" />
+                        </span>
+                      }
+                    }
+
+                    @if (rowActions.length) {
+                      <button
+                        type="button"
+                        class="dropdown-toggle inline-flex items-center gap-2 rounded-full bg-white px-4 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        [class.bg-gray-100]="isRowMenuOpen(rowKey)"
+                        [class.dark:bg-white/10]="isRowMenuOpen(rowKey)"
+                        [attr.aria-expanded]="isRowMenuOpen(rowKey)"
+                        [attr.aria-haspopup]="true"
+                        (click)="openRowMenu(rowKey, row, rowIndex, $event)"
+                      >
+                        <app-icon name="ellipsisVertical" size="sm" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td
+              class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+              [attr.colspan]="columns.length + ((rowActions.length || inlineIcons.length) ? 1 : 0) + (enableSelection || enableBulkActions ? 1 : 0)"
+            >
+              {{ emptyMessage }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (enableInfiniteScroll) {
+      <div #sentinelElement class="bottom-0 flex h-10 items-center justify-center">
+        @if (isLoadingMore) {
+          <div class="flex items-center gap-2 text-sm text-gray-500">
+            <div class="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></div>
+            <span>Cargando más registros...</span>
+          </div>
+        } @else if (!hasMore && filteredRows().length) {
+          <div class="flex items-center gap-2 bg-white px-4 py-2 text-xs font-medium text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+            <span>{{ endOfListMessage }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (activeRowMenuKey !== null && activeRowMenuRow) {
+    <div
+      class="row-action-menu fixed z-9999 min-w-40 rounded-xl border border-gray-200 bg-white p-2 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+      [style.top.px]="rowMenuTop"
+      [style.left.px]="rowMenuLeft"
+      (click)="$event.stopPropagation()"
+    >
+      @for (action of rowActions; track action.id) {
+        @if (isActionVisible(action, activeRowMenuRow)) {
+          <span
+            class="block w-full"
+            [appTooltip]="resolveActionTooltip(action, activeRowMenuRow)"
+            tooltipPlacement="left"
+          >
+            <app-item
+              [disabled]="isActionDisabled(action, activeRowMenuRow)"
+              (itemClick)="
+                onRowActionItemClick(
+                  action,
+                  activeRowMenuRow,
+                  activeRowMenuRowIndex
+                )
+              "
+            >
+              <span class="inline-flex items-center gap-2">
+                @if (action.icon) {
+                  <app-icon
+                    [name]="action.icon"
+                    size="xs"
+                    [class]="action.className"
+                  />
+                }
+                <span [class]="action.className">{{ action.label }}</span>
+              </span>
+            </app-item>
+          </span>
+        }
+      }
+    </div>
+  }
+</div>
+

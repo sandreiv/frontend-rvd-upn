@@ -1,0 +1,13 @@
+<app-data-table
+ [columns]="columns"
+ [rows]="preloadCalls()"
+ [rowActions]="rowActions()"
+ [rowIdentity]="rowIdentity"
+ [enableSelection]="true"
+ [selectedRowKeys]="selectedPreloadCallIds()"
+ [emptyMessage]="emptyMessage()"
+ (rowAction)="onTableAction($event)"
+ (toolbarAction)="onToolbarAction($event)"
+ (searchChange)="onSearchRecords($event)"
+ (selectedRowKeysChange)="onSelectedPreloadCallIdsChange($event)"
+/>

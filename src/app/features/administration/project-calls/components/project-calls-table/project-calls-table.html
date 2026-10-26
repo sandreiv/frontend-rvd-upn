@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="projectCalls()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedProjectCallIds()"
+  emptyMessage="No hay convocatorias de proyecto registradas."
+  searchPlaceholder="Buscar convocatoria de proyecto..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

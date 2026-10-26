@@ -1,0 +1,690 @@
+<div class="grid gap-4">
+  <div class="min-w-0">
+
+    <!-- ENCABEZADO -->
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h3
+          class="text-base font-semibold text-gray-800 dark:text-white/90"
+        >
+          Solicitar CDP
+        </h3>
+
+        <p
+          class="text-sm text-gray-500 dark:text-gray-400"
+        >
+          Solicita el Certificado de Disponibilidad Presupuestal.
+        </p>
+      </div>
+
+      @if (canShowCdpReportButtons()) {
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            [appTooltip]="downloadReportTooltip()"
+            tooltipPlacement="left"
+          >
+            <app-button
+              type="button"
+              size="sm"
+              variant="outline"
+              [disabled]="
+                !canDownloadCdpReport() ||
+                isDownloadingReport() ||
+                isDownloadingPdfReport()
+              "
+              (btnClick)="downloadCdpPdfReport()"
+            >
+              <img
+                src="/images/file-types/pdf.svg"
+                alt=""
+                aria-hidden="true"
+                class="size-4 shrink-0"
+              />
+              {{
+                isDownloadingPdfReport()
+                  ? 'Generando...'
+                  : 'Descargar PDF'
+              }}
+            </app-button>
+          </span>
+
+          <span
+            [appTooltip]="downloadReportTooltip()"
+            tooltipPlacement="left"
+          >
+            <app-button
+              type="button"
+              size="sm"
+              variant="outline"
+              [disabled]="
+                !canDownloadCdpReport() ||
+                isDownloadingReport() ||
+                isDownloadingPdfReport()
+              "
+              (btnClick)="downloadCdpReport()"
+            >
+              <img
+                src="/images/file-types/xls.svg"
+                alt=""
+                aria-hidden="true"
+                class="size-4 shrink-0"
+              />
+              {{
+                isDownloadingReport()
+                  ? 'Generando...'
+                  : 'Descargar reporte'
+              }}
+            </app-button>
+          </span>
+        </div>
+      }
+    </div>
+
+    <!-- PERÍODO DE TRABAJO -->
+    @if (isDean()) {
+      <section
+        class="mt-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+      >
+        <div class="flex items-center justify-between gap-3">
+          <h3
+            class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+          >
+            Período de trabajo
+          </h3>
+        </div>
+
+        <div
+          class="mt-5 flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-0"
+        >
+
+          <!-- UNIDAD ACADÉMICA -->
+          <div class="min-w-0 flex-1 lg:pr-5">
+            <span
+              class="block rounded-xl bg-gray-100 px-3 py-2 dark:bg-gray-800"
+            >
+              <p
+                class="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+              >
+                Unidad académica
+              </p>
+
+              <p
+                class="mt-1 text-sm font-semibold text-gray-900 dark:text-white/90"
+              >
+                {{ activeCdpContext()?.unidadAcademica || '-' }}
+              </p>
+            </span>
+          </div>
+
+          <!-- FACULTAD -->
+          <div class="min-w-0 flex-1 lg:pl-5">
+            <div
+              class="rounded-xl bg-gray-100 dark:bg-gray-800"
+            >
+              <p
+                class="px-3 pt-2 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+              >
+                Facultad
+              </p>
+
+              @if (hasMultipleCdpContexts()) {
+                <app-select
+                  [options]="cdpContextOptions()"
+                  [value]="activeCdpContextId()"
+                  [disabled]="cdpContextResource.isLoading()"
+                  labelFormat="uppercase"
+                  placeholder="Seleccione la facultad"
+                  searchPlaceholder="Buscar facultad..."
+                  emptyText="No hay facultades disponibles"
+                  className="!h-9 !w-full !rounded-xl !border-0 !bg-transparent !px-3 !pb-2 !pt-1 !text-sm !font-semibold !shadow-none focus:!border-0 focus:!ring-0"
+                  panelClassName="!rounded-xl !border-gray-200 !shadow-theme-md"
+                  (valueChange)="onCdpContextChange($event)"
+                />
+              } @else {
+                <p
+                  class="px-3 pb-2 pt-1 text-sm font-semibold text-gray-900 dark:text-white/90"
+                >
+                  {{ activeCdpContext()?.facultad || '-' }}
+                </p>
+              }
+            </div>
+          </div>
+
+        </div>
+      </section>
+    }
+
+    <!-- COORDINACIONES -->
+    <div class="mt-4">
+      <app-section-frame
+        [title]="titleSection()"
+        [description]="descriptionSection()"
+        iconName="documentPlus"
+        iconVariant="brand"
+      >
+
+      <!-- FILTROS -->
+      <div
+        sectionFrameHeaderActions
+        class="flex w-full items-center gap-2"
+      >
+
+        <!-- PERÍODO -->
+        <div
+          class="min-w-0 flex-1 sm:flex-none sm:w-48"
+        >
+          <app-select
+            [options]="periodOptions()"
+            [value]="selectedPeriodId()"
+            [disabled]="isLoadingPeriods()"
+            placeholder="Seleccione el periodo"
+            searchPlaceholder="Buscar periodo..."
+            emptyText="No hay periodos disponibles"
+            (valueChange)="onPeriodChange($event)"
+          />
+        </div>
+
+        <!-- CONVOCATORIA -->
+        @if (isDean()) {
+          <div
+            class="min-w-0 flex-1 sm:flex-none sm:w-64"
+          >
+            <app-select
+              [options]="preloadCallOptions()"
+              [value]="selectedPreloadCallId()"
+              [disabled]="
+                isLoadingPeriods() ||
+                !selectedPeriodId() ||
+                isLoadingPreloadCalls()
+              "
+              placeholder="Seleccione la convocatoria"
+              searchPlaceholder="Buscar convocatoria..."
+              emptyText="No hay convocatorias activas"
+              (valueChange)="onPreloadCallChange($event)"
+            />
+          </div>
+        }
+
+        <!-- FILTRAR -->
+        <app-button
+          type="button"
+          size="sm"
+          className="h-11 shrink-0 whitespace-nowrap"
+          [disabled]="isFilterDisabled()"
+          (btnClick)="onApplyFilter()"
+        >
+          Filtrar
+        </app-button>
+
+      </div>
+
+      <!-- TABLA -->
+      <app-coordination-table
+        [fromCDP]="true"
+        [coordinations]="tableItems()"
+        [emptyMessage]="tableEmptyMessage()"
+        [enableSelection]="false"
+        [showActionButton]="false"
+        [enableRowActions]="!isDean()"
+        (refreshCoordination)="isDean() ? onRefreshCoordinations() : onRefreshFaculties()"
+        (openObservations)="onOpenFacultyCdpRequest($event)"
+      />
+
+      </app-section-frame>
+
+    <!-- SOLICITAR CDP -->
+    @if (canShowCdpSection()) {
+      <div class="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-8">
+        <section
+          class="min-w-0 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:col-span-3 lg:p-6"
+        >
+
+          <!-- TÍTULO -->
+          <div>
+            <h3
+              class="text-base font-semibold text-gray-800 dark:text-white/90"
+            >
+              {{titleCdpSection()}}
+            </h3>
+
+            <p
+              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            >
+              {{descriptionCdpSection()}}
+            </p>
+          </div>
+
+          <!-- CONTENIDO -->
+          <div
+            class="mt-5 grid grid-cols-1 items-start gap-5 xl:grid-cols-2"
+          >
+
+            <!-- OBSERVACIONES -->
+            <div>
+              <div class="mb-2 flex h-9 items-center">
+                <label
+                  for="cdpObservation"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Observaciones
+                </label>
+              </div>
+
+            <textarea
+              id="cdpObservation"
+              rows="9"
+              [attr.maxlength]="cdpObservationMaxLength"
+              [value]="
+                hasCdpRequest()
+                  ? (currentCdpRequest()?.observacion || '')
+                  : cdpObservation()
+              "
+              [readonly]="hasCdpRequest() || !isDean()"
+              [disabled]="isRequestingCdp()"
+              (input)="onCdpObservationChange($event)"
+              placeholder="Ingrese las observaciones de la solicitud..."
+              class="h-56 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500 read-only:cursor-default read-only:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+            ></textarea>
+
+            <div class="mt-1 flex justify-end">
+              <span
+                class="text-xs text-gray-500 dark:text-gray-400"
+              >
+                {{
+                  hasCdpRequest()
+                    ? (currentCdpRequest()?.observacion?.length || 0)
+                    : cdpObservation().length
+                }}
+                /
+                {{ cdpObservationMaxLength }}
+              </span>
+            </div>
+          </div>
+
+            <!-- ADJUNTOS -->
+            <div>
+              <div
+                class="mb-2 flex h-9 items-center justify-between gap-3"
+              >
+                <label
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Adjuntos
+                </label>
+
+              @if (canCreateCdpRequest()) {
+                <button
+                  type="button"
+                  [disabled]="
+                    isRequestingCdp() ||
+                    hasCdpRequest()
+                  "
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:bg-gray-50 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  title="Agregar adjunto"
+                  (click)="cdpFileInput.click()"
+                >
+                  <app-icon
+                    name="plus"
+                    size="sm"
+                  />
+                </button>
+              }
+                <input
+                  #cdpFileInput
+                  type="file"
+                  multiple
+                  class="hidden"
+                  (change)="onCdpAttachmentSelected($event)"
+                />
+              </div>
+
+            <!-- LISTA DE ADJUNTOS -->
+            <div
+              class="h-56 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700"
+            >
+              @if (isDean()) {
+                @if (hasCdpRequest()) {
+
+                  @if (
+                    (currentCdpRequest()?.adjuntos?.length || 0) === 0
+                  ) {
+
+                    <div
+                      class="flex h-full items-center justify-center px-4 text-center"
+                    >
+                      <p
+                        class="text-sm text-gray-400 dark:text-gray-500"
+                      >
+                        No hay archivos adjuntos.
+                      </p>
+                    </div>
+
+                  } @else {
+
+                    <div
+                      class="divide-y divide-gray-200 dark:divide-gray-700"
+                    >
+                      @for (
+                          adjunto of currentCdpRequest()?.adjuntos || [];
+                          track adjunto.nombre
+                        ) {
+
+                        <div
+                          class="flex items-center justify-between gap-3 px-4 py-3"
+                        >
+                          <button
+                            type="button"
+                            class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                            title="Previsualizar adjunto"
+                            (click)="openAttachmentPreview(adjunto)"
+                          >
+                            <img
+                              [src]="getFileTypeIconPath(adjunto.nombre)"
+                              [alt]="adjunto.nombre"
+                              class="h-7 w-7 shrink-0 object-contain"
+                            />
+
+                            <span
+                              class="min-w-0 flex-1 truncate text-sm text-gray-700 transition hover:text-brand-600 dark:text-gray-300"
+                              [title]="adjunto.nombre"
+                            >
+                              {{ adjunto.nombre }}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled
+                            class="inline-flex h-8 w-8 shrink-0 cursor-not-allowed items-center justify-center rounded-md text-gray-300 opacity-50"
+                            title="La solicitud CDP ya fue enviada"
+                          >
+                            <app-icon
+                              name="delete"
+                              size="sm"
+                            />
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                } @else {
+
+                  @if (cdpAttachments().length === 0) {
+
+                    <div
+                      class="flex h-full items-center justify-center px-4 text-center"
+                    >
+                      <p
+                        class="text-sm text-gray-400 dark:text-gray-500"
+                      >
+                        No hay archivos adjuntos.
+                      </p>
+                    </div>
+
+                  } @else {
+
+                    <div
+                      class="divide-y divide-gray-200 dark:divide-gray-700"
+                    >
+                      @for (
+                        file of cdpAttachments();
+                        track $index;
+                        let index = $index
+                      ) {
+                        <div
+                          class="flex items-center justify-between gap-3 px-4 py-3"
+                        >
+                          <button
+                            type="button"
+                            class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                            title="Previsualizar adjunto"
+                            (click)="openLocalAttachmentPreview(file)"
+                          >
+                            <img
+                              [src]="getFileTypeIconPath(file.name)"
+                              [alt]="file.name"
+                              class="h-7 w-7 shrink-0 object-contain"
+                            />
+
+                            <span
+                              class="min-w-0 flex-1 truncate text-sm text-gray-700 transition hover:text-brand-600 dark:text-gray-300"
+                              [title]="file.name"
+                            >
+                              {{ file.name }}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            [disabled]="isRequestingCdp()"
+                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-error-50 hover:text-error-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-error-500/10"
+                            title="Eliminar adjunto"
+                            (click)="removeCdpAttachment(index)"
+                          >
+                            <app-icon
+                              name="delete"
+                              size="sm"
+                            />
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+
+              } @else {
+                @if (selectedFacultyAttachments().length === 0) {
+
+                  <div
+                    class="flex h-full items-center justify-center px-4 text-center"
+                  >
+                    <p
+                      class="text-sm text-gray-400 dark:text-gray-500"
+                    >
+                      No hay archivos adjuntos.
+                    </p>
+                  </div>
+
+                } @else {
+
+                  <div
+                    class="divide-y divide-gray-200 dark:divide-gray-700"
+                  >
+                    @for (
+                      adjunto of selectedFacultyAttachments();
+                      track adjunto.nombre
+                    ) {
+                      <div
+                        class="flex items-center justify-between gap-3 px-4 py-3"
+                      >
+                        <button
+                          type="button"
+                          class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          title="Previsualizar adjunto"
+                          (click)="openAttachmentPreview(adjunto)"
+                        >
+                          <img
+                            [src]="getFileTypeIconPath(adjunto.nombre)"
+                            [alt]="adjunto.nombre"
+                            class="h-7 w-7 shrink-0 object-contain"
+                          />
+
+                          <span
+                            class="min-w-0 flex-1 truncate text-sm text-gray-700 transition hover:text-brand-600 dark:text-gray-300"
+                            [title]="adjunto.nombre"
+                          >
+                            {{ adjunto.nombre }}
+                          </span>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- BOTÓN -->
+            @if (canCreateCdpRequest()) {
+              <div class="mt-4 flex justify-end">
+                <app-button
+                  type="button"
+                  size="sm"
+                  [disabled]="!canRequestCdp()"
+                  (btnClick)="openRequestCdpModal()"
+                >
+                  {{
+                    hasCdpRequest()
+                      ? 'CDP solicitado'
+                      : 'Solicitar CDP'
+                  }}
+                </app-button>
+              </div>
+            }
+            @if (canSendCdpToVice()) {
+              <div class="mt-4 flex justify-end">
+                <app-button
+                  type="button"
+                  size="sm"
+                  [disabled]="!isCdpOnAcademicDevelopment()"
+                  (btnClick)="sendCdpToViceAcademic()"
+                >
+                  Enviar CDP
+                </app-button>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      @if (canApproveCdpRequest() && isCdpOnViceAcademic()) {
+        <section class="flex min-w-0 flex-col gap-4 self-stretch rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:col-span-5 lg:p-6">
+          <div class="flex shrink-0 items-center gap-3">
+            <div class="min-w-0 flex-1">
+              <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">
+                Buscar CDP
+              </h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Busca o gestiona los CDPs disponibles desde presupuesto.
+              </p>
+            </div>
+
+            <app-button
+              type="button"
+              size="sm"
+              [disabled]="!!assignedCdp()"
+              (btnClick)="openCdpSearchModal()"
+            >
+              <app-icon
+                name="plus"
+                size="sm"
+              />
+            </app-button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-white/10">
+            <table class="w-full min-w-[900px] table-fixed text-left text-sm">
+              <colgroup>
+                <col class="w-[10%]" />
+                <col class="w-[12%]" />
+                <col class="w-[10%]" />
+                <col class="w-[12%]" />
+                <col class="w-[41%]" />
+                <col class="w-[15%]" />
+              </colgroup>
+
+              <thead class="bg-gray-50 dark:bg-white/5">
+                <tr>
+                  <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Número</th>
+                  <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Fecha</th>
+                  <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Vigencia</th>
+                  <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Artículo</th>
+                  <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Descripción</th>
+                  <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-400">Acción</th>
+                </tr>
+              </thead>
+
+              <tbody class="divide-y divide-gray-200 dark:divide-white/10">
+                @if (assignedCdp(); as cdp) {
+                  <tr>
+                    <td class="break-words px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {{ cdp.numero }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {{ cdp.fecha }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {{ cdp.vigencia }}
+                    </td>
+
+                    <td class="break-words px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {{ cdp.articulo }}
+                    </td>
+
+                    <td class="whitespace-normal break-words px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {{ cdp.descripcion }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center">
+                      <div class="flex justify-center">
+                        <app-button
+                          type="button"
+                          size="sm"
+                          variant="error"
+                          (btnClick)="onDisassociate()"
+                        >
+                          Desrelacionar
+                        </app-button>
+                      </div>
+                    </td>
+                  </tr>
+                } @else {
+                  <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                      No hay ningún CDP asignado.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    </div>
+  }
+    @if (canCreateCdpRequest()) {
+      <app-new-modal
+        [isOpen]="showRequestCdpModal()"
+        title="Solicitar CDP"
+        message="¿Seguro que deseas enviar la solicitud CDP con las observaciones y adjuntos registrados?"
+        variant="warning"
+        [buttonText]="
+          isRequestingCdp()
+            ? 'Solicitando...'
+            : 'Sí, solicitar'
+        "
+        [showCancelButton]="true"
+        cancelButtonText="No, cancelar"
+        (confirm)="onRequestCdp()"
+        (close)="closeRequestCdpModal()"
+      />
+    }
+
+    <app-document-preview
+      [isOpen]="showDocumentPreview()"
+      [document]="selectedDocument()"
+      (close)="closeDocumentPreview()"
+    />
+  </div>
+</div>
+
+<app-cdp-search-modal
+  [isOpen]="showCdpSearchModal()"
+  [idUnidad]="selectedFaculty()?.idUnidadRegional ?? null"
+  [idSolicitud]="selectedFaculty()?.solicitud?.id ?? null"
+  [anioVigencia]="selectedFaculty()?.anioUniversidad ?? null"
+  (approved)="onCdpApproved()"
+  (close)="closeCdpSearchModal()"
+/>

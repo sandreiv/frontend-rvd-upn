@@ -1,0 +1,7 @@
+:host {
+  display: block;
+}
+
+.shadow-user-dropdown {
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+}

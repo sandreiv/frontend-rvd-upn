@@ -1,0 +1,27 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="coordinations()"
+  [rowIdentity]="rowIdentity"
+  [emptyMessage]="emptyMessage()"
+  [showAddButton]="false"
+  [showDeleteButton]="false"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedCoordinationIds()"
+  searchPlaceholder="Buscar coordinación..."
+  (toolbarAction)="onToolbarAction($event)"
+  (searchChange)="onSearchRecords($event)"
+  (selectedRowKeysChange)="onSelectedCoordinationIdsChange($event)"
+/>
+
+<div class="mt-4 flex justify-end">
+  <app-button
+    type="button"
+    size="sm"
+    [disabled]="
+      selectedCoordinationIds().length === 0 || isStarting()
+    "
+    (btnClick)="onStartHiring()"
+  >
+    {{ isStarting() ? loadingActionLabel() : actionLabel() }}
+  </app-button>
+</div>

@@ -1,0 +1,92 @@
+<app-section-frame
+  title="Tipo actividades"
+  description="Administra las actividades principales usadas en la precarga docente."
+  iconName="bookOpen"
+  iconVariant="brand"
+>
+  <div class="space-y-5">
+    @if (isChildrenView()) {
+      <div
+        class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+            Actividades hijas de: {{ parentActivityType()?.nombre }}
+          </h4>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Administra las actividades hijas asociadas a este tipo de actividad
+            padre.
+          </p>
+        </div>
+
+        <app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          (btnClick)="backToParents()"
+        >
+          Volver a actividades padre
+        </app-button>
+      </div>
+    }
+
+    @if (childrenHoursSoftAlert(); as hoursAlert) {
+      <div
+        class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300"
+      >
+        {{ hoursAlert }}
+      </div>
+    }
+
+    @if (showForm()) {
+      <app-activity-type-form
+        [activityType]="selectedActivityType()"
+        [title]="formTitle()"
+        [editTitle]="formEditTitle()"
+        [description]="formDescription()"
+        [isSaving]="isSaving()"
+        [parentMinHoras]="isChildrenView() ? parentMinHoras() : null"
+        [parentMaxHoras]="isChildrenView() ? parentMaxHoras() : null"
+        [siblingsMaxHoursSum]="isChildrenView() ? siblingsMaxHoursSum() : 0"
+        (cancel)="closeForm()"
+        (saveActivityType)="onSaveActivityType($event)"
+      />
+    } @else {
+      @if (isChildrenView() && !canAddChildActivity()) {
+        <div
+          class="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-300"
+        >
+          Se alcanzó el máximo de horas del padre
+          ({{ parentMaxHoras() }}). No se pueden agregar más actividades
+          hijas.
+        </div>
+      }
+
+      <app-activity-type-table
+        [activityTypes]="displayedActivityTypes()"
+        [selectedActivityTypeIds]="displayedSelectedIds()"
+        [emptyMessage]="tableEmptyMessage()"
+        [searchPlaceholder]="tableSearchPlaceholder()"
+        [showChildrenAction]="!isChildrenView()"
+        (selectedActivityTypeIdsChange)="onSelectedIdsChange($event)"
+        (refreshActivityTypes)="refreshCurrentList()"
+        (addActivityType)="openCreateForm()"
+        (editActivityType)="openEditForm($event)"
+        (deleteActivityType)="requestDeleteActivityType($event)"
+        (deleteAll)="requestBulkDelete($event)"
+        (viewChildren)="openChildrenView($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="isDeleting() ? 'Eliminando...' : 'Sí, eliminar'"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

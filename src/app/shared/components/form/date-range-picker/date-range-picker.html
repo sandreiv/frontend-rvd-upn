@@ -1,0 +1,25 @@
+<div [formGroup]="formGroup()" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div>
+    <app-date-picker
+      [id]="startId()"
+      [formControlName]="startControlName()"
+      [label]="resolvedStartLabel()"
+      [placeholder]="startPlaceholder()"
+    />
+  </div>
+
+  <div>
+    <app-date-picker
+      [id]="endId()"
+      [formControlName]="endControlName()"
+      [label]="resolvedEndLabel()"
+      [placeholder]="endPlaceholder()"
+    />
+
+    @if (rangeInvalid()) {
+      <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+        {{ rangeErrorMessage }}
+      </p>
+    }
+  </div>
+</div>

@@ -1,0 +1,480 @@
+@if (loadingLatest()) {
+
+  <section
+    class="rounded-2xl border border-gray-200 bg-white p-4
+           dark:border-gray-800 dark:bg-white/3"
+  >
+    <div class="flex items-center gap-3">
+      <span
+        class="inline-flex size-9 shrink-0 items-center justify-center
+               rounded-xl bg-brand-50 text-brand-600
+               dark:bg-brand-500/10 dark:text-brand-400"
+      >
+        <app-icon
+          name="academicCap"
+          size="sm"
+        />
+      </span>
+
+      <div>
+        <h3
+          class="text-sm font-semibold text-gray-800
+                 dark:text-white/90"
+        >
+          Formación académica
+        </h3>
+
+        <p
+          class="mt-0.5 text-xs text-gray-500
+                 dark:text-gray-400"
+        >
+          Cargando último estudio registrado...
+        </p>
+      </div>
+    </div>
+  </section>
+
+} @else if (latestLoadError()) {
+
+  <section
+    class="rounded-2xl border border-error-200
+           bg-error-50 p-4
+           dark:border-error-500/30
+           dark:bg-error-500/10"
+  >
+    <p
+      class="text-sm text-error-600"
+    >
+      No fue posible consultar la formación
+      académica registrada.
+    </p>
+  </section>
+
+} @else if (
+  latestTraining();
+  as latest
+) {
+
+  @if (!creating() || readOnly()) {
+
+    <!-- PREVISUALIZACIÓN -->
+    <button
+      type="button"
+      class="w-full rounded-2xl border border-gray-200
+            bg-white p-4 text-left
+            transition hover:border-brand-300
+            hover:shadow-theme-sm
+            focus:outline-none focus:ring-2
+            focus:ring-brand-500/20
+            dark:border-gray-800 dark:bg-white/3
+            dark:hover:border-brand-500/40
+            disabled:cursor-default
+            disabled:hover:border-gray-200
+            disabled:hover:shadow-none
+            dark:disabled:hover:border-gray-800"
+      [disabled]="readOnly()"
+      (click)="startNewTraining()"
+    >
+
+      <!-- CABECERA -->
+      <div
+        class="mb-5 flex items-start gap-3"
+      >
+        <span
+          class="inline-flex size-9 shrink-0
+                 items-center justify-center
+                 rounded-xl bg-brand-50
+                 text-brand-600
+                 dark:bg-brand-500/10
+                 dark:text-brand-400"
+        >
+          <app-icon
+            name="academicCap"
+            size="sm"
+          />
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <h3
+            class="text-sm font-semibold
+                   text-gray-800
+                   dark:text-white/90"
+          >
+            Formación académica
+          </h3>
+
+          <p
+            class="mt-0.5 text-xs
+                   text-gray-500
+                   dark:text-gray-400"
+          >
+            Último estudio registrado.
+          </p>
+        </div>
+
+        <span
+          class="shrink-0 text-xs
+                font-medium text-brand-600
+                dark:text-brand-400"
+        >
+          {{
+            readOnly()
+              ? 'Solo lectura'
+              : 'Registrar nuevo'
+          }}
+        </span>
+      </div>
+
+      <!-- DATOS -->
+      <div
+        class="grid grid-cols-1 gap-x-4 gap-y-4"
+      >
+
+        <div>
+          <p
+            class="text-xs text-gray-400"
+          >
+            Nivel académico
+          </p>
+
+          <p
+            class="mt-1 text-sm font-medium
+                   text-gray-800
+                   dark:text-white/90"
+          >
+            {{ latest.nivelAcademico || '—' }}
+          </p>
+        </div>
+
+        <div>
+          <p
+            class="text-xs text-gray-400"
+          >
+            Título obtenido
+          </p>
+
+          <p
+            class="mt-1 text-sm font-medium
+                   text-gray-800
+                   dark:text-white/90"
+          >
+            {{ latest.titulo || '—' }}
+          </p>
+        </div>
+
+        <div>
+          <p
+            class="text-xs text-gray-400"
+          >
+            Institución
+          </p>
+
+          <p
+            class="mt-1 text-sm font-medium
+                   text-gray-800
+                   dark:text-white/90"
+          >
+            {{ latest.institucion || '—' }}
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 gap-4
+                 sm:grid-cols-2"
+        >
+
+          <div>
+            <p
+              class="text-xs text-gray-400"
+            >
+              Fecha acta de grado
+            </p>
+
+            <p
+              class="mt-1 text-sm font-medium
+                     text-gray-800
+                     dark:text-white/90"
+            >
+              {{ formatDate(latest.fechaGrado) }}
+            </p>
+          </div>
+
+          <div>
+            <p
+              class="text-xs text-gray-400"
+            >
+              País del título
+            </p>
+
+            <p
+              class="mt-1 text-sm font-medium
+                     text-gray-800
+                     dark:text-white/90"
+            >
+              {{ latest.pais || '—' }}
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        class="mt-5 border-t border-gray-100
+               pt-3 text-center
+               dark:border-gray-800"
+      >
+        <span
+          class="text-xs text-gray-400"
+        >
+          @if (readOnly()) {
+
+            La formación académica es solo de consulta.
+
+          } @else {
+
+            Haz clic sobre el card para registrar
+            una nueva formación académica.
+
+          }
+        </span>
+      </div>
+
+    </button>
+
+  } @else {
+
+    <!-- FORMULARIO PARA NUEVO REGISTRO -->
+    <section
+      class="rounded-2xl border border-gray-200
+             bg-white p-4
+             dark:border-gray-800
+             dark:bg-white/3"
+    >
+
+      <div
+        class="mb-4 flex items-start gap-3"
+      >
+        <span
+          class="inline-flex size-9 shrink-0
+                 items-center justify-center
+                 rounded-xl bg-brand-50
+                 text-brand-600
+                 dark:bg-brand-500/10
+                 dark:text-brand-400"
+        >
+          <app-icon
+            name="academicCap"
+            size="sm"
+          />
+        </span>
+
+        <div class="min-w-0">
+          <h3
+            class="text-sm font-semibold
+                   text-gray-800
+                   dark:text-white/90"
+          >
+            Formación académica
+          </h3>
+
+          <p
+            class="mt-0.5 text-xs
+                   text-gray-500
+                   dark:text-gray-400"
+          >
+            Registra la información del nuevo estudio.
+          </p>
+        </div>
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="academicTrainingForm"
+      />
+
+    </section>
+
+  }
+
+} @else {
+
+  <!-- NO EXISTE NINGÚN REGISTRO -->
+  <section
+    class="rounded-2xl border border-gray-200
+           bg-white p-4
+           dark:border-gray-800
+           dark:bg-white/3"
+  >
+
+    <div
+      class="mb-4 flex items-start gap-3"
+    >
+      <span
+        class="inline-flex size-9 shrink-0
+               items-center justify-center
+               rounded-xl bg-brand-50
+               text-brand-600
+               dark:bg-brand-500/10
+               dark:text-brand-400"
+      >
+        <app-icon
+          name="academicCap"
+          size="sm"
+        />
+      </span>
+
+      <div>
+        <h3
+          class="text-sm font-semibold
+                 text-gray-800
+                 dark:text-white/90"
+        >
+          Formación académica
+        </h3>
+
+        <p
+          class="mt-0.5 text-xs
+                 text-gray-500
+                 dark:text-gray-400"
+        >
+          Registra la información del último estudio obtenido.
+        </p>
+      </div>
+    </div>
+
+    @if (readOnly()) {
+
+      <p
+        class="text-sm text-gray-500
+              dark:text-gray-400"
+      >
+        No hay formación académica registrada.
+      </p>
+
+    } @else {
+
+      <ng-container
+        *ngTemplateOutlet="academicTrainingForm"
+      />
+
+    }
+
+  </section>
+}
+
+
+<!-- FORMULARIO REUTILIZABLE -->
+<ng-template #academicTrainingForm>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+  >
+
+    <div class="grid grid-cols-1 gap-4">
+
+      <div>
+        <app-label>
+          Nivel académico
+        </app-label>
+
+        <app-select
+          formControlName="idNivelAcademico"
+          [options]="academicLevelOptions()"
+          placeholder="Seleccione el nivel académico"
+          emptyText="No hay niveles disponibles"
+          (valueChange)="onAcademicLevelChange($event)"
+        />
+      </div>
+
+      <div>
+        <app-label>
+          Título obtenido
+        </app-label>
+
+        <app-typeahead-select
+          formControlName="idTitulo"
+          [options]="titleOptions()"
+          [loading]="titlesLoading()"
+          [disabled]="!form.controls.idNivelAcademico.value"
+          placeholder="Buscar título..."
+          emptyText="No se encontraron títulos"
+          [minChars]="2"
+          (queryChange)="onTitleQueryChange($event)"
+        />
+      </div>
+
+      <div>
+        <app-label>
+          Institución
+        </app-label>
+
+        <app-input-field
+          formControlName="institucion"
+          placeholder="Ingrese la institución"
+          maxlength="160"
+        />
+      </div>
+
+      <div
+        class="grid grid-cols-1 gap-4
+               sm:grid-cols-2"
+      >
+        <div>
+          <app-date-picker
+            label="Fecha acta de grado"
+            formControlName="fechaGrado"
+            placeholder="AAAA-MM-DD"
+          />
+        </div>
+
+        <div>
+          <app-label>
+            País del título
+          </app-label>
+
+          <app-select
+            formControlName="idPais"
+            [options]="countryOptions()"
+            placeholder="Seleccione el país"
+            searchPlaceholder="Buscar país..."
+            emptyText="No se encontraron países"
+          />
+        </div>
+      </div>
+
+    </div>
+
+    <div
+      class="mt-5 flex justify-end gap-3"
+    >
+
+      @if (latestTraining()) {
+        <app-button
+          type="button"
+          size="sm"
+          variant="outline"
+          [disabled]="saving()"
+          (btnClick)="cancelNewTraining()"
+        >
+          Cancelar
+        </app-button>
+      }
+
+      <app-button
+        type="submit"
+        size="sm"
+        [disabled]="form.invalid || saving()"
+      >
+        {{
+          saving()
+            ? 'Guardando...'
+            : 'Guardar'
+        }}
+      </app-button>
+
+    </div>
+
+  </form>
+
+</ng-template>

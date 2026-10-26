@@ -1,0 +1,445 @@
+<app-collapsible-section
+  class="block"
+  [expanded]="expanded()"
+  (expandedChange)="
+    onExpandedChange($event)
+  "
+  contentClassName="flex flex-col gap-5"
+>
+
+  <!-- CABECERA -->
+  <div
+    collapsibleSectionHeader
+    class="flex min-w-0 flex-1 items-center gap-3"
+  >
+
+    <span
+      class="inline-flex size-10 shrink-0
+             items-center justify-center
+             rounded-xl
+             bg-brand-50
+             dark:bg-brand-500/10"
+    >
+      <app-icon
+        name="file"
+        size="sm"
+        classes="
+          text-brand-600
+          dark:text-brand-400
+        "
+      />
+    </span>
+
+    <div class="min-w-0">
+
+      <h4
+        class="text-sm font-semibold
+               text-gray-900
+               dark:text-white/90"
+      >
+        Plan de Trabajo Digital
+      </h4>
+
+    </div>
+
+  </div>
+
+
+  <!-- TOTAL EN EL HEADER -->
+  @if (
+    !loading() &&
+    !error() &&
+    plan();
+    as currentPlan
+  ) {
+
+    <div
+      collapsibleSectionActions
+      class="flex items-center"
+    >
+
+      <span
+        class="rounded-full
+               px-2.5 py-1
+               text-xs font-medium"
+        [class]="
+          currentPlan.totalPonderacion === 100
+            ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400'
+            : 'bg-warning-50 text-warning-600 dark:bg-warning-500/10 dark:text-warning-400'
+        "
+      >
+        {{
+          currentPlan.totalPonderacion
+        }} %
+      </span>
+
+    </div>
+
+  }
+
+
+  <!-- CARGANDO -->
+  @if (loading()) {
+
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      Cargando Plan de Trabajo Digital...
+    </p>
+
+  } @else if (error()) {
+
+    <!-- ERROR -->
+    <p
+      class="rounded-xl
+             border border-error-200
+             bg-error-50
+             px-4 py-5
+             text-sm text-error-600
+             dark:border-error-500/30
+             dark:bg-error-500/10"
+    >
+      No fue posible cargar el
+      Plan de Trabajo Digital.
+    </p>
+
+  } @else if (
+    plan();
+    as currentPlan
+  ) {
+
+    @if (currentPlan.items.length) {
+
+      <!-- TABLA PTD -->
+      <div
+        class="max-w-full overflow-x-auto
+               rounded-xl
+               border border-gray-200
+               dark:border-white/10"
+      >
+
+        <table
+          class="w-full min-w-[760px]
+                 table-fixed
+                 text-left text-sm"
+        >
+
+          <colgroup>
+            <col class="w-[24%]">
+            <col>
+            <col class="w-24">
+            <col class="w-28">
+          </colgroup>
+
+
+          <thead
+            class="bg-gray-50
+                   dark:bg-white/5"
+          >
+
+            <tr>
+
+              @for (
+                header of [
+                  'Criterio',
+                  'Actividad(es)',
+                  'Horas',
+                  'Ponderación'
+                ];
+                track header
+              ) {
+
+                <th
+                  class="px-4 py-3
+                         text-[11px]
+                         font-semibold
+                         uppercase
+                         tracking-wide
+                         text-gray-400"
+                >
+                  {{ header }}
+                </th>
+
+              }
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            @for (
+              item of currentPlan.items;
+              track item.idTipoActividad
+            ) {
+
+              <tr
+                class="border-t
+                       border-gray-100
+                       align-top
+                       dark:border-white/5"
+              >
+
+                <!-- CRITERIO -->
+                <td class="px-4 py-4">
+
+                  <p
+                    class="break-words
+                           [overflow-wrap:anywhere]
+                           font-semibold
+                           text-gray-900
+                           dark:text-white/90"
+                  >
+                    {{
+                      item.criterio ||
+                      '—'
+                    }}
+                  </p>
+
+                  @if (item.codigo) {
+
+                    <p
+                      class="mt-1
+                             text-xs
+                             text-gray-400
+                             dark:text-gray-500"
+                    >
+                      {{ item.codigo }}
+                    </p>
+
+                  }
+
+                </td>
+
+
+                <!-- ACTIVIDADES -->
+                <td
+                  class="px-4 py-4
+                         text-gray-700
+                         dark:text-gray-300"
+                >
+
+                  @if (
+                    item.actividades.length
+                  ) {
+
+                    <ul
+                      class="flex min-w-0
+                             flex-col gap-1.5"
+                    >
+
+                      @for (
+                        activity of
+                          item.actividades;
+                        track $index
+                      ) {
+
+                        <li
+                          class="flex min-w-0
+                                 items-start gap-2"
+                        >
+
+                          <span
+                            class="mt-2 size-1.5
+                                   shrink-0
+                                   rounded-full
+                                   bg-brand-500"
+                          ></span>
+
+                          <span
+                            class="min-w-0
+                                   whitespace-pre-wrap
+                                   break-words
+                                   [overflow-wrap:anywhere]"
+                          >
+                            {{ activity }}
+                          </span>
+
+                        </li>
+
+                      }
+
+                    </ul>
+
+                  } @else {
+
+                    <span
+                      class="text-gray-400"
+                    >
+                      —
+                    </span>
+
+                  }
+
+                  <!-- NIVEL DE LENGUA EXTRANJERA -->
+                    @if (item.nivel?.trim()) {
+
+                    <p
+                        class="mt-2 ml-3.5
+                            text-xs
+                            leading-5
+                            text-gray-400
+                            dark:text-gray-500"
+                    >
+                        <span class="font-medium">
+                        Nivel:
+                        </span>
+
+                        {{ levelLabel(item.nivel) }}
+                    </p>
+
+                    }
+
+                </td>
+
+
+                <!-- HORAS -->
+                <td
+                  class="px-4 py-4
+                         text-gray-600
+                         dark:text-gray-300"
+                >
+                  {{
+                    hoursLabel(
+                      item.totalHoras
+                    )
+                  }}
+                </td>
+
+                <!-- PONDERACIÓN -->
+                <td class="px-4 py-4">
+
+                  <span
+                    class="inline-flex
+                           rounded-full
+                           bg-gray-100
+                           px-2.5 py-1
+                           text-xs
+                           font-semibold
+                           text-gray-700
+                           dark:bg-gray-800
+                           dark:text-gray-300"
+                  >
+                    {{
+                      percentageLabel(
+                        item.ponderacion
+                      )
+                    }}
+                  </span>
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      <!-- TOTAL -->
+      <div
+        class="flex items-center
+               justify-between gap-4
+               rounded-xl
+               border border-gray-200
+               bg-gray-50/60
+               px-4 py-3
+               dark:border-white/10
+               dark:bg-white/[0.02]"
+      >
+
+        <div>
+
+          <p
+            class="text-sm font-semibold
+                   text-gray-900
+                   dark:text-white/90"
+          >
+            Total ponderación
+          </p>
+
+          @if (
+            currentPlan.totalPonderacion
+              !== 100
+          ) {
+
+            <p
+              class="mt-0.5
+                     text-xs
+                     text-warning-600
+                     dark:text-warning-400"
+            >
+              La ponderación registrada
+              no suma 100 %.
+            </p>
+
+          }
+
+        </div>
+
+
+        <span
+          class="text-lg font-semibold"
+          [class]="
+            currentPlan.totalPonderacion === 100
+              ? 'text-success-600 dark:text-success-400'
+              : 'text-warning-600 dark:text-warning-400'
+          "
+        >
+          {{
+            currentPlan.totalPonderacion
+          }} %
+        </span>
+
+      </div>
+
+    } @else {
+
+      <p
+        class="rounded-xl
+               border border-dashed
+               border-gray-200
+               px-4 py-7
+               text-center
+               text-sm text-gray-500
+               dark:border-white/10
+               dark:text-gray-400"
+      >
+        El Plan de Trabajo Digital
+        no tiene criterios para mostrar.
+      </p>
+
+    }
+
+  } @else {
+
+    <!-- NO EXISTE PTD -->
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      No hay un Plan de Trabajo Digital
+      registrado para esta contratación.
+    </p>
+
+  }
+
+</app-collapsible-section>

@@ -1,0 +1,40 @@
+<app-auth-page-layout>
+  <div class="flex w-full flex-col justify-center px-6 py-10 sm:px-12 lg:w-1/2">
+    <div class="mx-auto w-full max-w-md">
+      <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">
+        Acceso docente
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        Ingresa con tu número de documento y la fecha de expedición.
+      </p>
+
+      <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div>
+          <app-label for="numeroDocumento">Número de documento</app-label>
+          <app-input-field
+            id="numeroDocumento"
+            type="text"
+            placeholder="Número de documento"
+            formControlName="numeroDocumento"
+          />
+        </div>
+
+        <div>
+          <app-date-picker
+            id="fechaExpedicion"
+            label="Fecha de expedición"
+            placeholder="AAAA-MM-DD"
+            formControlName="fechaExpedicion"
+          />
+        </div>
+
+        <app-button
+          type="submit"
+          [disabled]="form.invalid || isSubmitting()"
+        >
+          {{ isSubmitting() ? 'Validando...' : 'Ingresar' }}
+        </app-button>
+      </form>
+    </div>
+  </div>
+</app-auth-page-layout>

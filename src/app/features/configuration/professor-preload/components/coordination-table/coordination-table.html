@@ -1,0 +1,35 @@
+<app-data-table
+  [columns]="columns()"
+  [rows]="coordinations()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions()"
+  [showAddButton]="false"
+  [showDeleteButton]="false"
+  [enableSelection]="enableSelection()"
+  [selectedRowKeys]="selectedCoordinationIds()"
+  [emptyMessage]="emptyMessage()"
+  (rowAction)="onTableAction($event)"
+  (toolbarAction)="onToolbarAction($event)"
+  (searchChange)="onSearchRecords($event)"
+  (selectedRowKeysChange)="onSelectedCoordinationIdsChange($event)"
+/>
+
+@if (showActionButton()) {
+  <div class="mt-4 flex justify-end">
+    <app-button
+      type="button"
+      size="sm"
+      [disabled]="
+        selectedCoordinationIds().length === 0 ||
+        isStartingPreassignment()
+      "
+      (btnClick)="onStartPreassignment()"
+    >
+      {{
+        isStartingPreassignment()
+          ? loadingActionLabel()
+          : actionLabel()
+      }}
+    </app-button>
+  </div>
+}

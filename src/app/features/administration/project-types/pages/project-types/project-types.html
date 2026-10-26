@@ -1,0 +1,39 @@
+<app-section-frame
+  title="Tipos de proyecto"
+  description="Administra los tipos de proyecto y sus parámetros de convocatoria."
+  iconName="briefcase"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-project-types-form
+        [projectType]="selectedProjectType()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveProjectType)="onSaveProjectType($event)"
+      />
+    } @else {
+      <app-project-types-table
+        [projectTypes]="projectTypes()"
+        [selectedProjectTypeIds]="selectedProjectTypeIds()"
+        (selectedProjectTypeIdsChange)="onSelectedIdsChange($event)"
+        (refreshProjectTypes)="refreshProjectTypes()"
+        (addProjectType)="openCreateForm()"
+        (editProjectType)="openEditForm($event)"
+        (deleteProjectType)="requestDeleteProjectType($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

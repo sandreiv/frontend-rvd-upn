@@ -1,0 +1,327 @@
+<section
+  class="rounded-2xl border border-gray-200 bg-white p-4
+         dark:border-gray-800 dark:bg-white/3"
+>
+  <!-- CABECERA -->
+  <div class="mb-4 flex items-start gap-3">
+    <span
+      class="inline-flex size-9 shrink-0 items-center justify-center
+             rounded-xl bg-brand-50 text-brand-600
+             dark:bg-brand-500/10 dark:text-brand-400"
+    >
+      <app-icon
+        name="identification"
+        size="sm"
+      />
+    </span>
+
+    <div class="min-w-0">
+      <h3
+        class="text-sm font-semibold text-gray-800
+               dark:text-white/90"
+      >
+        Información básica
+      </h3>
+
+      <p
+        class="mt-0.5 text-xs text-gray-500
+               dark:text-gray-400"
+      >
+        Consulta la información personal registrada actualmente.
+      </p>
+    </div>
+  </div>
+
+  <!-- DATOS BÁSICOS -->
+  <div>
+    <h4
+      class="mb-3 text-[11px] font-semibold uppercase
+             tracking-wide text-gray-400"
+    >
+      Datos básicos
+    </h4>
+
+    <div
+      class="grid grid-cols-1 gap-x-5 gap-y-3
+             sm:grid-cols-2 xl:grid-cols-3"
+    >
+      <!-- NOMBRES Y APELLIDOS -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Nombres y apellidos
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().nombreCompleto) }}
+        </p>
+      </div>
+
+      <!-- TIPO DE DOCUMENTO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Tipo de documento
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().tipoDocumento) }}
+        </p>
+      </div>
+
+      <!-- NÚMERO DE DOCUMENTO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Número de documento
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().documentoIdentidad) }}
+        </p>
+      </div>
+
+      <!-- FECHA DE EXPEDICIÓN -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Fecha de expedición
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ formatDate(information().fechaExpedicion) }}
+        </p>
+      </div>
+
+      <!-- LUGAR DE EXPEDICIÓN -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Lugar de expedición
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().lugarExpedicion) }}
+        </p>
+      </div>
+
+      <!-- FECHA DE NACIMIENTO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Fecha de nacimiento
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ formatDate(information().fechaNacimiento) }}
+        </p>
+      </div>
+
+      <!-- SEXO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Sexo
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().sexo) }}
+        </p>
+      </div>
+
+      <!-- ESTADO CIVIL -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Estado civil
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().estadoCivil) }}
+        </p>
+      </div>
+
+      <!-- RH -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          RH
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().rh) }}
+        </p>
+      </div>
+
+      <!-- LUGAR DE NACIMIENTO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Lugar de nacimiento
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().lugarNacimiento) }}
+        </p>
+      </div>
+
+      <!-- NACIONALIDAD -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Nacionalidad
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().nacionalidad) }}
+        </p>
+      </div>
+
+      <!-- PAÍS DE NACIMIENTO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          País de nacimiento
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().paisNacimiento) }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATOS DE CONTACTO -->
+  <div
+    class="mt-4 border-t border-gray-100 pt-4
+           dark:border-white/10"
+  >
+    <h4
+      class="mb-3 text-[11px] font-semibold uppercase
+             tracking-wide text-gray-400"
+    >
+      Datos de contacto
+    </h4>
+
+    <div
+      class="grid grid-cols-1 gap-x-5 gap-y-3
+             sm:grid-cols-2 xl:grid-cols-3"
+    >
+      <!-- DIRECCIÓN -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Dirección
+        </p>
+
+        <p
+          class="mt-0.5 break-words text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().direccion) }}
+        </p>
+      </div>
+
+      <!-- CELULAR -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Celular
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().telefonoCelular) }}
+        </p>
+      </div>
+
+      <!-- TELÉFONO -->
+      <div class="min-w-0">
+        <p class="text-[11px] text-gray-400">
+          Teléfono
+        </p>
+
+        <p
+          class="mt-0.5 text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().telefono) }}
+        </p>
+      </div>
+
+      <!-- CORREO PERSONAL -->
+      <div
+        class="min-w-0 sm:col-span-2 xl:col-span-3"
+      >
+        <p class="text-[11px] text-gray-400">
+          Correo personal
+        </p>
+
+        <p
+          class="mt-0.5 break-all text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().correoPersonal) }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFORMACIÓN INSTITUCIONAL -->
+  <div
+    class="mt-4 border-t border-gray-100 pt-4
+           dark:border-white/10"
+  >
+    <h4
+      class="mb-3 text-[11px] font-semibold uppercase
+             tracking-wide text-gray-400"
+    >
+      Información institucional
+    </h4>
+
+    <div
+      class="grid grid-cols-1 gap-x-5 gap-y-3
+             sm:grid-cols-2 xl:grid-cols-3"
+    >
+      <!-- CORREO INSTITUCIONAL -->
+      <div
+        class="min-w-0 sm:col-span-2 xl:col-span-3"
+      >
+        <p class="text-[11px] text-gray-400">
+          Correo institucional
+        </p>
+
+        <p
+          class="mt-0.5 break-all text-sm font-medium
+                 text-gray-800 dark:text-white/90"
+        >
+          {{ value(information().correoInstitucional) }}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

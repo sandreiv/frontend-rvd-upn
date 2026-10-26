@@ -1,0 +1,121 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="max-w-6xl mx-4 p-0 overflow-hidden"
+  (close)="onClose()"
+>
+  <div class="border-b border-gray-200 px-6 py-5 dark:border-gray-700 sm:px-8">
+    <div class="flex items-start gap-4">
+      <div class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+        <app-icon name="chatBubbleBottomCenterText" size="sm" />
+      </div>
+
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+            Gestión de novedades
+          </h3>
+        </div>
+
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          A continuación podra realizar las novedades necesarias para el docente seleccionado.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-h-[65vh] overflow-y-auto px-6 py-6 sm:px-8">
+
+    @if (hasNoveltyInReview()) {
+
+      <div
+        class="rounded-xl border border-warning-200 bg-warning-50 px-5 py-4
+              dark:border-warning-500/20 dark:bg-warning-500/10"
+      >
+        <p
+          class="text-sm font-semibold text-warning-700
+                dark:text-warning-400"
+        >
+          El docente tiene una novedad en revisión.
+        </p>
+
+        @if (professor()?.tipoNovedad; as tipoNovedad) {
+          <p class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+            Novedad en curso:
+            <span class="font-semibold">
+              {{ tipoNovedad }}
+            </span>
+          </p>
+        }
+
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          La novedad actual debe ser resuelta antes de registrar una nueva.
+        </p>
+      </div>
+
+    } @else {
+
+      <div class="flex flex-col gap-2">
+        <app-label>Novedad</app-label>
+
+        <app-select
+          [formControl]="idNovedadControl"
+          [options]="noveltyOptions()"
+          [disabled]="noveltiesResource.isLoading()"
+          placeholder="Seleccione la novedad"
+          searchPlaceholder="Buscar novedad..."
+          emptyText="No hay novedades disponibles"
+        />
+
+        @if (idNovedadControl.touched && idNovedadControl.invalid) {
+          <p class="text-xs font-medium text-red-600 dark:text-red-400">
+            Debe seleccionar una novedad.
+          </p>
+        }
+      </div>
+
+      @if (selectedNoveltyComponent(); as component) {
+        <div class="mt-6">
+          <ng-container
+            [ngComponentOutlet]="component"
+            [ngComponentOutletInputs]="noveltyInputs()"
+          />
+        </div>
+      }
+
+    }
+
+  </div>
+
+  @if (!hasNoveltyInReview()) {
+
+    <div
+      class="flex justify-end gap-3 border-t border-gray-200 px-6 py-5
+            dark:border-gray-700 sm:px-8"
+    >
+      <app-button
+        type="button"
+        [disabled]="
+          idNovedadControl.invalid ||
+          noveltiesResource.isLoading() ||
+          !noveltyState.isValid() ||
+          budgetStore.excede() ||
+          saving() ||
+          !canSaveSelectedNovelty()
+        "
+        (btnClick)="onSave()"
+      >
+        {{ saving() ? 'Guardando...' : 'Guardar' }}
+      </app-button>
+    </div>
+
+    @if (budgetStore.excede()) {
+      <p
+        class="px-6 pb-5 text-sm font-medium text-red-600
+              dark:text-red-400 sm:px-8"
+      >
+        El valor proyectado supera el valor autorizado.
+      </p>
+    }
+
+  }
+</app-modal>

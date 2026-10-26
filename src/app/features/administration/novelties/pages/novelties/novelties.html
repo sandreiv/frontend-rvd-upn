@@ -1,0 +1,39 @@
+<app-section-frame
+  title="Novedades"
+  description="Administra el catálogo de novedades y la acción asociada a cada una."
+  iconName="bell"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-novelties-form
+        [novelty]="selectedNovelty()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveNovelty)="onSaveNovelty($event)"
+      />
+    } @else {
+      <app-novelties-table
+        [novelties]="novelties()"
+        [selectedNoveltyIds]="selectedNoveltyIds()"
+        (selectedNoveltyIdsChange)="onSelectedIdsChange($event)"
+        (refreshNovelties)="refreshNovelties()"
+        (addNovelty)="openCreateForm()"
+        (editNovelty)="openEditForm($event)"
+        (deleteNovelty)="requestDeleteNovelty($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

@@ -1,0 +1,14 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="assignments()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedAssignmentIds()"
+  [emptyMessage]="emptyMessage()"
+  [canAdd]="canAdd()"
+  searchPlaceholder="Buscar centro de costo..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

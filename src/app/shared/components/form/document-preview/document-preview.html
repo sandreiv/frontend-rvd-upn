@@ -1,0 +1,93 @@
+<app-modal
+  [isOpen]="isOpen()"
+  (close)="onClose()"
+  [className]="className()"
+>
+  <div
+    class="no-scrollbar relative w-full max-w-275 overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-6"
+  >
+    <div
+      class="mb-4 flex items-start justify-between gap-4"
+    >
+      <div>
+        <h4
+          class="text-xl font-semibold text-gray-800 dark:text-white/90"
+        >
+          Previsualización de documento
+        </h4>
+
+        <p
+          class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+        >
+          {{ resolvedFileName() }}
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="rounded-2xl bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
+    >
+      @if (resolvedIsLoading()) {
+
+        <div
+          class="flex h-[70vh] items-center justify-center text-sm text-gray-500 dark:text-gray-400"
+        >
+          Cargando previsualización...
+        </div>
+
+      } @else if (resolvedError()) {
+
+        <div
+          class="flex h-[70vh] items-center justify-center text-sm text-error-600"
+        >
+          {{ resolvedError() }}
+        </div>
+
+      } @else if (
+        resolvedPreviewUrl()
+      ) {
+
+        <iframe
+          [src]="resolvedPreviewUrl()"
+          class="h-[70vh] w-full rounded-xl bg-white"
+          title="Previsualización de documento"
+        ></iframe>
+
+      } @else {
+
+        <div
+          class="flex h-[70vh] items-center justify-center text-sm text-gray-500 dark:text-gray-400"
+        >
+          No hay documento para previsualizar.
+        </div>
+
+      }
+    </div>
+
+    <div
+      class="mt-6 flex items-center gap-3 lg:justify-end"
+    >
+      <app-button
+        size="sm"
+        variant="outline"
+        type="button"
+        (btnClick)="onClose()"
+      >
+        Cerrar
+      </app-button>
+
+      <app-button
+        size="sm"
+        type="button"
+        [disabled]="
+          !resolvedPreviewUrl() ||
+          resolvedIsLoading() ||
+          resolvedDownloadDisabled()
+        "
+        (btnClick)="onDownload()"
+      >
+        Descargar
+      </app-button>
+    </div>
+  </div>
+</app-modal>

@@ -1,0 +1,47 @@
+<app-section-frame
+  title="Restricción de carga"
+  description="Administra las restricciones de carga por modalidad de contratación."
+  iconName="adjustmentsHorizontal"
+  iconVariant="brand"
+>
+  <div class="space-y-5">
+    @if (selectedModality()) {
+      <div
+        class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+            Restricción de carga de: {{ selectedModality()?.nombre }}
+          </h4>
+
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Configura los parámetros aplicables a esta modalidad de contratación.
+          </p>
+        </div>
+      </div>
+
+      @if (isLoadingRestriction()) {
+        <div
+          class="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-white/10 dark:bg-white/3 dark:text-gray-400"
+        >
+          Cargando restricción de carga...
+        </div>
+      } @else {
+        <app-load-restriction-form
+          [modality]="selectedModality()"
+          [restriction]="selectedRestriction()"
+          [catalogs]="catalogs()"
+          [isSaving]="isSaving()"
+          (cancel)="closeLoadRestriction()"
+          (saveRestriction)="onSaveRestriction($event)"
+        />
+      }
+    } @else {
+      <app-load-restriction-table
+        [modalities]="modalities()"
+        (refreshModalities)="refreshModalities()"
+        (configureLoadRestriction)="openLoadRestriction($event)"
+      />
+    }
+  </div>
+</app-section-frame>

@@ -1,0 +1,178 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  class="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/3"
+>
+  <div class="mb-4 flex flex-col gap-1">
+    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+      {{ projectType() ? 'Editar tipo de proyecto' : 'Nuevo tipo de proyecto' }}
+    </h4>
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+      Define los parámetros de participación, montos y tipología del proyecto.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div>
+      <app-label>Nombre</app-label>
+      <app-input-field
+        formControlName="nombre"
+        placeholder="Ingrese el nombre"
+      />
+
+      @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El nombre es obligatorio.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Descripción</app-label>
+      <app-input-field
+        formControlName="descripcion"
+        placeholder="Ingrese la descripción"
+      />
+
+      @if (
+        form.controls.descripcion.touched && form.controls.descripcion.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          La descripción es obligatoria.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div>
+      <app-label>Mínimo participantes</app-label>
+      <app-input-field
+        type="number"
+        formControlName="minimoParticipantes"
+        placeholder="Mínimo participantes"
+        min="0"
+      />
+
+      @if (
+        form.controls.minimoParticipantes.touched &&
+        form.controls.minimoParticipantes.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El mínimo de participantes es obligatorio.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Máximo participantes</app-label>
+      <app-input-field
+        type="number"
+        formControlName="maximoParticipantes"
+        placeholder="Máximo participantes"
+        min="0"
+      />
+
+      @if (
+        form.controls.maximoParticipantes.touched &&
+        form.controls.maximoParticipantes.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El máximo de participantes es obligatorio.
+        </p>
+      }
+
+      @if (participantsRangeInvalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El máximo debe ser mayor o igual al mínimo de participantes.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Monto máximo</app-label>
+      <app-input-field
+        formControlName="montoMaximo"
+        placeholder="Monto máximo"
+        (focus)="onMontoMaximoFocus()"
+        (blurred)="onMontoMaximoBlur()"
+      />
+
+      @if (
+        form.controls.montoMaximo.touched && form.controls.montoMaximo.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El monto máximo es obligatorio.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div>
+      <app-label>Mínimo productos</app-label>
+      <app-input-field
+        type="number"
+        formControlName="minimoProductos"
+        placeholder="Mínimo productos"
+        min="0"
+      />
+
+      @if (
+        form.controls.minimoProductos.touched &&
+        form.controls.minimoProductos.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El mínimo de productos es obligatorio.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Mínimo conocimiento TI</app-label>
+      <app-input-field
+        formControlName="minimoConocimientoTi"
+        placeholder="Mínimo conocimiento TI"
+      />
+
+      @if (
+        form.controls.minimoConocimientoTi.touched &&
+        form.controls.minimoConocimientoTi.invalid
+      ) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El mínimo de conocimiento TI es obligatorio.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Tipo</app-label>
+      <app-select
+        formControlName="tipo"
+        [options]="typeOptions"
+        placeholder="Seleccione el tipo"
+      />
+
+      @if (form.controls.tipo.touched && form.controls.tipo.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El tipo es obligatorio.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-5 flex justify-end gap-3">
+    <app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      (btnClick)="cancel.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button type="submit" size="sm" [disabled]="form.invalid || isSaving()">
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+    </app-button>
+  </div>
+</form>

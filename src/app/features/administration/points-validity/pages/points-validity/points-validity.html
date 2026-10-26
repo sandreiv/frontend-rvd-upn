@@ -1,0 +1,39 @@
+<app-section-frame
+  title="Puntos por vigencia"
+  description="Administra el valor del punto correspondiente a cada año de vigencia."
+  iconName="calendar"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-points-validity-form
+        [item]="selectedItem()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveItem)="onSave($event)"
+      />
+    } @else {
+      <app-points-validity-table
+        [items]="items()"
+        [selectedIds]="selectedIds()"
+        (selectedIdsChange)="onSelectedIdsChange($event)"
+        (refreshItems)="refresh()"
+        (addItem)="openCreateForm()"
+        (editItem)="openEditForm($event)"
+        (deleteItem)="requestDelete($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

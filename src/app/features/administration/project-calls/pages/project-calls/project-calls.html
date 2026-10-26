@@ -1,0 +1,39 @@
+<app-section-frame
+  title="Convocatorias de proyecto"
+  description="Administra las convocatorias de proyecto y su vínculo con precarga."
+  iconName="bookOpen"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-project-calls-form
+        [projectCall]="selectedProjectCall()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveProjectCall)="onSaveProjectCall($event)"
+      />
+    } @else {
+      <app-project-calls-table
+        [projectCalls]="projectCalls()"
+        [selectedProjectCallIds]="selectedProjectCallIds()"
+        (selectedProjectCallIdsChange)="onSelectedIdsChange($event)"
+        (refreshProjectCalls)="refreshProjectCalls()"
+        (addProjectCall)="openCreateForm()"
+        (editProjectCall)="openEditForm($event)"
+        (deleteProjectCall)="requestDeleteProjectCall($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

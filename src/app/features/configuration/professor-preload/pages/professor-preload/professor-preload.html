@@ -1,0 +1,85 @@
+<div class="grid gap-4">
+  <div class="min-w-0">
+    @if (showAlterationDetail() && selectedCoordination(); as coordination) {
+      <app-alteration-detail
+        [coordination]="coordination"
+        (back)="onBackToCoordinationList()"
+        (valorChange)="onCargaValorChange($event)"
+      />
+    } @else if (!showCoordinationDetail()) {
+      <app-section-frame
+        title="Coordinaciones"
+        description="Administra las coordinaciones de la precarga docente."
+        iconName="paperAirplane"
+        iconVariant="brand"
+      >
+        <div
+          sectionFrameHeaderActions
+          class="flex w-full items-center gap-2"
+        >
+          <div class="min-w-0 flex-1 sm:flex-none sm:w-48">
+            <app-select
+              [options]="periodOptions()"
+              [value]="selectedPeriodId()"
+              [disabled]="isLoadingPeriods()"
+              placeholder="Seleccione el periodo"
+              searchPlaceholder="Buscar periodo..."
+              emptyText="No hay periodos disponibles"
+              (valueChange)="onPeriodChange($event)"
+            />
+          </div>
+
+          <div class="min-w-0 flex-1 sm:flex-none sm:w-64">
+            <app-select
+              [options]="preloadCallOptions()"
+              [value]="selectedPreloadCallId()"
+              [disabled]="
+                isLoadingPeriods() ||
+                !selectedPeriodId() ||
+                isLoadingPreloadCalls()
+              "
+              placeholder="Seleccione la convocatoria"
+              searchPlaceholder="Buscar convocatoria..."
+              emptyText="No hay convocatorias activas"
+              (valueChange)="onPreloadCallChange($event)"
+            />
+          </div>
+
+          <app-button
+            type="button"
+            size="sm"
+            className="h-11 shrink-0 whitespace-nowrap"
+            [disabled]="
+              isLoadingPeriods() ||
+              !selectedPeriodId() ||
+              isLoadingPreloadCalls() ||
+              isLoadingCoordinations()
+            "
+            (btnClick)="onApplyCoordinationFilter()"
+          >
+            Filtrar
+          </app-button>
+        </div>
+
+        <app-coordination-table
+          [coordinations]="coordinations()"
+          [(selectedCoordinationIds)]="selectedCoordinationIds"
+          [isStartingPreassignment]="isStartingPreassignment()"
+          [emptyMessage]="tableEmptyMessage()"
+          [enableAlterationAction]="true"
+          (startPreassignment)="onStartPreassignment($event)"
+          (refreshCoordination)="onRefreshCoordinations()"
+          (openAlteration)="onOpenAlteration($event)"
+        />
+      </app-section-frame>
+    } @else if (selectedCoordination(); as coordination) {
+      <app-coordination-detail
+        [coordination]="coordination"
+        [coordinationsCatalog]="coordinations()"
+        [idPeriodoUniversidad]="appliedPeriodId()"
+        (back)="onBackToCoordinationList()"
+        (coordinationUpdated)="onCoordinationUpdated($event)"
+      />
+    }
+  </div>
+</div>

@@ -1,0 +1,76 @@
+@if (canShow()) {
+  <div class="relative">
+    <button
+      type="button"
+      class="relative flex size-10 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+      [attr.aria-expanded]="isOpen()"
+      aria-label="Docentes pendientes de verificación"
+      (click)="toggleDropdown()"
+    >
+      <app-icon name="bell" size="sm" />
+
+      @if (hasPending()) {
+        <span
+          class="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full bg-error-500 px-1 py-0.5 text-[10px] font-semibold leading-none text-white"
+        >
+          {{ badgeCount() }}
+        </span>
+      }
+    </button>
+
+    @if (isOpen()) {
+      <div
+        class="absolute right-0 z-[70] mt-3 w-[22rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900"
+      >
+        <div class="px-2 pb-2 pt-1">
+          <p class="text-sm font-semibold text-gray-800 dark:text-white/90">
+            Pendientes de verificación
+          </p>
+          <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            @if (hasPending()) {
+              {{ total() }} docente{{ total() === 1 ? '' : 's' }}
+              listo{{ total() === 1 ? '' : 's' }} para verificar.
+            } @else {
+              No hay docentes pendientes de verificación.
+            }
+          </p>
+        </div>
+
+        <div class="max-h-80 overflow-y-auto">
+          @for (item of visibleItems(); track item.idCargaDocente) {
+            <button
+              type="button"
+              class="flex w-full flex-col gap-1 rounded-xl px-2 py-2.5 text-left transition hover:bg-gray-50 dark:hover:bg-white/5"
+              (click)="onSelectItem(item)"
+            >
+              <span class="text-sm text-gray-700 dark:text-gray-200">
+                El docente
+                <span class="font-semibold">
+                  {{ pendingProfessorName(item) }}
+                </span>
+                está listo para su verificación.
+              </span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                {{ pendingCoordinationName(item) }}
+              </span>
+            </button>
+          }
+        </div>
+
+        @if (hiddenCount() > 0) {
+          <p class="px-2 pt-1 text-xs text-gray-500 dark:text-gray-400">
+            Y {{ hiddenCount() }} más.
+          </p>
+        }
+
+        <button
+          type="button"
+          class="mt-2 w-full rounded-lg px-3 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10"
+          (click)="onViewAll()"
+        >
+          Ir a verificar docentes
+        </button>
+      </div>
+    }
+  </div>
+}

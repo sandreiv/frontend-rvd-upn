@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="items()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedIds()"
+  emptyMessage="No hay puntos por vigencia registrados."
+  searchPlaceholder="Buscar vigencia..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

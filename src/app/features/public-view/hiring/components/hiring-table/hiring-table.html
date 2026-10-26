@@ -1,0 +1,14 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="records()"
+  [rowIdentity]="rowIdentity"
+  [emptyMessage]="emptyMessage()"
+  [showAddButton]="false"
+  [showDeleteButton]="false"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedHiringKeys()"
+  searchPlaceholder="Buscar contratación..."
+  (toolbarAction)="onToolbarAction($event)"
+  (searchChange)="onSearchRecords($event)"
+  (selectedRowKeysChange)="onSelectedHiringKeysChange($event)"
+/>

@@ -1,0 +1,547 @@
+<app-collapsible-section
+  class="block"
+  [expanded]="expanded()"
+  (expandedChange)="onExpandedChange($event)"
+  contentClassName="flex flex-col gap-5"
+>
+
+  <!-- CABECERA -->
+  <div
+    collapsibleSectionHeader
+    class="flex min-w-0 flex-1 items-center gap-3"
+  >
+
+    <span
+      class="inline-flex size-10 shrink-0
+             items-center justify-center
+             rounded-xl
+             bg-brand-50
+             dark:bg-brand-500/10"
+    >
+      <app-icon
+        name="file"
+        size="sm"
+        classes="text-brand-600 dark:text-brand-400"
+      />
+    </span>
+
+    <div class="min-w-0">
+
+      <h4
+        class="text-sm font-semibold
+               text-gray-900
+               dark:text-white/90"
+      >
+        Documentos de soporte
+      </h4>
+
+      <p
+        class="mt-0.5 text-xs
+               text-gray-500
+               dark:text-gray-400"
+      >
+        Documentación de contratación
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- TOTAL DE DOCUMENTOS -->
+  @if (
+    !loading() &&
+    !error() &&
+    totalFiles() > 0
+  ) {
+
+    <div
+      collapsibleSectionActions
+      class="flex items-center"
+    >
+
+      <span
+        class="rounded-full
+               bg-gray-100
+               px-2.5 py-1
+               text-xs font-medium
+               text-gray-600
+               dark:bg-gray-800
+               dark:text-gray-300"
+      >
+        {{ totalFiles() }}
+        {{ totalFiles() === 1 ? 'archivo' : 'archivos' }}
+      </span>
+
+    </div>
+
+  }
+
+
+  <!-- CARGANDO -->
+  @if (loading()) {
+
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      Cargando documentos de soporte...
+    </p>
+
+  } @else if (error()) {
+
+    <!-- ERROR -->
+    <p
+      class="rounded-xl
+             border border-error-200
+             bg-error-50
+             px-4 py-5
+             text-sm text-error-600
+             dark:border-error-500/30
+             dark:bg-error-500/10"
+    >
+      No fue posible cargar los documentos
+      de soporte de la contratación.
+    </p>
+
+  } @else if (rows().length) {
+
+    <!-- TABLA DE DOCUMENTOS -->
+    <div
+      class="max-w-full overflow-x-auto
+             rounded-xl
+             border border-gray-200
+             dark:border-white/10"
+    >
+
+      <table
+        class="w-full min-w-[800px]
+                table-fixed text-left text-sm"
+        >
+
+        <thead
+          class="bg-gray-50
+                 dark:bg-white/5"
+        >
+
+          <tr>
+
+                <th
+                    scope="col"
+                    class="w-[30%] px-4 py-3
+                        text-[11px] font-semibold
+                        uppercase tracking-wide
+                        text-gray-500
+                        dark:text-gray-400"
+                >
+                    Documento de soporte
+                </th>
+
+                <th
+                    scope="col"
+                    class="w-[40%] px-4 py-3
+                        text-[11px] font-semibold
+                        uppercase tracking-wide
+                        text-gray-500
+                        dark:text-gray-400"
+                >
+                    Archivos registrados
+                </th>
+
+                <th
+                    scope="col"
+                    class="w-[10%] px-4 py-3
+                        text-center text-[11px]
+                        font-semibold uppercase
+                        tracking-wide text-gray-500
+                        dark:text-gray-400"
+                >
+                    Cantidad
+                </th>
+
+                <th
+                    scope="col"
+                    class="w-[20%] px-4 py-3
+                        text-center text-[11px]
+                        font-semibold uppercase
+                        tracking-wide text-gray-500
+                        dark:text-gray-400"
+                >
+                    Acciones
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (
+            categoria of rows();
+            track categoria.codigo
+          ) {
+
+            <tr
+              class="border-t border-gray-100
+                     align-top
+                     dark:border-white/5"
+            >
+
+              <!-- NOMBRE DE CATEGORÍA -->
+              <td
+                class="min-w-0 px-4 py-4"
+              >
+
+                <p
+                  class="text-sm font-semibold
+                         text-gray-900
+                         break-words
+                         [overflow-wrap:anywhere]
+                         dark:text-white/90"
+                >
+                  {{ categoria.nombre }}
+                </p>
+
+                <p
+                  class="mt-1 text-xs
+                         text-gray-400
+                         break-words
+                         [overflow-wrap:anywhere]"
+                >
+                  {{ categoria.codigo }}
+                </p>
+
+              </td>
+
+
+              <!-- ARCHIVOS REGISTRADOS -->
+              <td
+                class="min-w-0 px-4 py-4"
+              >
+
+                @if (
+                  categoria.archivos.length
+                ) {
+
+                  <ul
+                    class="flex min-w-0
+                           flex-col gap-3"
+                  >
+
+                    @for (
+                      archivo of categoria.archivos;
+                      track archivo.id
+                    ) {
+
+                      <li
+                        class="flex min-w-0
+                               items-start gap-2"
+                      >
+
+                        <span
+                          class="mt-0.5 shrink-0
+                                 text-brand-600
+                                 dark:text-brand-400"
+                        >
+                          <app-icon
+                            name="file"
+                            size="xs"
+                          />
+                        </span>
+
+                        <div
+                          class="min-w-0 flex-1"
+                        >
+
+                          <p
+                            class="text-sm
+                                   text-gray-700
+                                   break-words
+                                   whitespace-pre-wrap
+                                   [overflow-wrap:anywhere]
+                                   dark:text-gray-300"
+                          >
+                            {{ archivo.nombre }}
+                          </p>
+
+                          <p
+                            class="mt-0.5 text-xs
+                                   text-gray-400"
+                          >
+                            {{
+                              formatFileSize(
+                                archivo.tamano
+                              )
+                            }}
+                          </p>
+
+                          <!-- ACCIONES DEL ARCHIVO -->
+                            <div
+                            class="mt-2 flex flex-wrap
+                                    items-center gap-3"
+                            >
+
+                            <!-- VISUALIZAR -->
+                            @if (canPreview(archivo)) {
+
+                                <button
+                                type="button"
+                                class="text-xs font-medium
+                                        text-brand-600
+                                        hover:underline
+                                        disabled:opacity-50
+                                        dark:text-brand-400"
+                                [disabled]="uploading()"
+                                (click)="
+                                    viewRequested.emit(archivo)
+                                "
+                                >
+                                Ver
+                                </button>
+
+                            }
+
+                            <!-- DESCARGAR -->
+                            <button
+                                type="button"
+                                class="text-xs font-medium
+                                    text-gray-600
+                                    hover:underline
+                                    disabled:opacity-50
+                                    dark:text-gray-300"
+                                [disabled]="
+                                uploading() ||
+                                downloadingFileId() !== null
+                                "
+                                (click)="
+                                downloadRequested.emit(archivo)
+                                "
+                            >
+                                {{
+                                downloadingFileId() === archivo.id
+                                    ? 'Descargando...'
+                                    : 'Descargar'
+                                }}
+                            </button>
+
+                              @if (!readOnly()) {
+
+                                <!-- ELIMINAR -->
+                                <button
+                                type="button"
+                                class="text-xs font-medium
+                                        text-error-600
+                                        hover:underline
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-50
+                                        dark:text-error-400"
+                                [disabled]="
+                                    uploading() ||
+                                    deleting()
+                                "
+                                (click)="
+                                    deleteRequested.emit(archivo)
+                                "
+                                >
+                                Eliminar
+                                </button>
+
+                              }
+
+                            </div>
+
+                        </div>
+
+                      </li>
+
+                    }
+
+                  </ul>
+
+                } @else {
+
+                  <span
+                    class="text-sm
+                           text-gray-400
+                           dark:text-gray-500"
+                  >
+                    Sin documentos registrados
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- CANTIDAD -->
+              <td
+                class="px-4 py-4 text-center"
+              >
+
+                <span
+                  class="inline-flex
+                         rounded-full
+                         px-2.5 py-1
+                         text-xs font-medium"
+                  [class]="
+                    categoria.archivos.length > 0
+                      ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400'
+                      : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                  "
+                >
+                  {{ categoria.archivos.length }}
+                </span>
+
+              </td>
+
+              <!-- ACCIONES -->
+                <td
+                class="px-4 py-4 text-center"
+                >
+
+                @if (categoria.habilitada && !readOnly()) {
+
+                    <!-- Selector múltiple -->
+                    <input
+                    #documentInput
+                    type="file"
+                    multiple
+                    class="sr-only"
+                    [disabled]="uploading() || deleting()"
+                    [attr.aria-label]="
+                        'Seleccionar archivos para ' +
+                        categoria.nombre
+                    "
+                    (change)="
+                        onFilesSelected(
+                        $event,
+                        categoria.codigo
+                        )
+                    "
+                    />
+
+                    <!-- Botón de carga -->
+                    <button
+                    type="button"
+                    class="inline-flex items-center
+                            justify-center rounded-lg
+                            bg-brand-500 px-3 py-2
+                            text-xs font-medium
+                            text-white
+                            transition-colors
+                            hover:bg-brand-600
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50"
+                    [disabled]="uploading()"
+                    (click)="documentInput.click()"
+                    >
+                    {{ uploading()
+                        ? 'Procesando...'
+                        : 'Agregar archivos'
+                    }}
+                    </button>
+
+                } @else {
+
+                    <span
+                    class="text-xs text-gray-400
+                            dark:text-gray-500"
+                    >
+                    Solo consulta
+                    </span>
+
+                }
+
+                </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- PROGRESO DE CARGA -->
+    @if (uploading()) {
+
+    <div
+        role="status"
+        aria-live="polite"
+        class="rounded-xl
+            border border-brand-200
+            bg-brand-50
+            px-4 py-3
+            text-sm text-brand-700
+            dark:border-brand-500/30
+            dark:bg-brand-500/10
+            dark:text-brand-400"
+    >
+
+        {{
+        uploadProgress() ??
+        'Subiendo documentos...'
+        }}
+
+    </div>
+
+    }
+
+    <!-- RESUMEN -->
+    <div
+      class="flex flex-wrap
+             items-center justify-between
+             gap-3 rounded-xl
+             border border-gray-200
+             bg-gray-50 px-4 py-3
+             dark:border-white/10
+             dark:bg-white/5"
+    >
+
+      <span
+        class="text-xs font-medium
+               text-gray-500
+               dark:text-gray-400"
+      >
+        Total de documentos registrados
+      </span>
+
+      <span
+        class="text-sm font-semibold
+               text-gray-900
+               dark:text-white/90"
+      >
+        {{ totalFiles() }}
+      </span>
+
+    </div>
+
+  } @else {
+
+    <!-- SIN CATEGORÍAS -->
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      No hay categorías documentales
+      disponibles para mostrar.
+    </p>
+
+  }
+
+</app-collapsible-section>

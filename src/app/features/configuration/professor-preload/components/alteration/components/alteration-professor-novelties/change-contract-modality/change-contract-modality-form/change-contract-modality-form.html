@@ -1,0 +1,82 @@
+<section
+  class="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 lg:p-6"
+>
+  <div
+    class="-mx-5 mb-4 flex items-center gap-2 border-b border-gray-200 px-5 pb-4 lg:-mx-6 lg:px-6 dark:border-white/10"
+  >
+    <app-icon name="academicCap" size="sm" classes="text-gray-500" />
+    <h4 class="text-sm font-semibold text-gray-800 dark:text-white/90">
+      Asignación del docente
+    </h4>
+  </div>
+
+  @if (modalityKind() === 'tiempoCompletoOcasional') {
+    <div
+      class="mb-5 flex items-start gap-2 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10"
+    >
+      <app-icon name="infoCircle" size="sm" classes="text-warning-500" />
+      <p class="text-sm text-warning-700 dark:text-warning-400">
+        Los docentes de los cuales no se tiene definido un puntaje docente,
+        definir un mínimo de <span class="font-semibold">375 puntos</span>.
+      </p>
+    </div>
+  }
+
+  <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/5">
+    <p class="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+      Detalle de asignación
+      <span class="text-gray-400">· {{ displayName() }}</span>
+    </p>
+
+    @if (fields().length) {
+      <div
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        [formGroup]="professorForm()"
+      >
+        @for (field of fields(); track field.key) {
+          <div [class.sm:col-span-2]="field.key === 'fechaLabor'">
+            <app-label>{{ field.label }}</app-label>
+            @switch (field.control) {
+              @case ('select') {
+                @if (field.key === 'categoriaCatedratico') {
+                  <app-select
+                    [formControlName]="field.key"
+                    [options]="categoriaOptions()"
+                    [placeholder]="field.placeholder ?? ''"
+                    (valueChange)="onCategoriaChange($event)"
+                  />
+                } @else {
+                  <app-select
+                    [formControlName]="field.key"
+                    [options]="fechaLaborOptions()"
+                    [placeholder]="field.placeholder ?? ''"
+                    (valueChange)="onFechaLaborChange($event)"
+                  />
+                }
+              }
+              @default {
+                <app-input-field
+                  [type]="field.control"
+                  [formControlName]="field.key"
+                  [min]="
+                    field.key === 'numeroPuntos' && !hasIdentifiedProfessor()
+                      ? '375'
+                      : undefined
+                  "
+                  (valueChange)="
+                    field.key === 'numeroPuntos' &&
+                      onNumeroPuntosChange($event)
+                  "
+                />
+              }
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Esta modalidad no tiene formulario de asignación.
+      </p>
+    }
+  </div>
+</section>

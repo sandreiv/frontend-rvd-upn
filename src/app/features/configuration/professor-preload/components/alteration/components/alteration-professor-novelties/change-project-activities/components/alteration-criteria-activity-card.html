@@ -1,0 +1,140 @@
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      {{ tipoActividad()?.descripcion ?? '' }}
+    </p>
+    <span
+      [appTooltip]="readOnly() ? readOnlyMessage() : ''"
+      tooltipPlacement="left"
+    >
+      <app-button
+        type="button"
+        size="sm"
+        className="h-10 shrink-0 whitespace-nowrap"
+        [disabled]="readOnly()"
+        (btnClick)="toggleAddForm()"
+      >
+        <app-icon name="plus" size="sm" />
+        Agregar actividad
+      </app-button>
+    </span>
+  </div>
+
+  @if (addFormOpen()) {
+    <section
+      class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5"
+      [formGroup]="form"
+    >
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <app-label>{{ formFields[0].label }}</app-label>
+          <app-select
+            formControlName="idCriterio"
+            [options]="criteriaOptions()"
+            [placeholder]="formFields[0].placeholder ?? ''"
+            [disabled]="readOnly()"
+          />
+        </div>
+        <div>
+          <app-label>{{ formFields[1].label }}</app-label>
+          <app-input-field
+            type="number"
+            formControlName="horasDedicacion"
+            [placeholder]="formFields[1].placeholder ?? ''"
+            [min]="'1'"
+            [disabled]="readOnly()"
+          />
+
+          @if (horasValidation().bajoMinimo) {
+            <div
+              class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
+            >
+              El mínimo de horas para este criterio es
+              {{ horasValidation().minimo }}.
+            </div>
+          }
+
+          @if (horasValidation().sobreMaximo) {
+            <div
+              class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
+            >
+              El máximo de horas para este criterio es
+              {{ horasValidation().maximo }}.
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          (btnClick)="cancelAddForm()"
+        >
+          Cancelar
+        </app-button>
+        <app-button
+          type="button"
+          size="sm"
+          [disabled]="readOnly() || !horasValidation().valid"
+          (btnClick)="onAddActivity()"
+        >
+          Agregar
+        </app-button>
+      </div>
+    </section>
+  }
+
+  @if (activities().length) {
+    <div
+      class="overflow-x-auto rounded-xl border border-gray-200 dark:border-white/10"
+    >
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Actividad
+            </th>
+            <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Horas dedicación
+            </th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (activity of activities(); track activity.id) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="px-4 py-3 font-medium text-gray-900 dark:text-white/90">
+                {{ activity.actividad }}
+              </td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                {{ activity.horasDedicacion }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <span
+                  [appTooltip]="readOnly() ? readOnlyMessage() : ''"
+                  tooltipPlacement="left"
+                >
+                  <button
+                    type="button"
+                    class="inline-flex size-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/5"
+                    aria-label="Eliminar actividad"
+                    [disabled]="readOnly()"
+                    (click)="onRemoveActivity(activity.id)"
+                  >
+                    <app-icon name="delete" size="sm" />
+                  </button>
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
+      No hay actividades registradas en esta categoría.
+    </p>
+  }
+</div>

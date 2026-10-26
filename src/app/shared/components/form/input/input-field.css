@@ -1,0 +1,31 @@
+input:not(:disabled) {
+  background-color: transparent;
+}
+
+input:disabled {
+  background-color: #f9fafb !important;
+  color: #9ca3af !important;
+  cursor: default !important;
+}
+
+input:disabled::placeholder {
+  color: #d1d5db !important;
+}
+
+:host-context(.dark) input:disabled {
+  background-color: #111827 !important;
+  color: #6b7280 !important;
+  cursor: default !important;
+}
+
+  /* Evita el fondo azul/amarillo del autofill en Chromium */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    box-shadow: 0 0 0px 1000px transparent inset !important;
+    -webkit-text-fill-color: inherit !important;
+    caret-color: inherit;
+    transition: background-color 99999s ease-in-out 0s;
+  }

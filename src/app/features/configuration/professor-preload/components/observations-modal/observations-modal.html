@@ -1,0 +1,87 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="max-w-6xl mx-4 p-0 overflow-hidden"
+  (close)="onClose()"
+>
+  <div class="border-b border-gray-200 px-6 py-5 dark:border-gray-700 sm:px-8">
+    <div class="flex items-start gap-4">
+      <div class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+        <app-icon name="chatBubbleBottomCenterText" size="sm" />
+      </div>
+
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+            Observaciones realizadas
+          </h3>
+
+          @if (!isLoading() && results().length > 0) {
+            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              {{ results().length }}
+            </span>
+          }
+        </div>
+
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Revisa las observaciones realizadas sobre la precarga docente y corrige los aspectos señalados.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-h-[65vh] overflow-y-auto px-6 py-6 sm:px-8">
+    @if (isLoading()) {
+      <p class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
+        Buscando observaciones...
+      </p>
+    } @else {
+      <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-white/10">
+        <table class="min-w-[900px] w-full table-fixed text-left text-sm">
+          <thead class="bg-gray-50 dark:bg-white/5">
+            <tr>
+              <th class="w-[48%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Observación
+              </th>
+
+              <th class="w-[22%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Persona
+              </th>
+
+              <th class="w-[15%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Rol
+              </th>
+
+              <th class="w-[15%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Fecha
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (item of results(); track $index) {
+              <tr class="border-t border-gray-100 dark:border-white/5">
+                <td class="px-4 py-3 align-top whitespace-normal break-words text-gray-700 dark:text-gray-300">
+                  {{ item.observacion }}
+                </td>
+
+                <td class="px-4 py-3 align-top whitespace-normal break-words">
+                  <p class="font-medium text-gray-900 dark:text-white/90">
+                    {{ item.nombrePersonaGeneral }}
+                  </p>
+                </td>
+
+                <td class="px-4 py-3 align-top whitespace-normal break-words text-gray-600 dark:text-gray-300">
+                  {{ item.rolPersonaGeneral }}
+                </td>
+
+                <td class="px-4 py-3 align-top whitespace-nowrap text-gray-600 dark:text-gray-300">
+                  {{ item.fecha | date: "dd/MM/yyyy HH:mm" }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</app-modal>

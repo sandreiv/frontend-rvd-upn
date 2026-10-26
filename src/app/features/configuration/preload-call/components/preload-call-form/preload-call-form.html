@@ -1,0 +1,212 @@
+<form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="onSubmit($event)">
+  <div
+    class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-white/5 dark:border-white/5 dark:bg-white/3"
+  >
+  <!-- Información de quien autoriza -->
+    <app-collapsible-section
+      title="Información de quien autoriza"
+      variant="plain"
+      [expanded]="authorizerSectionExpanded()"
+      (expandedChange)="authorizerSectionExpanded.set($event)"
+    >
+    <div
+      class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+    >
+      <div>
+        <app-label>Documento</app-label>
+        <app-input-field
+          formControlName="documentoIdentidad"
+          placeholder="Número de documento"
+        />
+      </div>
+      <div>
+        <app-label>Nombre</app-label>
+        <app-input-field
+          formControlName="nombreCompleto"
+          placeholder="Nombre o apellido"
+        />
+      </div>
+      <div class="flex sm:justify-end">
+        <button
+          type="button"
+          aria-label="Buscar persona"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white text-gray-700 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300"
+          [disabled]="isSearching()"
+          (click)="onSearchPerson()"
+        >
+          <app-icon name="search" size="sm" />
+        </button>
+      </div>
+    </div>
+
+    @if (searchError()) {
+      <p class="text-sm text-error-500">{{ searchError() }}</p>
+    }
+  </app-collapsible-section>
+
+  <hr class="border-gray-200 dark:border-white/5" />
+
+  <!-- Información de convocatoria -->
+
+  <app-collapsible-section
+    title="Información de convocatoria"
+    variant="plain"
+    [expanded]="callInfoSectionExpanded()"
+    (expandedChange)="callInfoSectionExpanded.set($event)"
+  >
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <app-label>Nombre</app-label>
+        <app-input-field
+          formControlName="nombre"
+          placeholder="Ingrese el nombre de la convocatoria"
+        />
+      </div>
+      <div>
+        <app-label>Descripción</app-label>
+        <app-input-field
+          formControlName="descripcion"
+          placeholder="Ingrese la descripción de la convocatoria"
+        />
+      </div>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <app-label>Periodo</app-label>
+        <app-select
+          formControlName="periodoUniversidad"
+          [options]="universityPeriodOptions()"
+          placeholder="Seleccione el periodo"
+          searchPlaceholder="Buscar periodo..."
+          emptyText="No se encontraron periodos"
+        />
+      </div>
+      <div>
+        <app-label>Nivel Educativo</app-label>
+        <app-select
+          formControlName="nivelEducativo"
+          [options]="educationalLevelOptions()"
+          placeholder="Seleccione el nivel educativo"
+          searchPlaceholder="Buscar nivel educativo..."
+          emptyText="No se encontraron niveles educativos"
+        />
+      </div>
+    </div>
+
+    <app-checkbox
+      label="¿Es convocatoria de contratación?"
+      [checked]="isHiringCall()"
+      [disabled]="isReadOnly()"
+      (checkedChange)="onHiringCallToggle($event)"
+    />
+
+    <div class="flex flex-col gap-3">
+      <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
+        Fechas convocatoria
+      </h5>
+
+      <app-date-range-picker
+        [formGroup]="form"
+        startControlName="fechaInicio"
+        endControlName="fechaFin"
+        startId="fechaInicio"
+        endId="fechaFin"
+        startPlaceholder="Fecha inicio"
+        endPlaceholder="Fecha fin"
+      />
+    </div>
+
+    @if (!isHiringCall()) {
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-3">
+          <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
+            Fechas CTEI
+          </h5>
+
+          <app-date-range-picker
+            [formGroup]="form"
+            startControlName="fechaInicioCtei"
+            endControlName="fechaFinCtei"
+            startId="fechaInicioCtei"
+            endId="fechaFinCtei"
+            startPlaceholder="Fecha inicio"
+            endPlaceholder="Fecha fin"
+          />
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
+            Fechas ISU
+          </h5>
+
+          <app-date-range-picker
+            [formGroup]="form"
+            startControlName="fechaInicioIsu"
+            endControlName="fechaFinIsu"
+            startId="fechaInicioIsu"
+            endId="fechaFinIsu"
+            startPlaceholder="Fecha inicio"
+            endPlaceholder="Fecha fin"
+          />
+        </div>
+      </div>
+    }
+  </app-collapsible-section>
+
+  <hr class="border-gray-200 dark:border-white/5" />
+
+  <!-- Modalidad -->
+
+  <app-collapsible-section
+    title="Modalidad de contratación"
+    variant="plain"
+    [expanded]="modalitySectionExpanded()"
+    (expandedChange)="modalitySectionExpanded.set($event)"
+  >
+    <app-modality-table
+      [rows]="modalities()"
+      [readonly]="isReadOnly()"
+      [isHiringCall]="isHiringCall()"
+      (addModality)="openModalityModal()"
+      (deleteModality)="onDeleteModality($event)"
+      (editModality)="openEditModality($event)"
+    />
+  </app-collapsible-section>
+  </div>
+
+  <div class="flex flex-col gap-3 pt-1">
+    @if (saveError()) {
+      <p class="text-end text-sm text-error-500">{{ saveError() }}</p>
+    }
+    <div class="flex justify-end gap-3">
+    <app-button type="button" variant="outline" (btnClick)="closeForm.emit()">
+      Cancelar
+    </app-button>
+    @if (!isReadOnly()) {
+      <app-button
+        type="submit"
+        [disabled]="form.invalid || isSaving()"
+      >
+        {{ submitButtonLabel() }}
+      </app-button>
+    }
+    </div>
+  </div>
+</form>
+
+<app-preload-call-person-search-modal
+  [isOpen]="searchModalOpen()"
+  [results]="searchResults()"
+  [isLoading]="isSearching()"
+  (close)="closeSearchModal()"
+  (personSelected)="onPersonSelected($event)"
+/>
+
+<app-modality-form-modal
+  [isOpen]="modalityModalOpen()"
+  [modalityOptions]="modalitySelectOptions()"
+  [editingItem]="editingModality()"
+  [isHiringCall]="isHiringCall()"
+  (close)="closeModalityModal()"
+  (saved)="onModalitySaved($event)"
+/>

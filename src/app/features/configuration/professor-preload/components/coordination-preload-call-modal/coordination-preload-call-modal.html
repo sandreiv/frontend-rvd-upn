@@ -1,0 +1,52 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="mx-4 w-full max-w-lg p-8 sm:p-10"
+  (close)="close.emit()"
+>
+  <h3 class="mb-2 text-xl font-semibold text-gray-800 dark:text-white">
+    Asignar convocatoria
+  </h3>
+  <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+    Seleccione la convocatoria activa para la coordinación
+    {{ coordination().descripcion || coordination().nombre }}.
+  </p>
+
+  <div class="flex flex-col gap-4">
+    <div>
+      <app-label>Convocatoria</app-label>
+      <app-select
+        [options]="preloadCallOptions()"
+        [value]="selectedPreloadCallId()"
+        [disabled]="isLoadingOptions() || isSaving()"
+        placeholder="Seleccione la convocatoria"
+        searchPlaceholder="Buscar convocatoria..."
+        emptyText="No hay convocatorias activas"
+        (valueChange)="onPreloadCallChange($event)"
+      />
+    </div>
+
+    @if (saveError()) {
+      <p class="text-sm text-error-500">{{ saveError() }}</p>
+    }
+  </div>
+
+  <div
+    class="mt-8 flex justify-end gap-3 border-t border-gray-200 pt-6 dark:border-white/5"
+  >
+    <app-button
+      type="button"
+      variant="outline"
+      [disabled]="isSaving()"
+      (btnClick)="close.emit()"
+    >
+      Cancelar
+    </app-button>
+    <app-button
+      type="button"
+      [disabled]="!canSave()"
+      (btnClick)="onSave()"
+    >
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+    </app-button>
+  </div>
+</app-modal>

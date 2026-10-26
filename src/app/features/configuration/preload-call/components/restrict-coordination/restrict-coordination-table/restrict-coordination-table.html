@@ -1,0 +1,55 @@
+<app-section-frame
+  title="Restringir coordinación"
+  description="Administra las coordinaciones restringidas de la convocatoria."
+  iconName="lock"
+  iconVariant="brand"
+>
+  <div class="space-y-5">
+    <div
+      class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div>
+        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Coordinaciones restringidas de:
+          {{ preloadCall()?.descripcion }}
+        </h4>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Administra las coordinaciones restringidas para esta convocatoria.
+        </p>
+      </div>
+
+      <app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        (btnClick)="closeView.emit()"
+      >
+        Cerrar
+      </app-button>
+    </div>
+
+    @if (showForm()) {
+      <app-restrict-coordination-form
+        [restriction]="editingRestriction()"
+        [idConvocatoria]="preloadCall()?.id ?? null"
+        [isSaving]="isSaving()"
+        (cancel)="closeRestrictionForm()"
+        (saveRestriction)="onSaveRestriction($event)"
+      />
+    } @else {
+      <app-data-table
+        [columns]="columns"
+        [rows]="restrictCoordination()"
+        [rowActions]="rowActions"
+        [rowIdentity]="rowIdentity"
+        [enableSelection]="true"
+        [selectedRowKeys]="selectedRestrictCoordinationIds()"
+        emptyMessage="No hay coordinaciones restringidas."
+        (rowAction)="onTableAction($event)"
+        (toolbarAction)="onToolbarAction($event)"
+        (searchChange)="onSearchRecords($event)"
+        (selectedRowKeysChange)="onSelectedRestrictCoordinationIdsChange($event)"
+      />
+    }
+  </div>
+</app-section-frame>

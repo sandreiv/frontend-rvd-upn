@@ -1,0 +1,117 @@
+
+@if (!canViewActivities()) {
+    <div class="rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10">
+        <p class="text-sm text-warning-700 dark:text-warning-400">
+            La novedad "Reasignación de dedicación docente" solo está disponible para docentes que puedan tener proyectos relacionados o actividades académico administrativas.
+        </p>
+    </div>
+} @else {
+    <div class="max-h-[calc(100vh-16rem)] flex flex-col gap-4 overflow-y-auto border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10">
+        @if (isLoadingDetail() || isLoadingActivityCategories()) {
+            <p class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
+                Cargando actividades del docente...
+            </p>
+        } @else if (!visibleNoveltyItems().length) {
+            <p class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
+                No hay categorías de actividades disponibles para esta novedad.
+            </p>
+        } @else if (!hasSavedDetail()) {
+            <div class="mb-5 flex items-start gap-2 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10">
+                <app-icon name="infoCircle" size="sm" classes="text-warning-500" />
+                <p class="text-sm text-warning-700 dark:text-warning-400">
+                    Aún no hay actividades registradas. Agrega la primera actividad en las categorías disponibles.
+                </p>
+            </div>
+        }
+
+        @if (!isLoadingDetail() && !isLoadingActivityCategories()) {
+            @for (item of visibleNoveltyItems(); track item.codigo) {
+                @let hours = categoryHours()[item.codigo];
+
+                <app-collapsible-section
+                    class="block"
+                    [expanded]="isCategoryExpanded(item.codigo)"
+                    (expandedChange)="onCategoryExpandedChange(item.codigo, $event)"
+                    contentClassName="flex flex-col gap-4"
+                >
+
+                    <div collapsibleSectionHeader class="flex min-w-0 flex-1 items-center gap-3">
+                        <span
+                            class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl"
+                            [class]="item.iconBgClass"
+                        >
+                        <app-icon
+                            [name]="item.icon"
+                            size="sm"
+                            [classes]="item.iconColorClass"
+                        />
+                        </span>
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white/90">
+                                {{ item.tipoActividad?.nombre ?? '' }}
+                            </h4>
+                        </div>
+                    </div>
+
+                    <div collapsibleSectionActions class="flex items-center">
+                        <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                            {{ hoursLabel(hours) }}
+                        </span>
+                    </div>
+
+                    @switch (item.formType) {
+                        @case ('criteria') {
+                            <app-alteration-criteria-activity-card
+                                [tipoActividad]="item.tipoActividad ?? null"
+                                [addFormOpen]="isAddFormOpen(item.codigo)"
+                                [activities]="criteriaActivitiesForCodigo(item.codigo)"
+                                [readOnly]="isActivityCardsReadOnly()"
+                                [readOnlyReason]="activityCardsReadOnlyReason()"
+                                (addFormOpenChange)="onAddFormOpenChange(item.codigo, $event)"
+                                (activitiesChange)="setCriteriaActivitiesForCodigo(item.codigo, $event)"
+                            />
+                        }
+                        @case ('project') {
+                            <app-alteration-project-activity-card
+                                [tipoActividad]="item.tipoActividad ?? null"
+                                [projectRows]="projectHierarchyRowsForCodigo(item.codigo)"
+                                [associatedRows]="associatedProjectsForCodigo(item.codigo)"
+                                [isLoading]="professorProjectsResource.isLoading()"
+                                [associationExpired]="isProjectAssociationExpired(item.codigo)"
+                                [associationExpiredReason]="projectAssociationExpiredReason(item.codigo)"
+                                (associatedRowsChange)="setAssociatedProjectsForCodigo(item.codigo, $event)"
+                            />
+                        }
+                    }
+                </app-collapsible-section>
+            }
+        }
+    </div>
+
+    <div class="flex flex-col gap-1">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+            Total de horas asignadas:
+            <span
+                class="font-semibold"
+                [class.text-gray-900]="inWeeklyLimit()"
+                [class.dark:text-white/90]="inWeeklyLimit()"
+                [class.text-error-600]="!inWeeklyLimit()"
+                [class.dark:text-error-400]="!inWeeklyLimit()"
+            >
+            {{ totalAssignedHours() }} h
+            @if (isLoadingWorkDates()) {
+                / ...
+            } @else if (weeklyHoursLimit() != null) {
+                / {{ weeklyHoursLimit() }} h
+            }
+            </span>
+            semanales
+        </p>
+
+        @if (!inWeeklyLimit()) {
+            <p class="text-xs text-error-600 dark:text-error-400">
+                La asignación de actividades no cumple el límite de horas semanales permitido. Ajusta la distribución para poder guardar.
+            </p>
+        }
+    </div>
+}

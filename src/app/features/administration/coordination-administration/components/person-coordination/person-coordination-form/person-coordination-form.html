@@ -1,0 +1,62 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  class="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/3"
+>
+  <div class="mb-4 flex flex-col gap-1">
+    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+      {{ assignment() ? editTitle() : title() }}
+    </h4>
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+      {{ description() }}
+    </p>
+  </div>
+
+  <div>
+    <app-label>{{ personLabel() }}</app-label>
+
+    <div (focusout)="markPersonFieldBlurred()">
+      <app-typeahead-select
+        formControlName="idPersonaGeneral"
+        [items]="filteredPeople()"
+        [optionAdapter]="personOptionAdapter"
+        [placeholder]="personPlaceholder()"
+        emptyText="Sin resultados"
+        (queryChange)="onSearchPerson($event)"
+      />
+    </div>
+
+    @if (shouldShowPersonRequiredError()) {
+      <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+        {{ personRequiredMessage() }}
+      </p>
+    }
+  </div>
+
+  <div class="mt-4 rounded-lg border border-gray-100 p-3 dark:border-white/10">
+    <div class="mb-2">
+      <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
+        {{ statusTitle() }}
+      </h5>
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        {{ statusDescription() }}
+      </p>
+    </div>
+
+    <app-checkbox
+      label="Activo"
+      [checked]="form.controls.estado.value"
+      (checkedChange)="form.controls.estado.setValue($event)"
+    />
+  </div>
+
+  <div class="mt-5 flex justify-end gap-3">
+    <app-button type="button" variant="outline" size="sm" (btnClick)="cancel.emit()">
+      Cancelar
+    </app-button>
+
+    <app-button type="submit" size="sm" [disabled]="form.invalid || isSaving()">
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+    </app-button>
+  </div>
+</form>

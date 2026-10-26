@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="professors()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [showAddButton]="false"
+  [showDeleteButton]="false"
+  [enableSelection]="false"
+  [emptyMessage]="emptyMessage()"
+  searchPlaceholder="Buscar docente..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+/>

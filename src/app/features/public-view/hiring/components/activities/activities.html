@@ -1,0 +1,500 @@
+<app-collapsible-section
+  class="block"
+  [expanded]="expanded()"
+  (expandedChange)="
+    onExpandedChange($event)
+  "
+  contentClassName="flex flex-col gap-5"
+>
+
+  <!-- CABECERA -->
+  <div
+    collapsibleSectionHeader
+    class="flex min-w-0 flex-1 items-center gap-3"
+  >
+    <span
+      class="inline-flex size-10 shrink-0
+             items-center justify-center
+             rounded-xl
+             bg-brand-50
+             dark:bg-brand-500/10"
+    >
+      <app-icon
+        name="academicCap"
+        size="sm"
+        classes="text-brand-600 dark:text-brand-400"
+      />
+    </span>
+
+    <div class="min-w-0">
+      <h4
+        class="text-sm font-semibold
+               text-gray-900
+               dark:text-white/90"
+      >
+        Actividades
+      </h4>
+    </div>
+  </div>
+
+
+  <!-- TOTAL -->
+  @if (
+    !loading() &&
+    !error() &&
+    activities().length
+  ) {
+    <div
+      collapsibleSectionActions
+      class="flex items-center"
+    >
+      <span
+        class="rounded-full
+               bg-gray-100
+               px-2.5 py-1
+               text-xs font-medium
+               text-gray-600
+               dark:bg-gray-800
+               dark:text-gray-300"
+      >
+        {{ hoursLabel(totalHours()) }}
+      </span>
+    </div>
+  }
+
+
+  <!-- CONTENIDO -->
+  @if (loading()) {
+
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      Cargando actividades...
+    </p>
+
+  } @else if (error()) {
+
+    <p
+      class="rounded-xl
+             border border-error-200
+             bg-error-50
+             px-4 py-5
+             text-sm text-error-600
+             dark:border-error-500/30
+             dark:bg-error-500/10"
+    >
+      No fue posible cargar las
+      actividades de la contratación.
+    </p>
+
+  } @else if (tables().length) {
+
+    @for (
+      table of tables();
+      track table.id
+    ) {
+
+      <section
+        class="flex flex-col gap-3"
+      >
+
+        <!-- CATEGORÍA -->
+        <div
+          class="flex items-center
+                 justify-between gap-3"
+        >
+
+          <div
+            class="flex min-w-0
+                   items-center gap-2"
+          >
+
+            <span
+              class="inline-flex size-8
+                     shrink-0
+                     items-center
+                     justify-center
+                     rounded-lg"
+              [class]="
+                table.iconBgClass
+              "
+            >
+              <app-icon
+                [name]="table.icon"
+                size="xs"
+                [classes]="
+                  table.iconColorClass
+                "
+              />
+            </span>
+
+            <div class="min-w-0">
+
+              <p
+                class="text-sm font-semibold
+                       text-gray-900
+                       dark:text-white/90"
+              >
+                {{ table.title }}
+              </p>
+
+              <p
+                class="text-xs
+                       text-gray-500
+                       dark:text-gray-400"
+              >
+                {{ table.codigo }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <span
+            class="rounded-full
+                   bg-gray-100
+                   px-2.5 py-1
+                   text-xs font-medium
+                   text-gray-600
+                   dark:bg-gray-800
+                   dark:text-gray-300"
+          >
+            {{
+              hoursLabel(
+                table.totalHoras
+              )
+            }}
+          </span>
+
+        </div>
+
+
+        <!-- FORMACIÓN DIRECTA -->
+        @if (
+          table.kind === 'direct'
+        ) {
+
+          <div
+            class="overflow-x-auto
+                   rounded-xl
+                   border border-gray-200
+                   dark:border-white/10"
+          >
+
+            <table
+              class="min-w-full
+                     text-left text-sm"
+            >
+
+              <thead
+                class="bg-gray-50
+                       dark:bg-white/5"
+              >
+                <tr>
+
+                  @for (
+                    header of [
+                      'Actividad',
+                      'Unidad',
+                      'Programa',
+                      'Materia',
+                      'Grupo',
+                      'Horas'
+                    ];
+                    track header
+                  ) {
+
+                    <th
+                      class="px-4 py-3
+                             text-[11px]
+                             font-semibold
+                             uppercase
+                             tracking-wide
+                             text-gray-400"
+                    >
+                      {{ header }}
+                    </th>
+
+                  }
+
+                </tr>
+              </thead>
+
+
+              <tbody>
+
+                @for (
+                  row of
+                    table.directRows;
+                  track row.id
+                ) {
+
+                  <tr
+                    class="border-t
+                           border-gray-100
+                           dark:border-white/5"
+                  >
+
+                    <td
+                      class="px-4 py-3
+                             text-gray-600
+                             dark:text-gray-300"
+                    >
+                      {{ row.actividad }}
+                    </td>
+
+                    <td
+                      class="px-4 py-3
+                             text-gray-600
+                             dark:text-gray-300"
+                    >
+                      {{ row.unidad }}
+                    </td>
+
+                    <td
+                      class="px-4 py-3
+                             text-gray-600
+                             dark:text-gray-300"
+                    >
+                      {{ row.programa }}
+                    </td>
+
+                    <td
+                      class="px-4 py-3
+                             font-semibold
+                             text-gray-900
+                             dark:text-white/90"
+                    >
+                      {{ row.materia }}
+                    </td>
+
+                    <td
+                      class="px-4 py-3"
+                    >
+                      <span
+                        class="inline-flex
+                               rounded-full
+                               bg-gray-100
+                               px-2.5 py-0.5
+                               text-xs
+                               font-medium
+                               text-gray-700
+                               dark:bg-gray-800
+                               dark:text-gray-300"
+                      >
+                        {{ row.grupo }}
+                      </span>
+                    </td>
+
+                    <td
+                      class="px-4 py-3
+                             text-gray-600
+                             dark:text-gray-300"
+                    >
+                      {{ row.horas }}
+                    </td>
+
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        } @else {
+
+          <!-- RESTO DE ACTIVIDADES -->
+          <div
+            class="overflow-x-auto
+                   rounded-xl
+                   border border-gray-200
+                   dark:border-white/10"
+          >
+
+            <table
+              class="min-w-full
+                     text-left text-sm"
+            >
+
+              <thead
+                class="bg-gray-50
+                       dark:bg-white/5"
+              >
+                <tr>
+
+                  <th
+                    class="px-4 py-3
+                           text-[11px]
+                           font-semibold
+                           uppercase
+                           tracking-wide
+                           text-gray-400"
+                  >
+                    Actividad
+                  </th>
+
+                  <th
+                    class="w-24 px-4 py-3
+                           text-[11px]
+                           font-semibold
+                           uppercase
+                           tracking-wide
+                           text-gray-400"
+                  >
+                    Horas
+                  </th>
+
+                </tr>
+              </thead>
+
+
+              <tbody>
+
+                @for (
+                  row of
+                    table.simpleRows;
+                  track row.id
+                ) {
+
+                  <tr
+                    class="border-t
+                           border-gray-100
+                           dark:border-white/5"
+                  >
+
+                    <td
+                      class="px-4 py-3
+                             font-medium
+                             text-gray-900
+                             dark:text-white/90"
+                    >
+                      {{ row.actividad }}
+                    </td>
+
+                    <td
+                      class="px-4 py-3
+                             text-gray-600
+                             dark:text-gray-300"
+                    >
+                      {{ row.horas }}
+                    </td>
+
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        }
+
+      </section>
+
+    }
+
+  } @else {
+
+    <p
+      class="rounded-xl
+             border border-dashed
+             border-gray-200
+             px-4 py-7
+             text-center
+             text-sm text-gray-500
+             dark:border-white/10
+             dark:text-gray-400"
+    >
+      No hay actividades registradas
+      para esta contratación.
+    </p>
+
+  }
+
+
+  @if (
+    !loading() &&
+    !error() &&
+    observation();
+    as observation
+    ) {
+
+    <section
+        class="flex flex-col gap-3"
+    >
+
+        <!-- CABECERA OBSERVACIONES -->
+        <div
+        class="flex items-center gap-2"
+        >
+
+        <span
+            class="inline-flex size-8
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                bg-error-50
+                dark:bg-error-500/10"
+        >
+            <app-icon
+            name="chatBubbleBottomCenterText"
+            size="xs"
+            classes="text-error-500 dark:text-error-400"
+            />
+        </span>
+
+        <div>
+            <p
+            class="text-sm font-semibold
+                    text-gray-900
+                    dark:text-white/90"
+            >
+            Observaciones
+            </p>
+        </div>
+
+        </div>
+
+
+        <!-- TEXTO -->
+        <div
+        class="min-w-0 max-w-full overflow-hidden
+                rounded-xl
+                border border-gray-200
+                bg-gray-50/50
+                px-4 py-4
+                dark:border-white/10
+                dark:bg-white/[0.02]"
+        >
+        <p
+            class="whitespace-pre-wrap
+                break-words
+                [overflow-wrap:anywhere]
+                max-w-full
+                text-sm leading-6
+                text-gray-700
+                dark:text-gray-300"
+        >
+            {{ observation }}
+        </p>
+        </div>
+
+    </section>
+
+    }
+
+</app-collapsible-section>

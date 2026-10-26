@@ -1,0 +1,244 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="mx-4 w-full max-w-5xl p-0"
+  (close)="close.emit()"
+>
+  <header class="px-6 pb-5 pt-6 sm:px-8 sm:pt-8">
+    <div class="flex items-start gap-3 pr-10">
+      <span
+        class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+      >
+        <app-icon name="academicCap" size="sm" />
+      </span>
+      <div class="min-w-0">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+          {{ modalTitle() }}
+        </h3>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          Distribuye la carga académica, administrativa, de investigación
+          e interacción social.
+        </p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          >
+            Docente · {{ professorDisplayName() }}
+          </span>
+          <span
+            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          >
+            {{ contractModalityLabel() }}
+          </span>
+          <span
+            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          >
+            Coordinación · {{ coordinationLabel() }}
+          </span>
+          @if (periodLabel()) {
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              <app-icon name="calendar" size="xs" />
+              {{ periodLabel() }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div
+    class="max-h-[calc(100vh-16rem)] flex flex-col gap-4 overflow-y-auto border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
+  >
+    @if (isLoadingDetail() || isLoadingActivityCategories()) {
+      <p
+        class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+      >
+        Cargando actividades del docente...
+      </p>
+    } @else if (!visibleActivityItems().length) {
+      <p
+        class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+      >
+        No hay categorías de actividades disponibles para esta modalidad
+        de contratación.
+      </p>
+    } @else if (!hasSavedDetail()) {
+      <div
+        class="mb-5 flex items-start gap-2 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10"
+      >
+        <app-icon name="infoCircle" size="sm" classes="text-warning-500" />
+        <p class="text-sm text-warning-700 dark:text-warning-400">
+          Aún no hay actividades registradas. Agrega la primera actividad
+          en las categorías disponibles.
+        </p>
+      </div>
+    }
+
+    @if (!isLoadingDetail() && !isLoadingActivityCategories()) {
+    @for (item of visibleActivityItems(); track item.codigo) {
+      @let hours = categoryHours()[item.codigo];
+
+      <app-collapsible-section
+        class="block"
+        [expanded]="isCategoryExpanded(item.codigo)"
+        (expandedChange)="onCategoryExpandedChange(item.codigo, $event)"
+        contentClassName="flex flex-col gap-4"
+      >
+        <div
+          collapsibleSectionHeader
+          class="flex min-w-0 flex-1 items-center gap-3"
+        >
+          <span
+            class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl"
+            [class]="item.iconBgClass"
+          >
+            <app-icon
+              [name]="item.icon"
+              size="sm"
+              [classes]="item.iconColorClass"
+            />
+          </span>
+          <div class="min-w-0">
+            <h4
+              class="text-sm font-semibold text-gray-900 dark:text-white/90"
+            >
+              {{ item.tipoActividad?.nombre ?? '' }}
+            </h4>
+          </div>
+        </div>
+
+        <div collapsibleSectionActions class="flex items-center">
+          <span
+            class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          >
+            {{ hoursLabel(hours) }}
+          </span>
+        </div>
+
+        @switch (item.formType) {
+          @case ('direct') {
+            @if (directActivityContext(); as context) {
+              <app-direct-activity-card
+                [tipoActividad]="item.tipoActividad ?? null"
+                [idCoordinacion]="context.idCoordinacion"
+                [idNivelEducativo]="context.idNivelEducativo"
+                [idPeriodoUniversidad]="context.idPeriodoUniversidad"
+                [idModalidadContratacion]="context.idModalidadContratacion"
+                [idCargaDocente]="context.idCargaDocente"
+                [allDirectActivities]="allDirectActivities()"
+                [addFormOpen]="isAddFormOpen(item.codigo)"
+                [activities]="directActivitiesForCodigo(item.codigo)"
+                [readOnly]="activityCardsReadOnly()"
+                [readOnlyReason]="activityCardsReadOnlyReason()"
+                [isRegistrationProcessed]="isProfessorRegistrationProcessed()"
+                (addFormOpenChange)="onAddFormOpenChange(item.codigo, $event)"
+                (activitiesChange)="setDirectActivitiesForCodigo(item.codigo, $event)"
+                (activityDeleted)="onLastPersistedActivityDelete()"
+              />
+            }
+          }
+          @case ('criteria') {
+            <app-criteria-activity-card
+              [tipoActividad]="item.tipoActividad ?? null"
+              [addFormOpen]="isAddFormOpen(item.codigo)"
+              [activities]="criteriaActivitiesForCodigo(item.codigo)"
+              [readOnly]="activityCardsReadOnly()"
+              [readOnlyReason]="activityCardsReadOnlyReason()"
+              [isRegistrationProcessed]="isProfessorRegistrationProcessed()"
+              (addFormOpenChange)="onAddFormOpenChange(item.codigo, $event)"
+              (activitiesChange)="setCriteriaActivitiesForCodigo(item.codigo, $event)"
+              (activityDeleted)="onLastPersistedActivityDelete()"
+            />
+          }
+          @case ('project') {
+            <app-project-activity-card
+              [tipoActividad]="item.tipoActividad ?? null"
+              [projectRows]="projectHierarchyRowsForCodigo(item.codigo)"
+              [associatedRows]="associatedProjectsForCodigo(item.codigo)"
+              [isLoading]="professorProjectsResource.isLoading()"
+              [readOnly]="activityCardsReadOnly()"
+              [readOnlyReason]="activityCardsReadOnlyReason()"
+              [isRegistrationProcessed]="isProfessorRegistrationProcessed()"
+              [associationExpired]="isProjectAssociationExpired(item.codigo)"
+              [associationExpiredReason]="projectAssociationExpiredReason(item.codigo)"
+              (associatedRowsChange)="setAssociatedProjectsForCodigo(item.codigo, $event)"
+              (associatedRowDeleted)="onLastPersistedActivityDelete()"
+            />
+          }
+        }
+      </app-collapsible-section>
+    }
+    }
+  </div>
+
+  <footer
+    class="flex flex-col gap-4 border-t border-gray-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 dark:border-white/10"
+  >
+    <div class="flex flex-col gap-1">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Total de horas asignadas:
+        <span
+          class="font-semibold"
+          [class.text-gray-900]="!exceedsWeeklyLimit()"
+          [class.dark:text-white/90]="!exceedsWeeklyLimit()"
+          [class.text-error-600]="exceedsWeeklyLimit()"
+          [class.dark:text-error-400]="exceedsWeeklyLimit()"
+        >
+          {{ totalAssignedHours() }} h
+          @if (isLoadingWorkDates()) {
+            / ...
+          } @else if (weeklyHoursLimit() != null) {
+            / {{ weeklyHoursLimit() }} h
+          }
+        </span>
+        semanales
+      </p>
+
+      @if (exceedsWeeklyLimit()) {
+        <p class="text-xs text-error-600 dark:text-error-400">
+          Supera el límite de horas semanales permitido. Ajusta la distribución para poder guardar.
+        </p>
+      }
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <app-button type="button" variant="outline" (btnClick)="close.emit()">
+        Cancelar
+      </app-button>
+
+      <span
+        [appTooltip]="readOnly() ? readOnlyMessage() : ''"
+        tooltipPlacement="top"
+      >
+        <app-button
+          type="button"
+          [variant]="
+            showWorkflowButton()
+              ? 'outline'
+              : 'primary'
+          "
+          [disabled]="saveButtonDisabled()"
+          (btnClick)="onSave()"
+        >
+          {{ saveButtonText() }}
+        </app-button>
+      </span>
+
+      @if (showWorkflowButton()) {
+        <span
+          [appTooltip]="workflowButtonTooltip()"
+          tooltipPlacement="top"
+        >
+          <app-button
+            type="button"
+            [disabled]="workflowButtonDisabled()"
+            (btnClick)="isProfessorRegistrationProcessed() ? onDisapprove() : onSendForVerification()"
+          >
+            {{ workflowButtonText() }}
+          </app-button>
+        </span>
+      }
+    </div>
+  </footer>
+</app-modal>

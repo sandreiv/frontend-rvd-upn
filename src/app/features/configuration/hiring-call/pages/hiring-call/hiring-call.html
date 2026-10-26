@@ -1,0 +1,74 @@
+<div class="grid gap-4">
+  <div class="min-w-0">
+    @if (!showCoordinationDetail()) {
+      <app-section-frame
+        title="Convocatoria contratación"
+        description="Administra la convocatoria de contratación."
+        iconName="hiringCall"
+        iconVariant="brand"
+      >
+        <div
+          sectionFrameHeaderActions
+          class="flex w-full items-center gap-2"
+        >
+          <div class="min-w-0 flex-1 sm:flex-none sm:w-48">
+            <app-select
+              [options]="periodOptions()"
+              [value]="selectedPeriodId()"
+              [disabled]="isLoadingPeriods()"
+              placeholder="Seleccione el periodo"
+              searchPlaceholder="Buscar periodo..."
+              emptyText="No hay periodos disponibles"
+              (valueChange)="onPeriodChange($event)"
+            />
+          </div>
+
+          <div class="min-w-0 flex-1 sm:flex-none sm:w-64">
+            <app-select
+              [options]="callOptions()"
+              [value]="selectedCallId()"
+              [disabled]="
+                isLoadingPeriods() ||
+                !selectedPeriodId() ||
+                isLoadingCalls()
+              "
+              placeholder="Seleccione la convocatoria"
+              searchPlaceholder="Buscar convocatoria..."
+              emptyText="No hay convocatorias de contratación"
+              (valueChange)="onCallChange($event)"
+            />
+          </div>
+
+          <app-button
+            type="button"
+            size="sm"
+            className="h-11 shrink-0 whitespace-nowrap"
+            [disabled]="
+              isLoadingPeriods() ||
+              !selectedPeriodId() ||
+              isLoadingCalls() ||
+              isLoadingCoordinations()
+            "
+            (btnClick)="onApplyFilter()"
+          >
+            Filtrar
+          </app-button>
+        </div>
+
+        <app-hiring-call-table
+          [coordinations]="coordinations()"
+          [(selectedCoordinationIds)]="selectedCoordinationIds"
+          [isStarting]="isStartingHiring()"
+          [emptyMessage]="tableEmptyMessage()"
+          (refreshCoordinations)="onRefreshCoordinations()"
+          (startHiring)="onStartHiring($event)"
+        />
+      </app-section-frame>
+    } @else if (selectedCoordination(); as coordination) {
+      <app-hiring-coordination-detail
+        [coordination]="coordination"
+        (back)="closeCoordinationDetail()"
+      />
+    }
+  </div>
+</div>

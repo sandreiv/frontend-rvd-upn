@@ -1,0 +1,93 @@
+<!-- Only render if open -->
+@if (isOpen) {
+  <div class="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto modal px-4">
+    <!-- Backdrop with blur -->
+    <div
+      class="fixed inset-0 h-full w-full bg-slate-900/30 backdrop-blur-[2px] transition-all"
+      (click)="onBackdropClick($event)"
+    ></div>
+
+    <!-- Modal Content -->
+    <div
+      class="relative w-full max-w-[460px] transform rounded-2xl border border-slate-100 bg-white px-7 py-8 text-center shadow-lg transition-all dark:border-slate-700/70 dark:bg-slate-800"
+      [class]="className"
+      (click)="onContentClick($event)"
+    >
+      <!-- Close Button -->
+      @if (showCloseButton) {
+        <button
+          type="button"
+          (click)="close.emit()"
+          class="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600 dark:hover:text-white"
+        >
+          <app-icon name="close" size="sm" />
+        </button>
+      }
+
+      <!-- Icon Section: un solo <svg> con el burst de fondo y el glifo del
+           variant. Ambos paths comparten el viewBox 60x60, así el glifo queda
+           grande y grueso sobre el burst sin capas ni tamaños extra. -->
+      <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center">
+        <svg
+          width="76"
+          height="76"
+          viewBox="0 0 60 60"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <!-- Burst background, color por variant -->
+          <path
+            d="M30 2L33.7847 8.52882L41.314 7.64917L43.8344 14.6596L50.8448 17.18L49.9652 24.7093L56.494 28.494L56.494 31.506L49.9652 35.2907L50.8448 42.82L43.8344 45.3404L41.314 52.3508L33.7847 51.4712L30 58L26.2153 51.4712L18.686 52.3508L16.1656 45.3404L9.15516 42.82L10.0348 35.2907L3.50604 31.506L3.50604 28.494L10.0348 24.7093L9.15516 17.18L16.1656 14.6596L18.686 7.64917L26.2153 8.52882L30 2Z"
+            [attr.fill]="iconBackground || defaultIconBackground()"
+          />
+
+          <!-- Glifo del variant (X, check, !, i) -->
+          <path
+            [attr.d]="defaultIconPath()"
+            [attr.stroke]="iconColor || defaultIconColor()"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+
+      <!-- Text Section -->
+      <h3 class="mb-3 text-2xl font-medium tracking-tight text-slate-800 dark:text-white">
+        {{ title }}
+      </h3>
+
+      <p class="mb-7 px-2 text-sm font-normal leading-relaxed text-slate-500 dark:text-slate-400">
+        {{ message }}
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="mt-2 flex items-center justify-center gap-3">
+        @if (showCancelButton) {
+          <button
+            type="button"
+            (click)="close.emit()"
+            class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-7 py-2.5 text-center text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:focus:ring-offset-slate-900"
+          >
+            {{ cancelButtonText }}
+          </button>
+        }
+
+        <button
+          type="button"
+          (click)="confirm.emit()"
+          [style.backgroundColor]="buttonColor || defaultButtonColor()"
+          [style.borderColor]="buttonColor || defaultButtonColor()"
+          class="inline-flex items-center justify-center rounded-lg px-7 py-2.5 text-center text-sm font-medium text-white shadow-sm transition-colors hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+        >
+          {{ buttonText }}
+        </button>
+      </div>
+
+      <!-- Optional content projection -->
+      <div>
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+}

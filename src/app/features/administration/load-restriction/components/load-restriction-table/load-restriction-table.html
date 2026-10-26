@@ -1,0 +1,14 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="modalities()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [canAdd]="false"
+  [showAddButton]="true"
+  [showDeleteButton]="false"
+  [enableSelection]="false"
+  emptyMessage="No hay modalidades de contratación registradas."
+  searchPlaceholder="Buscar modalidad..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+/>

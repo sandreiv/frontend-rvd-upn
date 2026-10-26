@@ -1,0 +1,245 @@
+<app-section-frame
+  title="Coordinaciones"
+  description="Administra facultades, coordinaciones y configuración interna."
+  iconName="adjustmentsHorizontal"
+  iconVariant="brand"
+>
+ 
+  <div class="space-y-5">
+    @if (!isInternalView()) {
+      @if (isChildrenView()) {
+        <div
+          class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+              Coordinaciones hijas de: {{ selectedParentCoordination()?.nombre }}
+            </h4>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Administra las coordinaciones asociadas a esta facultad.
+            </p>
+          </div>
+
+          <app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            (btnClick)="backToParentCoordinations()"
+          >
+            Volver a coordinaciones padre
+          </app-button>
+        </div>
+      }
+
+      @if (showCoordinationForm()) {
+        <app-coordination-management-form
+          [coordination]="selectedManagedCoordination()"
+          [modalidades]="modalities()"
+          [metodologias]="methodologies()"
+          [costCenters]="costCenters()"
+          [title]="coordinationFormTitle()"
+          [editTitle]="coordinationFormEditTitle()"
+          [description]="coordinationFormDescription()"
+          [isSaving]="isSaving()"
+          (cancel)="closeCoordinationForm()"
+          (saveCoordination)="onSaveCoordination($event)"
+        />
+      } @else {
+        <app-coordination-management-table
+          [coordinations]="displayedCoordinations()"
+          [selectedCoordinationIds]="displayedCoordinationSelectedIds()"
+          [emptyMessage]="coordinationTableEmptyMessage()"
+          [searchPlaceholder]="coordinationTableSearchPlaceholder()"
+          [showChildrenAction]="!isChildrenView()"
+          (selectedCoordinationIdsChange)="onSelectedCoordinationIdsChange($event)"
+          (refreshCoordinations)="refreshCurrentCoordinations()"
+          (addCoordination)="openCreateCoordinationForm()"
+          (viewChildren)="openChildrenView($event)"
+          (configureInternal)="openInternalConfiguration($event)"
+          (editCoordination)="openEditCoordinationForm($event)"
+          (deleteCoordination)="requestDeleteCoordination($event)"
+          (deleteAll)="requestBulkDeleteCoordinations($event)"
+        />
+      }
+    } @else {
+      <div
+        class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+            Configuración interna de: {{ selectedInternalCoordination()?.nombre }}
+          </h4>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {{
+              isInternalParentAcademicCoordination()
+                ? 'Administra asociaciones, personas y docentes de planta para esta facultad.'
+                : 'Administra asociaciones, personas y docentes de planta para esta coordinación.'
+            }}
+          </p>
+        </div>
+
+        <app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          (btnClick)="backToParentCoordinations()"
+        >
+          Volver a coordinaciones
+        </app-button>
+      </div>
+
+      <div class="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white p-1 shadow-theme-xs dark:border-white/10 dark:bg-white/5">
+        @for (item of switchItems; track item.id) {
+
+          @if (!(isInternalParentCoordination() && item.id === 'careerProfessors')) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/30"
+              [class.border-brand-600]="selectedTab() === item.id"
+              [class.bg-brand-600]="selectedTab() === item.id"
+              [class.text-white]="selectedTab() === item.id"
+              [class.shadow-theme-xs]="selectedTab() === item.id"
+              [class.border-transparent]="selectedTab() !== item.id"
+              [class.bg-transparent]="selectedTab() !== item.id"
+              [class.text-gray-700]="selectedTab() !== item.id"
+              [class.hover:bg-gray-100]="selectedTab() !== item.id"
+              [class.dark:text-gray-200]="selectedTab() !== item.id"
+              [class.dark:hover:bg-white/10]="selectedTab() !== item.id"
+              (click)="selectTab(item.id)"
+            >
+              <app-icon
+                [name]="item.icon"
+                size="sm"
+                [classes]="selectedTab() === item.id ? 'text-white' : 'text-brand-600 dark:text-brand-400'"
+              />
+
+              {{
+                isInternalParentAcademicCoordination() && item.id === 'people'
+                  ? 'Asociar decano'
+                  : item.label
+              }}
+            </button>
+          }
+
+        }
+      </div>
+
+      @if (selectedTabId() === 'associationCoordinations') {
+        @if (showForm()) {
+          <app-association-coordination-form
+            [association]="selectedAssociation()"
+            [selectedCoordinationId]="appliedCoordinationFilterId()"
+            [coordinations]="internalCoordinationOptions()"
+            [programs]="programs()"
+            [subjects]="subjects()"
+            [costCenters]="costCenters()"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (saveAssociation)="onSaveAssociation($event)"
+          />
+        } @else {
+          <app-association-coordination-table
+            [associations]="filteredAssociations()"
+            [selectedAssociationIds]="selectedAssociationIds()"
+            [canAdd]="canManageCurrentCoordination()"
+            [emptyMessage]="associationEmptyMessage()"
+            (selectedAssociationIdsChange)="selectedAssociationIds.set($event)"
+            (refreshAssociations)="refreshAssociations()"
+            (addAssociation)="openCreateForm()"
+            (editAssociation)="openEditForm($event)"
+            (deleteAssociation)="requestDeleteAssociation($event)"
+            (deleteAll)="requestBulkDelete($event)"
+          />
+        }
+      } @else if (selectedTabId() === 'people') {
+        @if (showForm()) {
+          <app-person-coordination-form
+            title="Nueva persona"
+            editTitle="Editar persona"
+            description="Selecciona la persona, la coordinación y el estado de la relación."
+            personLabel="Persona"
+            personPlaceholder="Seleccione la persona"
+            statusTitle="Estado de la persona"
+            statusDescription="Define si esta persona quedará activa para la coordinación."
+            [assignment]="selectedPeopleCoordination()"
+            [selectedCoordinationId]="appliedCoordinationFilterId()"
+            [people]="people()"
+            [coordinations]="internalCoordinationOptions()"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (saveAssignment)="onSavePeopleCoordination($event)"
+          />
+        } @else {
+          <app-person-coordination-table
+            [assignments]="filteredPeopleCoordinations()"
+            [selectedAssignmentIds]="selectedPeopleCoordinationIds()"
+            [canAdd]="canManageCurrentCoordination()"
+            [emptyMessage]="peopleEmptyMessage()"
+            searchPlaceholder="Buscar persona..."
+            (selectedAssignmentIdsChange)="selectedPeopleCoordinationIds.set($event)"
+            (refreshAssignments)="refreshPeopleCoordinations()"
+            (addAssignment)="openCreatePeopleForm()"
+            (editAssignment)="openEditPeopleForm($event)"
+            (deleteAssignment)="requestDeletePeopleCoordination($event)"
+            (deleteAll)="requestBulkDeletePeople($event)"
+          />
+        }
+      } @else if (selectedTabId() === 'careerProfessors') {
+        @if (showForm()) {
+          <app-person-coordination-form
+            title="Nuevo docente planta"
+            editTitle="Editar docente planta"
+            description="Selecciona el docente de planta, la coordinación y el estado de la relación."
+            personLabel="Docente planta"
+            personPlaceholder="Seleccione el docente planta"
+            statusTitle="Estado del docente planta"
+            statusDescription="Define si este docente planta quedará activo para la coordinación."
+            [assignment]="selectedPlantProfessorCoordination()"
+            [selectedCoordinationId]="appliedCoordinationFilterId()"
+            [people]="plantProfessors()"
+            [coordinations]="internalCoordinationOptions()"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (saveAssignment)="onSavePlantProfessorCoordination($event)"
+          />
+        } @else {
+          <app-person-coordination-table
+            [assignments]="filteredPlantProfessorCoordinations()"
+            [selectedAssignmentIds]="selectedPlantProfessorCoordinationIds()"
+            [canAdd]="canManageCurrentCoordination()"
+            [emptyMessage]="plantProfessorEmptyMessage()"
+            searchPlaceholder="Buscar docente planta..."
+            (selectedAssignmentIdsChange)="selectedPlantProfessorCoordinationIds.set($event)"
+            (refreshAssignments)="refreshPlantProfessorCoordinations()"
+            (addAssignment)="openCreatePlantProfessorForm()"
+            (editAssignment)="openEditPlantProfessorForm($event)"
+            (deleteAssignment)="requestDeletePlantProfessorCoordination($event)"
+            (deleteAll)="requestBulkDeletePlantProfessors($event)"
+          />
+        }
+      }
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="isDeleting() ? 'Eliminando...' : 'Sí, eliminar'"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>
+
+<app-new-modal
+  [isOpen]="showCoordinationDeleteModal()"
+  [title]="coordinationDeleteModalTitle()"
+  [message]="coordinationDeleteModalMessage()"
+  [buttonText]="isDeleting() ? 'Eliminando...' : 'Sí, eliminar'"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDeleteCoordination()"
+  (close)="closeCoordinationDeleteModal()"
+/>

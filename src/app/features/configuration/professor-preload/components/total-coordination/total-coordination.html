@@ -1,0 +1,114 @@
+<section
+  class="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3"
+>
+  <div class="px-5 py-4 lg:px-6">
+    <h3
+      class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+    >
+      Total de la preasignación docente
+    </h3>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full table-auto border-collapse">
+      <thead>
+        <tr class="border-y border-gray-100 bg-gray-50 dark:border-white/5 dark:bg-gray-900">
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            N.° docentes
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Valor prestaciones
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Valor contratos
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Total preasignación
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            H. aprendizaje directo
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            H. aprendizaje indirecto
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Horas CTEI
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Horas ISU
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Horas AC
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 lg:px-6 dark:text-gray-400"
+          >
+            Total horas
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100 dark:border-white/5">
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ totalDocentes() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ totalPrestaciones() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ totalContratos() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ totalPreasignacion() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ horasFad() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ horasFai() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ horasCtei() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ horasIsu() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ horasAc() }}
+          </td>
+          <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 lg:px-6 dark:text-white/90">
+            {{ totalHoras() }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
