@@ -2,11 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
 } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { CoordinationService } from '../../data/coordination.service';
 import {
   TotalHorasPreloadItem,
   TotalPreload,
@@ -29,28 +26,10 @@ const EMPTY_TOTAL: TotalPreload = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TotalCoordination {
-  private readonly coordinationService = inject(CoordinationService);
-
   idCarga = input<number | null>(null);
   refreshKey = input(0);
 
-  private readonly totalResource = rxResource({
-    params: () => {
-      const idCarga = this.idCarga();
-      const refreshKey = this.refreshKey();
-
-      if (idCarga == null) {
-        return undefined;
-      }
-
-      return { idCarga, refreshKey };
-    },
-    stream: ({ params }) =>
-      this.coordinationService.getTotalPreload(params.idCarga),
-    defaultValue: EMPTY_TOTAL,
-  });
-
-  readonly total = computed(() => this.totalResource.value() ?? EMPTY_TOTAL);
+  readonly total = computed(() => EMPTY_TOTAL);
 
   readonly hoursByCodigo = computed(() =>
     this.toHoursByCodigo(this.total().totalHorasPreasignacion),

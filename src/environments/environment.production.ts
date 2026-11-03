@@ -5,7 +5,7 @@ export const environment = {
     securityAuthUrl: 'http://127.0.0.1:8171',
   },
   auth: {
-    applicationId: 55100,
+    applicationId: 55200,
     tokenStorageKey: 'rvd.auth.token',
     userStorageKey: 'rvd.auth.user',
     loginRedirectUrl: '/rvd',

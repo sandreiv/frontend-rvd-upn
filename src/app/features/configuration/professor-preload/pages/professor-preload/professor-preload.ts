@@ -18,7 +18,6 @@ import { SectionFrame } from '../../../../../shared/ui/section-frame/section-fra
 import { UniversityPeriodItem } from '../../../preload-call/model/preload-call.model';
 import { CoordinationDetail } from '../../components/coordination-detail/coordination-detail';
 import { CoordinationTable } from '../../components/coordination-table/coordination-table';
-import { AlterationDetail } from '../../components/alteration/components/alteration-detail/alteration-detail';
 import { CoordinationService } from '../../data/coordination.service';
 import {
   CoordinationItem,
@@ -35,7 +34,6 @@ import {
     SectionFrame,
     CoordinationTable,
     CoordinationDetail,
-    AlterationDetail,
   ],
   templateUrl: './professor-preload.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +54,6 @@ export class ProfessorPreload implements OnInit {
   readonly selectedCoordination = signal<CoordinationItem | null>(null);
   readonly showCoordinationDetail = signal(false);
   readonly showAlterationDetail = signal(false);
-  readonly isStartingPreassignment = signal(false);
 
   readonly activePreloadCallsResource = rxResource({
     params: () => {
@@ -68,21 +65,6 @@ export class ProfessorPreload implements OnInit {
     },
     stream: ({ params }) =>
       this.coordinationService.getActivePreloadCall(
-        params.idPeriodoUniversidad,
-      ),
-    defaultValue: [] as CoordinationPreloadCallApi[],
-  });
-
-  readonly assignablePreloadCallsResource = rxResource({
-    params: () => {
-      const idPeriodoUniversidad = this.appliedPeriodId();
-      if (idPeriodoUniversidad == null) {
-        return undefined;
-      }
-      return { idPeriodoUniversidad };
-    },
-    stream: ({ params }) =>
-      this.coordinationService.getAssignablePreloadCalls(
         params.idPeriodoUniversidad,
       ),
     defaultValue: [] as CoordinationPreloadCallApi[],
@@ -221,61 +203,8 @@ export class ProfessorPreload implements OnInit {
     this.coordinationsResource.reload();
   }
 
-  async onStartPreassignment(coordination: CoordinationItem): Promise<void> {
-    const idPeriodoUniversidad = this.appliedPeriodId();
-    const isUnassignedFilter =
-      this.appliedFilterPreloadCallId() === UNASSIGNED_PRELOAD_CALL_FILTER;
-
-    const shouldAutoAssignPreloadCall =
-      isUnassignedFilter && coordination.idConvocatoria == null;
-
-    if (!shouldAutoAssignPreloadCall || idPeriodoUniversidad == null) {
-      this.openCoordinationDetail(coordination);
-      return;
-    }
-
-    const defaultPreloadCall = this.assignablePreloadCallsResource.value()[0];
-
-    if (!defaultPreloadCall?.id) {
-      this.openCoordinationDetail(coordination);
-      return;
-    }
-
-    this.isStartingPreassignment.set(true);
-
-    try {
-      await firstValueFrom(
-        this.coordinationService.savePreload({
-          idCoordinacion: coordination.id,
-          idConvocatoria: defaultPreloadCall.id,
-        }),
-      );
-
-      const updatedCoordinations = await firstValueFrom(
-        this.coordinationService.getCoordinations(
-          idPeriodoUniversidad,
-          defaultPreloadCall.id,
-        ),
-      );
-
-      const updatedCoordination =
-        updatedCoordinations.find((item) => item.id === coordination.id) ??
-        this.buildCoordinationWithDefaultPreloadCall(
-          coordination,
-          defaultPreloadCall,
-        );
-
-      this.selectedCoordination.set(updatedCoordination);
-      this.showCoordinationDetail.set(true);
-      this.showAlterationDetail.set(false);
-
-      this.coordinationsResource.reload();
-    } catch (error) {
-      console.error(error);
-      this.openCoordinationDetail(coordination);
-    } finally {
-      this.isStartingPreassignment.set(false);
-    }
+  onStartPreassignment(coordination: CoordinationItem): void {
+    this.openCoordinationDetail(coordination);
   }
 
   onOpenAlteration(coordination: CoordinationItem): void {
@@ -294,44 +223,9 @@ export class ProfessorPreload implements OnInit {
     this.showAlterationDetail.set(false);
   }
 
-  private buildCoordinationWithDefaultPreloadCall(
-    coordination: CoordinationItem,
-    preloadCall: CoordinationPreloadCallApi,
-  ): CoordinationItem {
-    const periodoUniversidad = preloadCall.periodoUniversidad;
-    const nivelEducativo = preloadCall.nivelEducativo;
-
-    return {
-      ...coordination,
-      idConvocatoria: preloadCall.id,
-      convocatoriaNombre:
-        preloadCall.nombre?.trim() || preloadCall.descripcion?.trim() || '',
-      nivelEducativo:
-        nivelEducativo?.descripcion?.trim() ||
-        nivelEducativo?.nombre?.trim() ||
-        coordination.nivelEducativo,
-      periodoUniversidad: periodoUniversidad
-        ? `${periodoUniversidad.anio}-${periodoUniversidad.periodo}`
-        : coordination.periodoUniversidad,
-      idPeriodoUniversidad:
-        periodoUniversidad?.id ?? coordination.idPeriodoUniversidad,
-      anioUniversidad:
-        periodoUniversidad?.anio ?? coordination.anioUniversidad,
-      idNivelEducativo:
-        nivelEducativo?.id ?? coordination.idNivelEducativo,
-      modalidadesContratacion:
-        preloadCall.modalidadesContratacion ??
-        coordination.modalidadesContratacion,
-    };
-  }
-
   onBackToCoordinationList(): void {
     this.syncListFilterWithSelectedCoordination();
     this.closeCoordinationViews();
-  }
-
-  onCoordinationUpdated(updated: CoordinationItem): void {
-    this.selectedCoordination.set(updated);
   }
 
   onCargaValorChange(valor: number | null): void {
