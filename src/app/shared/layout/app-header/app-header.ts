@@ -5,12 +5,12 @@ import { Router, RouterModule } from '@angular/router';
 import { ThemeToggleButton } from '../../components/common/theme-toggle-button/theme-toggle-button';
 import { Icon } from '../../ui/icon/icon';
 import { UserDropdown } from '../../components/header/user-dropdown/user-dropdown';
-import { VerifyNotifications } from '../../../features/configuration/verify-professors/components/verify-notifications/verify-notifications';
+
 import { SidebarTheme } from '../../../core/service/sidebar-theme';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, RouterModule, Icon, UserDropdown, VerifyNotifications],
+  imports: [CommonModule, RouterModule, Icon, UserDropdown],
   templateUrl: './app-header.html',
   styleUrl: './app-header.css',
 })

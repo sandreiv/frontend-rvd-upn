@@ -43,7 +43,7 @@ import { ProfessorLoadSummaryApi } from '../model/professor-summary.model';
 import { ProfessorNoveltySummaryApi } from '../model/novelty-summary.model';
 import { DeclinePreloadDeanRequest } from '../model/preload-carga.model';
 import { ObservacionesCargaItem } from '../model/observations-load';
-import { FacultyCoordinationItem, FacultyRequestCdpApiItem, normalizeFacultyRequestCdpItem } from '../../cdp-requests/model/cdp-context.model';
+
 import { NoveltiesItem } from '../model/novelties.model';
 import {
   SaveNovedadCargaDocenteRequest,
@@ -146,25 +146,7 @@ export class CoordinationService {
       );
   }
 
-  /**
-   * Lista las facultades con solicitudes CDP disponibles para revisión
-   * según el rol de Desarrollo Académico o Vicerrectoría Académica.
-   *
-   * @param idPeriodoUniversidad Identificador del periodo universitario.
-   * @returns Observable con las facultades y solicitudes CDP correspondientes.
-  */
 
-  getCdpRequestsForAcademics(idPeriodoUniversidad: number): Observable<FacultyCoordinationItem[]> {
-    return this.webRequestService.get<FacultyRequestCdpApiItem[]>(
-      `${this.cdpEndpoint}/requests-for-academics`,
-        { idPeriodoUniversidad },
-    )
-    .pipe(
-      map((items) =>
-        items.map(normalizeFacultyRequestCdpItem),
-      ),
-    );
-  }
 
   /**
    * Asigna o actualiza la convocatoria asociada a una coordinación.
