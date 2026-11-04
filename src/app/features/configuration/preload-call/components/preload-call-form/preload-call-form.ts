@@ -22,6 +22,7 @@ import { Icon } from '../../../../../shared/ui/icon/icon';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
 import { Option as SelectOption, Select } from '../../../../../shared/components/form/select/select';
+import { formatSentenceValue } from '../../../../../shared/utils/normalized-text.util';
 
 import { PreloadCallService } from '../../data/preload-call.service';
 import {
@@ -144,11 +145,11 @@ export class PreloadCallForm implements OnInit {
     const cldo = this.clasificacionesDocente().find((c) => c.id === tivi.idClasificacionDocente)?.descripcion;
     const dedo = this.dedicacionesDocente().find((d) => d.id === tivi.idDedicacionDocente)?.descripcion;
     if (cldo && dedo) {
-      return `${cldo} - ${dedo}`;
+      return `${formatSentenceValue(cldo)} - ${formatSentenceValue(dedo)}`;
     }
-    if (cldo) return cldo;
-    if (dedo) return dedo;
-    if (tivi.tipoContrato) return tivi.tipoContrato;
+    if (cldo) return formatSentenceValue(cldo);
+    if (dedo) return formatSentenceValue(dedo);
+    if (tivi.tipoContrato) return formatSentenceValue(tivi.tipoContrato);
     return `Vinculación #${tivi.id}`;
   }
 
@@ -165,14 +166,14 @@ export class PreloadCallForm implements OnInit {
   readonly clasificacionDocenteOptions = computed((): SelectOption[] =>
     this.clasificacionesDocente().map((c) => ({
       value: String(c.id),
-      label: c.descripcion,
+      label: formatSentenceValue(c.descripcion),
     })),
   );
 
   readonly dedicacionDocenteOptions = computed((): SelectOption[] =>
     this.dedicacionesDocente().map((d) => ({
       value: String(d.id),
-      label: d.descripcion,
+      label: formatSentenceValue(d.descripcion),
     })),
   );
 
@@ -322,18 +323,18 @@ export class PreloadCallForm implements OnInit {
     if (!item) return '-';
     const min = item.minimo != null ? `${item.minimo}` : '0';
     const max = item.maximo != null ? `${item.maximo}` : 'N/A';
-    const tipo = item.tipoHoras ? ` (${item.tipoHoras})` : '';
+    const tipo = item.tipoHoras ? ` (${formatSentenceValue(item.tipoHoras)})` : '';
     return `${min} - ${max} hrs${tipo}`;
   }
 
   getFormaPago(idTipoVinculacion: number): string {
     const item = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
-    return item?.formaPago || '-';
+    return item?.formaPago ? formatSentenceValue(item.formaPago) : '-';
   }
 
   getTipoContrato(idTipoVinculacion: number): string {
     const item = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
-    return item?.tipoContrato || '-';
+    return item?.tipoContrato ? formatSentenceValue(item.tipoContrato) : '-';
   }
 
   onSubmit(event: Event): void {

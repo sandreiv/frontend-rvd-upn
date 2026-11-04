@@ -214,36 +214,36 @@
       }
 
       @if (vinculaciones().length > 0) {
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
-          <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-white/10">
+        <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+          <table class="w-full min-w-full divide-y divide-gray-200 text-sm dark:divide-white/10">
             <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
               <tr>
-                <th class="px-4 py-3">Tipo de vinculación</th>
-                <th class="px-4 py-3">Rango de horas</th>
-                <th class="px-4 py-3">Forma de pago</th>
-                <th class="px-4 py-3">Tipo de contrato</th>
+                <th class="w-[36%] px-3.5 py-2.5 sm:px-4 sm:py-3">Tipo de vinculación</th>
+                <th class="w-[24%] px-3.5 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">Rango de horas</th>
+                <th class="w-[18%] px-3.5 py-2.5 sm:px-4 sm:py-3">Forma de pago</th>
+                <th class="w-[16%] px-3.5 py-2.5 sm:px-4 sm:py-3">Tipo de contrato</th>
                 @if (!isReadOnly()) {
-                  <th class="px-4 py-3 text-right">Acciones</th>
+                  <th class="w-[6%] px-2 py-2.5 sm:px-3 sm:py-3 text-center">Acciones</th>
                 }
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/5 dark:bg-transparent">
               @for (v of vinculaciones(); track v.idTipoVinculacion) {
                 <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                  <td class="px-3.5 py-2.5 font-medium text-gray-900 sm:px-4 sm:py-3 dark:text-white">
                     {{ getTipoVinculacionNombre(v.idTipoVinculacion) }}
                   </td>
-                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                  <td class="whitespace-nowrap px-3.5 py-2.5 text-gray-600 sm:px-4 sm:py-3 dark:text-gray-300">
                     {{ getHorasRange(v.idTipoVinculacion) }}
                   </td>
-                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                  <td class="px-3.5 py-2.5 text-gray-600 sm:px-4 sm:py-3 dark:text-gray-300">
                     {{ getFormaPago(v.idTipoVinculacion) }}
                   </td>
-                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                  <td class="px-3.5 py-2.5 text-gray-600 sm:px-4 sm:py-3 dark:text-gray-300">
                     {{ getTipoContrato(v.idTipoVinculacion) }}
                   </td>
                   @if (!isReadOnly()) {
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-2 py-2.5 text-center sm:px-3 sm:py-3">
                       <button
                         type="button"
                         title="Eliminar de la convocatoria"
