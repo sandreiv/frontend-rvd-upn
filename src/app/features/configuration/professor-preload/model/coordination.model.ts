@@ -58,16 +58,19 @@ export interface CoordinationPreloadCallApi {
 
 export interface CoordinationApiItem {
   id: number;
-  nombre: string;
-  descripcion: string;
-  codigo: string | null;
   esAcademica: string;
   unidadRegional: CoordinationLookupItem;
-  unidadArea: CoordinationLookupItem;
-  metodologia: CoordinationLookupItem | null;
-  modalidad: CoordinationLookupItem | null;
+  unidadArea?: CoordinationLookupItem | null;
+  unidadAreaPadre?: CoordinationLookupItem | null;
   convocatoria: CoordinationPreloadCallApi | null;
-  carga: PreloadCargaApi | null;
+  nombre?: string | null;
+  descripcion?: string | null;
+  idCoordinacionPadre?: number | null;
+  nombreCoordinacionPadre?: string | null;
+  codigo?: string | null;
+  metodologia?: CoordinationLookupItem | null;
+  modalidad?: CoordinationLookupItem | null;
+  carga?: PreloadCargaApi | null;
   centroCosto?: CoordinationCentroCosto | null;
   canEditPreassignment?: boolean | string | null;
   editBlockReason?: string | null;
@@ -82,6 +85,9 @@ export interface CoordinationItem {
   esAcademica: string;
   unidadRegional: string;
   unidadArea: string;
+  unidadAreaPadre: string;
+  idCoordinacionPadre: number | null;
+  nombreCoordinacionPadre: string;
   metodologia: string;
   modalidad: string;
   nivelEducativo: string;
@@ -109,8 +115,6 @@ export interface ValuePointsPreload {
   puntosDocente: number | null;
   asignacionSalarial: number | null;
 }
-
-export const UNASSIGNED_PRELOAD_CALL_FILTER = 'none';
 
 function resolveLookupLabel(
   item: CoordinationLookupItem | null | undefined,
@@ -190,12 +194,18 @@ function resolveConvocatoriaNombre(convocatoria: CoordinationPreloadCallApi | nu
 export function normalizeCoordinationItem(item: CoordinationApiItem): CoordinationItem {
   return {
     id: item.id,
-    nombre: item.nombre?.trim() ?? '',
-    descripcion: item.descripcion?.trim() ?? '',
+    nombre: item.nombre?.trim() || resolveLookupLabel(item.unidadArea),
+    descripcion:
+      item.descripcion?.trim() || resolveLookupLabel(item.unidadArea),
     codigo: item.codigo?.trim() ?? '',
     esAcademica: formatAcademicFlag(item.esAcademica),
     unidadRegional: resolveLookupLabel(item.unidadRegional),
     unidadArea: resolveLookupLabel(item.unidadArea),
+    unidadAreaPadre: resolveLookupLabel(item.unidadAreaPadre),
+    idCoordinacionPadre: item.idCoordinacionPadre ?? null,
+    nombreCoordinacionPadre:
+      item.nombreCoordinacionPadre?.trim() ||
+      resolveLookupLabel(item.unidadAreaPadre),
     metodologia: resolveLookupLabel(item.metodologia, 'descripcion'),
     modalidad: resolveLookupLabel(item.modalidad, 'descripcion'),
     nivelEducativo: resolveLookupLabel(
@@ -207,7 +217,7 @@ export function normalizeCoordinationItem(item: CoordinationApiItem): Coordinati
     ),
     idPeriodoUniversidad: item.convocatoria?.periodoUniversidad?.id ?? null,
     anioUniversidad: item.convocatoria?.periodoUniversidad?.anio ?? null,
-    idUnidadRegional: item.unidadRegional.id,
+    idUnidadRegional: item.unidadRegional?.id ?? null,
     estadoCarga: resolveEstadoCarga(item.carga),
     idCarga: item.carga?.id ?? null,
     valor: item.carga?.valor ?? null,
