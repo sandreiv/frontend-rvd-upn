@@ -1,177 +1,271 @@
 <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="onSubmit($event)">
-  <div
-    class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-white/5 dark:border-white/5 dark:bg-white/3"
-  >
-  <!-- Información de quien autoriza -->
+  <div class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-white/5 dark:border-white/5 dark:bg-white/3">
     <app-collapsible-section
-      title="Información de quien autoriza"
+      title="Información de la convocatoria"
       variant="plain"
-      [expanded]="authorizerSectionExpanded()"
-      (expandedChange)="authorizerSectionExpanded.set($event)"
+      [expanded]="callInfoSectionExpanded()"
+      (expandedChange)="callInfoSectionExpanded.set($event)"
     >
-    <div
-      class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
-    >
-      <div>
-        <app-label>Documento</app-label>
-        <app-input-field
-          formControlName="documentoIdentidad"
-          placeholder="Número de documento"
-        />
-      </div>
-      <div>
-        <app-label>Nombre</app-label>
-        <app-input-field
-          formControlName="nombreCompleto"
-          placeholder="Nombre o apellido"
-        />
-      </div>
-      <div class="flex sm:justify-end">
-        <button
-          type="button"
-          aria-label="Buscar persona"
-          class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white text-gray-700 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300"
-          [disabled]="isSearching()"
-          (click)="onSearchPerson()"
-        >
-          <app-icon name="search" size="sm" />
-        </button>
-      </div>
-    </div>
-
-    @if (searchError()) {
-      <p class="text-sm text-error-500">{{ searchError() }}</p>
-    }
-  </app-collapsible-section>
-
-  <hr class="border-gray-200 dark:border-white/5" />
-
-  <!-- Información de convocatoria -->
-
-  <app-collapsible-section
-    title="Información de convocatoria"
-    variant="plain"
-    [expanded]="callInfoSectionExpanded()"
-    (expandedChange)="callInfoSectionExpanded.set($event)"
-  >
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div>
-        <app-label>Nombre</app-label>
-        <app-input-field
-          formControlName="nombre"
-          placeholder="Ingrese el nombre de la convocatoria"
-        />
-      </div>
-      <div>
-        <app-label>Descripción</app-label>
-        <app-input-field
-          formControlName="descripcion"
-          placeholder="Ingrese la descripción de la convocatoria"
-        />
-      </div>
-    </div>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div>
-        <app-label>Periodo</app-label>
-        <app-select
-          formControlName="periodoUniversidad"
-          [options]="universityPeriodOptions()"
-          placeholder="Seleccione el periodo"
-          searchPlaceholder="Buscar periodo..."
-          emptyText="No se encontraron periodos"
-        />
-      </div>
-      <div>
-        <app-label>Nivel Educativo</app-label>
-        <app-select
-          formControlName="nivelEducativo"
-          [options]="educationalLevelOptions()"
-          placeholder="Seleccione el nivel educativo"
-          searchPlaceholder="Buscar nivel educativo..."
-          emptyText="No se encontraron niveles educativos"
-        />
-      </div>
-    </div>
-
-    <app-checkbox
-      label="¿Es convocatoria de contratación?"
-      [checked]="isHiringCall()"
-      [disabled]="isReadOnly()"
-      (checkedChange)="onHiringCallToggle($event)"
-    />
-
-    <div class="flex flex-col gap-3">
-      <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
-        Fechas convocatoria
-      </h5>
-
-      <app-date-range-picker
-        [formGroup]="form"
-        startControlName="fechaInicio"
-        endControlName="fechaFin"
-        startId="fechaInicio"
-        endId="fechaFin"
-        startPlaceholder="Fecha inicio"
-        endPlaceholder="Fecha fin"
-      />
-    </div>
-
-    @if (!isHiringCall()) {
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="flex flex-col gap-3">
-          <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
-            Fechas CTEI
-          </h5>
-
-          <app-date-range-picker
-            [formGroup]="form"
-            startControlName="fechaInicioCtei"
-            endControlName="fechaFinCtei"
-            startId="fechaInicioCtei"
-            endId="fechaFinCtei"
-            startPlaceholder="Fecha inicio"
-            endPlaceholder="Fecha fin"
+        <div>
+          <app-label>Nombre</app-label>
+          <app-input-field
+            formControlName="nombre"
+            placeholder="Ingrese el nombre de la convocatoria"
           />
         </div>
-
-        <div class="flex flex-col gap-3">
-          <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
-            Fechas ISU
-          </h5>
-
-          <app-date-range-picker
-            [formGroup]="form"
-            startControlName="fechaInicioIsu"
-            endControlName="fechaFinIsu"
-            startId="fechaInicioIsu"
-            endId="fechaFinIsu"
-            startPlaceholder="Fecha inicio"
-            endPlaceholder="Fecha fin"
+        <div>
+          <app-label>Descripción</app-label>
+          <app-input-field
+            formControlName="descripcion"
+            placeholder="Ingrese la descripción de la convocatoria"
           />
         </div>
       </div>
-    }
-  </app-collapsible-section>
 
-  <hr class="border-gray-200 dark:border-white/5" />
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <app-label>Periodo universitario</app-label>
+          <app-select
+            formControlName="idPeriodoUniversidad"
+            [options]="universityPeriodOptions()"
+            placeholder="Seleccione el periodo"
+            searchPlaceholder="Buscar periodo..."
+            emptyText="No se encontraron periodos"
+          />
+        </div>
+        <div class="flex items-center pt-6">
+          <app-checkbox
+            label="¿Es convocatoria intersemestral?"
+            [checked]="form.controls.esIntersemestral.value"
+            [disabled]="isReadOnly()"
+            (checkedChange)="form.controls.esIntersemestral.setValue($event)"
+          />
+        </div>
+      </div>
 
-  <!-- Modalidad -->
+      <div class="flex flex-col gap-3">
+        <h5 class="text-sm font-semibold text-gray-800 dark:text-white">
+          Fechas de la convocatoria
+        </h5>
 
-  <app-collapsible-section
-    title="Modalidad de contratación"
-    variant="plain"
-    [expanded]="modalitySectionExpanded()"
-    (expandedChange)="modalitySectionExpanded.set($event)"
-  >
-    <app-modality-table
-      [rows]="modalities()"
-      [readonly]="isReadOnly()"
-      [isHiringCall]="isHiringCall()"
-      (addModality)="openModalityModal()"
-      (deleteModality)="onDeleteModality($event)"
-      (editModality)="openEditModality($event)"
-    />
-  </app-collapsible-section>
+        <app-date-range-picker
+          [formGroup]="form"
+          startControlName="fechaInicio"
+          endControlName="fechaFin"
+          startId="fechaInicio"
+          endId="fechaFin"
+          startPlaceholder="Fecha inicio"
+          endPlaceholder="Fecha fin"
+        />
+      </div>
+    </app-collapsible-section>
+
+    <hr class="border-gray-200 dark:border-white/5" />
+
+    <app-collapsible-section
+      title="Tipos de vinculación"
+      variant="plain"
+      [expanded]="vinculacionSectionExpanded()"
+      (expandedChange)="vinculacionSectionExpanded.set($event)"
+    >
+      @if (!isReadOnly()) {
+        <div class="flex flex-col gap-3">
+          <div class="flex items-end gap-2">
+            <div class="flex-1">
+              <app-label>Seleccionar tipo de vinculación</app-label>
+              <app-select
+                [options]="availableTipoVinculacionOptions()"
+                [value]="selectedTipoVinculacionId()"
+                (valueChange)="onSelectTipoVinculacion($event)"
+                placeholder="Seleccione una vinculación para agregar"
+                searchPlaceholder="Buscar tipo de vinculación..."
+                emptyText="No hay más vinculaciones disponibles"
+              />
+            </div>
+            <div>
+              <button
+                type="button"
+                title="Registrar nuevo tipo de vinculación"
+                aria-label="Registrar nuevo tipo de vinculación"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 shadow-theme-xs transition hover:bg-gray-50 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                (click)="toggleNewTipoVinculacionForm()"
+              >
+                <app-icon name="plus" size="sm" />
+              </button>
+            </div>
+          </div>
+
+          @if (showNewTipoVinculacionForm()) {
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-5 dark:border-white/10 dark:bg-white/[0.03]">
+              <div class="mb-4 flex items-center justify-between border-b border-gray-200/80 pb-3 dark:border-white/10">
+                <div>
+                  <h6 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    Registrar nuevo tipo de vinculación
+                  </h6>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Seleccione la clasificación, dedicación y defina los rangos de horas.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-lg p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-200"
+                  (click)="toggleNewTipoVinculacionForm()"
+                >
+                  <app-icon name="close" size="sm" />
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <app-label>Clasificación docente <span class="text-error-500">*</span></app-label>
+                  <app-select
+                    [options]="clasificacionDocenteOptions()"
+                    [value]="selectedNewClasificacionId()"
+                    (valueChange)="setSelectedNewClasificacionId($event)"
+                    placeholder="Seleccione clasificación..."
+                    searchPlaceholder="Buscar clasificación..."
+                    emptyText="No se encontraron clasificaciones"
+                  />
+                </div>
+
+                <div>
+                  <app-label>Dedicación docente <span class="text-error-500">*</span></app-label>
+                  <app-select
+                    [options]="dedicacionDocenteOptions()"
+                    [value]="selectedNewDedicacionId()"
+                    (valueChange)="setSelectedNewDedicacionId($event)"
+                    placeholder="Seleccione dedicación..."
+                    searchPlaceholder="Buscar dedicación..."
+                    emptyText="No se encontraron dedicaciones"
+                  />
+                </div>
+
+                <div>
+                  <app-label>Tipo de contrato</app-label>
+                  <app-input-field
+                    [value]="newTipoContrato()"
+                    (valueChange)="setNewTipoContrato($event)"
+                    placeholder="Tipo de contrato"
+                  />
+                </div>
+
+                <div>
+                  <app-label>Forma de pago</app-label>
+                  <app-input-field
+                    [value]="newFormaPago()"
+                    (valueChange)="setNewFormaPago($event)"
+                    placeholder="Forma de pago"
+                  />
+                </div>
+
+                <div>
+                  <app-label>Tipo de horas <span class="text-error-500">*</span></app-label>
+                  <app-select
+                    [options]="tipoHorasOptions()"
+                    [value]="newTipoHoras()"
+                    (valueChange)="setNewTipoHoras($event)"
+                    placeholder="Seleccione tipo de horas..."
+                  />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <app-label>Horas mínimas</app-label>
+                    <app-input-field
+                      type="number"
+                      [value]="newMinimo()"
+                      (valueChange)="setNewMinimo($event)"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <app-label>Horas máximas</app-label>
+                    <app-input-field
+                      type="number"
+                      [value]="newMaximo()"
+                      (valueChange)="setNewMaximo($event)"
+                      placeholder="40"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 flex justify-end gap-2 border-t border-gray-200/80 pt-3 dark:border-white/10">
+                <app-button
+                  type="button"
+                  variant="outline"
+                  (btnClick)="toggleNewTipoVinculacionForm()"
+                >
+                  Cancelar
+                </app-button>
+                <app-button
+                  type="button"
+                  variant="primary"
+                  [disabled]="!selectedNewClasificacionId() || !selectedNewDedicacionId() || isCreatingTipo()"
+                  (btnClick)="onCreateCustomTipoVinculacion()"
+                >
+                  {{ isCreatingTipo() ? 'Guardando...' : 'Guardar y agregar' }}
+                </app-button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (vinculaciones().length > 0) {
+        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+          <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-white/10">
+            <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
+              <tr>
+                <th class="px-4 py-3">Tipo de vinculación</th>
+                <th class="px-4 py-3">Rango de horas</th>
+                <th class="px-4 py-3">Forma de pago</th>
+                <th class="px-4 py-3">Tipo de contrato</th>
+                @if (!isReadOnly()) {
+                  <th class="px-4 py-3 text-right">Acciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/5 dark:bg-transparent">
+              @for (v of vinculaciones(); track v.idTipoVinculacion) {
+                <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    {{ getTipoVinculacionNombre(v.idTipoVinculacion) }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                    {{ getHorasRange(v.idTipoVinculacion) }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                    {{ getFormaPago(v.idTipoVinculacion) }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                    {{ getTipoContrato(v.idTipoVinculacion) }}
+                  </td>
+                  @if (!isReadOnly()) {
+                    <td class="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        title="Eliminar de la convocatoria"
+                        aria-label="Eliminar vinculación"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10"
+                        (click)="removeVinculacion(v.idTipoVinculacion)"
+                      >
+                        <app-icon name="delete" size="sm" />
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          No se han asociado tipos de vinculación a esta convocatoria.
+        </p>
+      }
+    </app-collapsible-section>
   </div>
 
   <div class="flex flex-col gap-3 pt-1">
@@ -179,34 +273,17 @@
       <p class="text-end text-sm text-error-500">{{ saveError() }}</p>
     }
     <div class="flex justify-end gap-3">
-    <app-button type="button" variant="outline" (btnClick)="closeForm.emit()">
-      Cancelar
-    </app-button>
-    @if (!isReadOnly()) {
-      <app-button
-        type="submit"
-        [disabled]="form.invalid || isSaving()"
-      >
-        {{ submitButtonLabel() }}
+      <app-button type="button" variant="outline" (btnClick)="closeForm.emit()">
+        Cancelar
       </app-button>
-    }
+      @if (!isReadOnly()) {
+        <app-button
+          type="submit"
+          [disabled]="form.invalid || isSaving()"
+        >
+          {{ submitButtonLabel() }}
+        </app-button>
+      }
     </div>
   </div>
 </form>
-
-<app-preload-call-person-search-modal
-  [isOpen]="searchModalOpen()"
-  [results]="searchResults()"
-  [isLoading]="isSearching()"
-  (close)="closeSearchModal()"
-  (personSelected)="onPersonSelected($event)"
-/>
-
-<app-modality-form-modal
-  [isOpen]="modalityModalOpen()"
-  [modalityOptions]="modalitySelectOptions()"
-  [editingItem]="editingModality()"
-  [isHiringCall]="isHiringCall()"
-  (close)="closeModalityModal()"
-  (saved)="onModalitySaved($event)"
-/>

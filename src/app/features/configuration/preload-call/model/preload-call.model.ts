@@ -1,158 +1,99 @@
-export type PreloadCallContratacion = '1' | '0' | null;
+export interface ClasificacionDocenteItem {
+  id: number;
+  descripcion: string;
+}
+
+export interface DedicacionDocenteItem {
+  id: number;
+  descripcion: string;
+}
+
+export interface TipoHorasItem {
+  valor: string;
+  descripcion: string;
+}
+
+export interface TipoVinculacionDTO {
+  id: number;
+  idClasificacionDocente?: number | null;
+  idDedicacionDocente?: number | null;
+  minimo?: number | string | null;
+  maximo?: number | string | null;
+  tipoHoras?: string | null;
+  formaPago?: string | null;
+  tipoContrato?: string | null;
+  estado?: string | null;
+}
+
+export interface TipoVinculacionConvocatoriaItem {
+  id?: number | null;
+  idTipoVinculacion: number;
+  nombreTipoVinculacion?: string | null;
+  estado?: string | null;
+}
 
 export interface PreloadCallItem {
   id: number;
   nombre: string;
   descripcion: string;
-  estado: string;
+  idPeriodoUniversidad: number;
+  periodoUniversidad: string;
   fechaInicio: string;
   fechaFin: string;
-  nombreCompleto: string;
-  periodoUniversidad: string;
-  nivelEducativo: string;
+  estado: string;
   idRelacion: number | null;
-  contratacion: PreloadCallContratacion;
+  esIntersemestral: string;
 }
 
-/** Item crudo del listado */
 export interface PreloadCallListApiItem {
   id?: number | string;
   idConvocatoria?: number | string;
-  nombre: string;
-  descripcion: string;
-  estado: string;
-  fechaInicio: string;
-  fechaFin: string;
-  nombreCompleto: string;
-  periodoUniversidad: string;
-  nivelEducativo: string;
+  nombre?: string | null;
+  descripcion?: string | null;
+  idPeriodoUniversidad?: number | string | null;
+  periodoUniversidad?: string | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
+  estado?: string | null;
   idRelacion?: number | string | null;
-  contratacion?: string | null;
-}
-
-export function resolvePreloadCallListId(
-  item: PreloadCallListApiItem,
-): number | null {
-  const candidates = [item.id, item.idConvocatoria];
-
-  for (const value of candidates) {
-    if (value == null || value === '') {
-      continue;
-    }
-
-    const parsed = Number(value);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      return parsed;
-    }
-  }
-
-  return null;
-}
-
-function resolveIdRelacion(
-  value: number | string | null | undefined,
-): number | null {
-  if (value == null || value === '') {
-    return null;
-  }
-
-  const parsed = Number(value);
-  if (Number.isNaN(parsed) || parsed <= 0) {
-    return null;
-  }
-
-  return parsed;
-}
-
-export function resolveContratacion(
-  value: string | null | undefined,
-): PreloadCallContratacion {
-  if (value === '1' || value === '0') {
-    return value;
-  }
-  return null;
-}
-
-export function isHiringContratacion(
-  value: string | null | undefined,
-): boolean {
-  return value === '1';
-}
-
-export function toContratacionValue(isHiring: boolean): '1' | '0' {
-  return isHiring ? '1' : '0';
-}
-
-export function labelContratacion(
-  value: string | null | undefined,
-): string {
-  return isHiringContratacion(value) ? 'Contratación' : 'Precarga';
-}
-
-export function normalizePreloadCallListItem(item: PreloadCallListApiItem): PreloadCallItem | null {
-  const id = resolvePreloadCallListId(item);
-  if (id == null) {
-    return null;
-  }
-
-  return {
-    id,
-    nombre: item.nombre ?? '',
-    descripcion: item.descripcion ?? '',
-    estado: item.estado ?? '',
-    fechaInicio: item.fechaInicio ?? '',
-    fechaFin: item.fechaFin ?? '',
-    nombreCompleto: item.nombreCompleto ?? '',
-    periodoUniversidad: item.periodoUniversidad ?? '',
-    nivelEducativo: item.nivelEducativo ?? '',
-    idRelacion: resolveIdRelacion(item.idRelacion),
-    contratacion: resolveContratacion(item.contratacion),
-  };
-}
-
-/** Respuesta de GET /configuration/preload-call/detail/{id} */
-export interface PreloadCallDetailResponse {
-  convocatoria: PreloadCallDetailConvocatoria;
-  fechas: PreloadCallDetailFecha[];
-  convocatoriaTipoContratacion: PreloadCallDetailCotc[];
-}
-
-export interface PreloadCallDetailConvocatoria {
-  id?: number;
-  nombre: string;
-  descripcion: string;
-  autoriza: PersonaAutorizaConvocatoriaItem;
-  periodo: UniversityPeriodItem;
-  nivelEducativo: EducationalLevelItem;
-  contratacion?: string | null;
+  esIntersemestral?: string | null;
 }
 
 export interface PreloadCallDetailFecha {
   id?: number;
-  codigo: 'CNV' | 'CTEI' | 'ISU';
-  fechaInicio: string;
-  fechaFin: string;
+  codigo?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
 }
 
-export interface PreloadCallDetailCotc {
-  id: number;
-  idModalidadContratacion: number;
-  fechas: PreloadCallDetailCotcFecha[];
-}
-
-export interface PreloadCallDetailCotcFecha {
-  id: number;
-  vacaciones: number | null;
+export interface ConvocatoriaFormularioDTO {
+  id?: number | null;
+  idPeriodoUniversidad: number;
+  idRelacion?: number | null;
+  nombre: string;
+  descripcion?: string | null;
   fechaInicio: string;
   fechaFin: string;
-  semanas: number | string;
+  estado?: string | null;
+  esIntersemestral: string;
+  vinculaciones: TipoVinculacionConvocatoriaItem[];
+  fechas?: PreloadCallDetailFecha[];
+}
+
+export type PreloadCallDetailResponse = ConvocatoriaFormularioDTO;
+
+export interface UniversityPeriodItem {
+  id: number;
+  ano?: number;
+  anio?: number;
+  periodo: string;
 }
 
 export interface PersonaAutorizaConvocatoriaItem {
   id: number;
   documentoIdentidad: string;
   nombreCompleto: string;
-  telefonoCelular: string | null;
+  telefonoCelular?: string | null;
 }
 
 export interface SearchGeneralPersonParams {
@@ -174,66 +115,36 @@ export interface ModalityFormItem {
   semanas: number | null;
 }
 
-export interface FechaFormMeta {
-  codigo: 'CNV' | 'CTEI' | 'ISU';
-  id?: number;
+export function resolvePreloadCallListId(item: PreloadCallListApiItem): number | null {
+  const candidates = [item.id, item.idConvocatoria];
+  for (const value of candidates) {
+    if (value == null || value === '') continue;
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return null;
 }
 
-/** Respuesta de GET /configuration/preload-call/list-modality */
-export interface ModalityItem {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  instructivo: string | null;
-  estado: string;
-  sigla: string | null;
+function resolveIdRelacion(value: number | string | null | undefined): number | null {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
 }
 
-export interface UniversityPeriodItem {
-  id: number;
-  anio: number;
-  periodo: string;
+export function normalizePreloadCallListItem(item: PreloadCallListApiItem): PreloadCallItem | null {
+  const id = resolvePreloadCallListId(item);
+  if (id == null) return null;
+
+  return {
+    id,
+    nombre: item.nombre ?? '',
+    descripcion: item.descripcion ?? '',
+    idPeriodoUniversidad: item.idPeriodoUniversidad != null ? Number(item.idPeriodoUniversidad) : 0,
+    periodoUniversidad: item.periodoUniversidad ?? '',
+    fechaInicio: item.fechaInicio ?? '',
+    fechaFin: item.fechaFin ?? '',
+    estado: item.estado ?? '1',
+    idRelacion: resolveIdRelacion(item.idRelacion),
+    esIntersemestral: item.esIntersemestral === '1' ? '1' : '0',
+  };
 }
-
-/** Respuesta de GET /configuration/preload-call/list-educational-level */
-export interface EducationalLevelItem {
-  id: number;
-  descripcion: string;
-}
-
-
-/** Restringir coordinación */
-export interface RestrictCoordinationCoordinacion {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  codigo: string | null;
-}
-
-export interface RestrictCoordinationItem {
-  id: number;
-  coordinacion: RestrictCoordinationCoordinacion;
-  fechaInicio: string;
-  fechaFin: string;
-  estado: string;
-}
-
-export interface RestrictCoordinationFormData {
-  idConvocatoria: number | null;
-  idCoordinacion: number;
-  idFechasConvocatoria: number | null;
-  fechaInicio: string;
-  fechaFin: string;
-  estado: '1' | '0';
-}
-
-/** Payload de eliminación (CoordinacionRestriccionDTO) */
-export type RestrictCoordinationDeleteRequest = RestrictCoordinationItem;
-
-export interface RestrictCoordinationSaveEvent {
-  id: number | null;
-  data: RestrictCoordinationFormData;
-}
-
-
-

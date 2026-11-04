@@ -1,36 +1,28 @@
 <div
   class="grid gap-4"
-  [class.lg:grid-cols-2]="showPreloadCallForm() || showRestrictCoordination()"
+  [class.lg:grid-cols-2]="showPreloadCallForm()"
 >
   <div class="min-w-0">
     <app-section-frame
-      title="Convocatoria precarga"
-      description="Administra la convocatoria de precarga."
+      title="Convocatorias"
+      description="Administra las convocatorias del sistema."
       iconName="call"
       iconVariant="brand"
     >
-      <div
-        sectionFrameHeaderActions
-        class="flex w-full items-center gap-2 sm:w-auto"
-      >
-        <div class="min-w-0 flex-1 sm:min-w-[16rem] sm:max-w-sm">
-          <app-select
-            [options]="periodOptions()"
-            [value]="selectedPeriodId()"
-            [disabled]="isLoadingPeriods()"
-            placeholder="Seleccione el periodo"
-            searchPlaceholder="Buscar periodo..."
-            emptyText="No hay periodos disponibles"
-            (valueChange)="onPeriodChange($event)"
-          />
-        </div>
-
+      <div sectionFrameHeaderActions class="flex items-center gap-3">
+        <app-select
+          class="w-full sm:w-64"
+          [options]="universityPeriodOptions()"
+          [value]="selectedUniversityPeriodId()"
+          (valueChange)="selectedUniversityPeriodId.set($event)"
+          placeholder="Seleccione el periodo"
+          searchPlaceholder="Buscar periodo..."
+          emptyText="No se encontraron periodos"
+        />
         <app-button
-          type="button"
-          size="sm"
-          className="h-11 shrink-0 whitespace-nowrap"
-          [disabled]="isLoadingPeriods() || isLoading()"
-          (btnClick)="onApplyPeriodFilter()"
+          variant="primary"
+          [disabled]="!selectedUniversityPeriodId() || isLoading()"
+          (btnClick)="onFilterByPeriod()"
         >
           Filtrar
         </app-button>
@@ -40,16 +32,14 @@
         [preloadCalls]="preloadCalls()"
         [selectedPreloadCallIds]="selectedPreloadCallIds()"
         [emptyMessage]="tableEmptyMessage()"
-        [showLinkCallAction]="isSecondPeriodFilter()"
+        [showLinkCallAction]="true"
         (selectedPreloadCallIdsChange)="onSelectedPreloadCallIdsChange($event)"
         (addPreloadCall)="openPreloadCallForm()"
         (editPreloadCall)="openEditPreloadCallForm($event)"
         (deletePreloadCall)="onDeletePreloadCall($event)"
         (refreshPreloadCall)="onRefreshPreloadCallList()"
         (deleteAllPreloadCall)="onDeleteAllPreloadCall($event)"
-        (restrictCoordination)="openRestrictCoordination($event)"
         (linkPreloadCall)="openLinkPreloadCallModal($event)"
-        (linkPreassignment)="openLinkPreassignmentModal($event)"
       />
     </app-section-frame>
   </div>
@@ -58,9 +48,9 @@
     <div class="min-w-0">
       <app-section-frame
         [title]="formMode() === 'edit'
-          ? 'Editar convocatoria precarga'
-          : 'Formulario de convocatoria precarga'"
-        description="Complete los datos de la convocatoria de precarga."
+          ? 'Editar convocatoria'
+          : 'Formulario de convocatoria'"
+        description="Complete los datos de la convocatoria."
         iconName="plus"
         iconVariant="brand"
       >
@@ -73,34 +63,19 @@
         />
       </app-section-frame>
     </div>
-  } @else if (showRestrictCoordination()) {
-    <div class="min-w-0">
-      <app-restrict-coordination
-        [restrictCoordination]="restrictCoordinations()"
-        [preloadCall]="preloadCallForRestriction()"
-        [selectedRestrictCoordinationIds]="selectedRestrictCoordinationIds()"
-        [isSaving]="isSavingRestriction()"
-        (closeView)="closeRestrictCoordination()"
-        (saveRestriction)="onSaveRestriction($event)"
-        (refreshRestrictCoordination)="refreshRestrictCoordinations()"
-        (selectedRestrictCoordinationIdsChange)="onSelectedRestrictCoordinationIdsChange($event)"
-        (deleteRestrictCoordination)="onDeleteRestrictCoordination($event)"
-        (deleteAllRestrictCoordination)="onDeleteAllRestrictCoordination($event)"
-      />
-    </div>
   }
 </div>
 
 <app-link-preload-call-modal
   [isOpen]="isLinkModalOpen()"
+  [linkKind]="linkKind()"
   [preloadCall]="preloadCallToLink()"
   [calls]="linkModalCalls()"
-  [linkKind]="linkKind()"
   [isLoadingOptions]="isLoadingLinkOptions()"
   [isSaving]="isSavingLink()"
   (close)="closeLinkModal()"
-  (save)="onSavePreloadCallLink($event)"
-  (unlink)="onUnlinkPreloadCall()"
+  (save)="onSaveLink($event)"
+  (unlink)="onUnlink()"
 />
 
 <app-new-modal
@@ -109,18 +84,8 @@
   [message]="deleteModalMessage()"
   [buttonText]="deleteModalButtonText()"
   [showCancelButton]="true"
-  cancelButtonText="No, cancelar"
+  cancelButtonText="Cancelar"
+  variant="danger"
   (confirm)="confirmDelete()"
   (close)="closeDeleteModal()"
-/>
-
-<app-new-modal
-  [isOpen]="isRestrictionDeleteModalOpen()"
-  [title]="restrictionDeleteModalTitle()"
-  [message]="restrictionDeleteModalMessage()"
-  [buttonText]="restrictionDeleteModalButtonText()"
-  [showCancelButton]="true"
-  cancelButtonText="No, cancelar"
-  (confirm)="confirmRestrictionDelete()"
-  (close)="closeRestrictionDeleteModal()"
 />

@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -10,54 +10,42 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+
+import { Button } from '../../../../../shared/ui/button/button';
+import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { CollapsibleSection } from '../../../../../shared/components/form/collapsible-section/collapsible-section';
 import { DateRangePicker } from '../../../../../shared/components/form/date-range-picker/date-range-picker';
-import { InputField } from '../../../../../shared/components/form/input/input-field';
-import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
-import { Label } from '../../../../../shared/components/form/label/label';
-import {
-  Select,
-  type Option as SelectOption,
-} from '../../../../../shared/components/form/select/select';
-import { formatSentenceValue } from '../../../../../shared/utils/normalized-text.util';
-import { Button } from '../../../../../shared/ui/button/button';
 import { Icon } from '../../../../../shared/ui/icon/icon';
+import { InputField } from '../../../../../shared/components/form/input/input-field';
+import { Label } from '../../../../../shared/components/form/label/label';
+import { Option as SelectOption, Select } from '../../../../../shared/components/form/select/select';
+
 import { PreloadCallService } from '../../data/preload-call.service';
-import { buildPreloadCallSavePayload } from '../../model/build-preload-call-save-payload.function';
-import { PreloadCallSaveRequest } from '../../model/preload-call-save.model';
 import {
-  EducationalLevelItem,
-  FechaFormMeta,
-  isHiringContratacion,
-  ModalityFormItem,
-  ModalityItem,
-  PersonaAutorizaConvocatoriaItem,
-  PreloadCallDetailResponse,
-  toContratacionValue,
+  ClasificacionDocenteItem,
+  ConvocatoriaFormularioDTO,
+  DedicacionDocenteItem,
+  TipoHorasItem,
+  TipoVinculacionConvocatoriaItem,
+  TipoVinculacionDTO,
   UniversityPeriodItem,
 } from '../../model/preload-call.model';
-import { ModalityFormModal } from '../modality-form-modal/modality-form-modal';
-import { ModalityTable } from '../modality-table/modality-table';
-import { PreloadCallPersonSearchModal } from '../preload-call-person-search-modal/preload-call-person-search-modal';
 
 @Component({
   selector: 'app-preload-call-form',
   imports: [
     ReactiveFormsModule,
-    Label,
     InputField,
+    Label,
     Checkbox,
-    DateRangePicker,
-    CollapsibleSection,
+    Select,
     Button,
     Icon,
-    ModalityTable,
-    ModalityFormModal,
-    PreloadCallPersonSearchModal,
-    Select,
+    CollapsibleSection,
+    DateRangePicker,
   ],
   templateUrl: './preload-call-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,377 +56,315 @@ export class PreloadCallForm implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly universityPeriods = signal<UniversityPeriodItem[]>([]);
-  private readonly educationalLevels = signal<EducationalLevelItem[]>([]);
-  private readonly modalityCatalog = signal<ModalityItem[]>([]);
-  private readonly catalogsLoaded = signal(false);
-  private lastSyncedDetailId: number | null = null;
+  private readonly tiposVinculacionCatalog = signal<TipoVinculacionDTO[]>([]);
 
   readonly mode = input<'create' | 'edit' | 'read'>('create');
-  readonly preloadCall = input<PreloadCallDetailResponse | null>(null);
+  readonly preloadCall = input<ConvocatoriaFormularioDTO | null>(null);
   readonly isSaving = input<boolean>(false);
+
+  readonly submitPreloadCall = output<ConvocatoriaFormularioDTO>();
   readonly closeForm = output<void>();
-  readonly submitPreloadCall = output<PreloadCallSaveRequest>();
 
   readonly isReadOnly = computed(() => this.mode() === 'read');
+  readonly submitButtonLabel = computed(() => (this.mode() === 'edit' ? 'Actualizar' : 'Guardar'));
 
-  readonly submitButtonLabel = computed(() => {
-    if (this.isSaving()) {
-      return this.mode() === 'edit' ? 'Actualizando...' : 'Guardando...';
-    }
-    return this.mode() === 'edit' ? 'Actualizar' : 'Guardar';
-  });
-
-  readonly searchModalOpen = signal(false);
-  readonly modalityModalOpen = signal(false);
-  readonly editingModality = signal<ModalityFormItem | null>(null);
-  readonly searchResults = signal<PersonaAutorizaConvocatoriaItem[]>([]);
-  readonly fechasMeta = signal<FechaFormMeta[]>([]);
-  readonly modalities = signal<ModalityFormItem[]>([]);
-  readonly isSearching = signal(false);
+  readonly callInfoSectionExpanded = signal(true);
+  readonly vinculacionSectionExpanded = signal(true);
   readonly saveError = signal<string | null>(null);
-  readonly searchError = signal<string | null>(null);
-  readonly authorizerSectionExpanded = signal(false);
-  readonly callInfoSectionExpanded = signal(false);
-  readonly modalitySectionExpanded = signal(false);
-  readonly isHiringCall = signal(false);
 
-  readonly universityPeriodOptions = computed<SelectOption[]>(() =>
-    this.universityPeriods().map((item) => ({
-      value: String(item.id),
-      label: `${item.anio} - ${item.periodo}`,
-    })),
-  );
+  readonly vinculaciones = signal<TipoVinculacionConvocatoriaItem[]>([]);
+  readonly selectedTipoVinculacionId = signal('');
 
-  readonly educationalLevelOptions = computed<SelectOption[]>(() =>
-    this.educationalLevels().map((item) => ({
-      value: String(item.id),
-      label: formatSentenceValue(item.descripcion),
-    })),
-  );
+  readonly clasificacionesDocente = signal<ClasificacionDocenteItem[]>([]);
+  readonly dedicacionesDocente = signal<DedicacionDocenteItem[]>([]);
+  readonly tiposHoras = signal<TipoHorasItem[]>([]);
 
-  readonly modalitySelectOptions = computed<SelectOption[]>(() =>
-    this.modalityCatalog().map((item) => ({
-      value: String(item.id),
-      label: formatSentenceValue(item.nombre),
-    })),
-  );
+  readonly showNewTipoVinculacionForm = signal(false);
+  readonly isCreatingTipo = signal(false);
+  readonly selectedNewClasificacionId = signal('');
+  readonly selectedNewDedicacionId = signal('');
+  readonly newTipoHoras = signal('SEMANAL');
+  readonly newTipoContrato = signal('');
+  readonly newFormaPago = signal('');
+  readonly newMinimo = signal('');
+  readonly newMaximo = signal('');
+
+  setSelectedNewClasificacionId(val: string | number): void {
+    this.selectedNewClasificacionId.set(String(val ?? ''));
+  }
+
+  setSelectedNewDedicacionId(val: string | number): void {
+    this.selectedNewDedicacionId.set(String(val ?? ''));
+  }
+
+  setNewTipoHoras(val: string | number): void {
+    this.newTipoHoras.set(String(val ?? ''));
+  }
+
+  setNewTipoContrato(val: string | number): void {
+    this.newTipoContrato.set(String(val ?? ''));
+  }
+
+  setNewFormaPago(val: string | number): void {
+    this.newFormaPago.set(String(val ?? ''));
+  }
+
+  setNewMinimo(val: string | number): void {
+    this.newMinimo.set(String(val ?? ''));
+  }
+
+  setNewMaximo(val: string | number): void {
+    this.newMaximo.set(String(val ?? ''));
+  }
 
   readonly form = this.fb.group({
-    idPersonaNaturalGeneral: [null as number | null],
-    documentoIdentidad: [''],
-    nombreCompleto: [''],
-    telefonoCelular: [''],
-    nombre: ['', Validators.required],
-    descripcion: ['', Validators.required],
-    fechaInicio: ['', Validators.required],
-    fechaFin: ['', Validators.required],
-    fechaInicioCtei: [''],
-    fechaFinCtei: [''],
-    fechaInicioIsu: [''],
-    fechaFinIsu: [''],
-    periodoUniversidad: ['', Validators.required],
-    nivelEducativo: ['', Validators.required],
-    esContratacion: [false],
+    id: this.fb.control<number | null>(null),
+    nombre: this.fb.nonNullable.control('', [Validators.required]),
+    descripcion: this.fb.nonNullable.control(''),
+    idPeriodoUniversidad: this.fb.nonNullable.control('', [Validators.required]),
+    esIntersemestral: this.fb.nonNullable.control(false),
+    fechaInicio: this.fb.nonNullable.control('', [Validators.required]),
+    fechaFin: this.fb.nonNullable.control('', [Validators.required]),
+    idRelacion: this.fb.control<number | null>(null),
   });
 
+  readonly universityPeriodOptions = computed((): SelectOption[] =>
+    this.universityPeriods().map((period) => {
+      const anio = period.anio ?? period.ano ?? '';
+      return {
+        value: String(period.id),
+        label: `${anio} - ${period.periodo}`,
+      };
+    }),
+  );
+
+  getTipoVinculacionNombre(idTipoVinculacion: number): string {
+    const tivi = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
+    if (!tivi) return `Vinculación #${idTipoVinculacion}`;
+    const cldo = this.clasificacionesDocente().find((c) => c.id === tivi.idClasificacionDocente)?.descripcion;
+    const dedo = this.dedicacionesDocente().find((d) => d.id === tivi.idDedicacionDocente)?.descripcion;
+    if (cldo && dedo) {
+      return `${cldo} - ${dedo}`;
+    }
+    if (cldo) return cldo;
+    if (dedo) return dedo;
+    if (tivi.tipoContrato) return tivi.tipoContrato;
+    return `Vinculación #${tivi.id}`;
+  }
+
+  readonly availableTipoVinculacionOptions = computed((): SelectOption[] => {
+    const assignedIds = new Set(this.vinculaciones().map((v) => v.idTipoVinculacion));
+    return this.tiposVinculacionCatalog()
+      .filter((tivi) => !assignedIds.has(tivi.id))
+      .map((tivi) => ({
+        value: String(tivi.id),
+        label: this.getTipoVinculacionNombre(tivi.id),
+      }));
+  });
+
+  readonly clasificacionDocenteOptions = computed((): SelectOption[] =>
+    this.clasificacionesDocente().map((c) => ({
+      value: String(c.id),
+      label: c.descripcion,
+    })),
+  );
+
+  readonly dedicacionDocenteOptions = computed((): SelectOption[] =>
+    this.dedicacionesDocente().map((d) => ({
+      value: String(d.id),
+      label: d.descripcion,
+    })),
+  );
+
+  readonly tipoHorasOptions = computed((): SelectOption[] =>
+    this.tiposHoras().map((th) => ({
+      value: th.valor,
+      label: th.descripcion,
+    })),
+  );
+
   constructor() {
-    this.form.controls.esContratacion.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((checked) => this.onHiringCallChange(checked === true));
-
-    effect(() => {
-      const isCreateMode = this.mode() === 'create';
-      this.authorizerSectionExpanded.set(!isCreateMode);
-      this.callInfoSectionExpanded.set(!isCreateMode);
-      this.modalitySectionExpanded.set(!isCreateMode);
-    });
-
     effect(() => {
       const detail = this.preloadCall();
-      const isCreateMode = this.mode() === 'create';
-
       if (!detail) {
-        this.lastSyncedDetailId = null;
-        if (isCreateMode) {
-          this.resetFormState();
-        }
         return;
       }
 
-      if (!this.catalogsLoaded()) {
-        return;
-      }
+      this.form.patchValue({
+        id: detail.id ?? null,
+        nombre: detail.nombre ?? '',
+        descripcion: detail.descripcion ?? '',
+        idPeriodoUniversidad: detail.idPeriodoUniversidad ? String(detail.idPeriodoUniversidad) : '',
+        esIntersemestral: detail.esIntersemestral === '1',
+        fechaInicio: detail.fechaInicio ? this.normalizeDateString(detail.fechaInicio) : '',
+        fechaFin: detail.fechaFin ? this.normalizeDateString(detail.fechaFin) : '',
+        idRelacion: detail.idRelacion ?? null,
+      });
 
-      const detailId = detail.convocatoria.id ?? null;
-      if (this.lastSyncedDetailId === detailId) {
-        return;
-      }
-
-      this.lastSyncedDetailId = detailId;
-      this.syncFormFromDetail(detail);
-    });
-  }
-
-  private resetFormState(): void {
-    this.form.reset({ esContratacion: false });
-    this.fechasMeta.set([]);
-    this.modalities.set([]);
-    this.saveError.set(null);
-    this.searchError.set(null);
-    this.onHiringCallChange(false);
-  }
-
-  onHiringCallToggle(checked: boolean): void {
-    this.form.controls.esContratacion.setValue(checked);
-  }
-
-  private onHiringCallChange(isHiring: boolean): void {
-    this.isHiringCall.set(isHiring);
-  }
-
-  private syncFormFromDetail(detail: PreloadCallDetailResponse): void {
-    const cnv = detail.fechas.find((fecha) => fecha.codigo === 'CNV');
-    const CTEI = detail.fechas.find((fecha) => fecha.codigo === 'CTEI');
-    const isu = detail.fechas.find((fecha) => fecha.codigo === 'ISU');
-
-    this.fechasMeta.set(this.mapDetailFechasMeta(detail));
-
-    this.form.patchValue({
-      nombre: detail.convocatoria.nombre,
-      descripcion: detail.convocatoria.descripcion,
-      idPersonaNaturalGeneral: detail.convocatoria.autoriza.id,
-      documentoIdentidad: detail.convocatoria.autoriza.documentoIdentidad,
-      nombreCompleto: detail.convocatoria.autoriza.nombreCompleto,
-      telefonoCelular: detail.convocatoria.autoriza.telefonoCelular ?? '',
-      periodoUniversidad: String(detail.convocatoria.periodo.id),
-      nivelEducativo: String(detail.convocatoria.nivelEducativo.id),
-      fechaInicio: this.toDateOnly(cnv?.fechaInicio),
-      fechaFin: this.toDateOnly(cnv?.fechaFin),
-      fechaInicioCtei: this.toDateOnly(CTEI?.fechaInicio),
-      fechaFinCtei: this.toDateOnly(CTEI?.fechaFin),
-      fechaInicioIsu: this.toDateOnly(isu?.fechaInicio),
-      fechaFinIsu: this.toDateOnly(isu?.fechaFin),
-      esContratacion: isHiringContratacion(
-        detail.convocatoria.contratacion,
-      ),
+      this.vinculaciones.set(detail.vinculaciones ?? []);
     });
 
-    this.modalities.set(this.mapDetailModalityRows(detail));
-  }
-
-  private mapDetailFechasMeta(
-    detail: PreloadCallDetailResponse,
-  ): FechaFormMeta[] {
-    return detail.fechas.map(({ codigo, id }) => ({ codigo, id }));
-  }
-
-  private mapDetailModalityRows(
-    detail: PreloadCallDetailResponse,
-  ): ModalityFormItem[] {
-    return detail.convocatoriaTipoContratacion.flatMap(
-      (cotc): ModalityFormItem[] => {
-        const tipoModalidad = String(cotc.idModalidadContratacion);
-        const label =
-          this.modalitySelectOptions().find(
-            (opt) => opt.value === tipoModalidad,
-          )?.label ?? tipoModalidad;
-
-        if (!cotc.fechas.length) {
-          return [
-            {
-              id: crypto.randomUUID(),
-              cotcId: cotc.id,
-              tipoModalidad,
-              tipoModalidadLabel: label,
-              diasVacaciones: null,
-              fechaInicio: null,
-              fechaFin: null,
-              semanas: null,
-            },
-          ];
-        }
-
-        return cotc.fechas.map(
-          (fecha): ModalityFormItem => ({
-            id: crypto.randomUUID(),
-            cotcId: cotc.id,
-            fechaId: fecha.id,
-            tipoModalidad,
-            tipoModalidadLabel: label,
-            diasVacaciones: fecha.vacaciones,
-            fechaInicio: this.toDateOnly(fecha.fechaInicio),
-            fechaFin: this.toDateOnly(fecha.fechaFin),
-            semanas:
-              fecha.semanas == null ? null : Number(fecha.semanas),
-          }),
-        );
-      },
-    );
-  }
-
-  private toDateOnly(value: string | null | undefined): string {
-    if (!value) {
-      return '';
-    }
-    const datePart = value.split('T')[0];
-    return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : '';
+    effect(() => {
+      if (this.isReadOnly()) {
+        this.form.disable({ emitEvent: false });
+      } else {
+        this.form.enable({ emitEvent: false });
+      }
+    });
   }
 
   ngOnInit(): void {
-    this.loadCatalogs();
-  }
-
-  private loadCatalogs(): void {
     forkJoin({
       periods: this.preloadCallService.getUniversityPeriod(),
-      levels: this.preloadCallService.getEducationalLevels(),
-      modalities: this.preloadCallService.getModalities(),
+      vinculaciones: this.preloadCallService.getTiposVinculacion(),
+      clasificaciones: this.preloadCallService.getClasificacionesDocente(),
+      dedicaciones: this.preloadCallService.getDedicacionesDocente(),
+      tiposHoras: this.preloadCallService.getTiposHoras(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ periods, levels, modalities }) => {
-        this.universityPeriods.set(periods);
-        this.educationalLevels.set(levels);
-        this.modalityCatalog.set(modalities);
-        this.catalogsLoaded.set(true);
-      });
-  }
-
-  openModalityModal(): void {
-    this.editingModality.set(null);
-    this.modalityModalOpen.set(true);
-  }
-
-  openEditModality(item: ModalityFormItem): void {
-    if (!item?.id) {
-      return;
-    }
-
-    this.editingModality.set(item);
-    this.modalityModalOpen.set(true);
-  }
-
-  closeModalityModal(): void {
-    this.modalityModalOpen.set(false);
-    this.editingModality.set(null);
-  }
-
-  onModalitySaved(item: ModalityFormItem): void {
-    const editing = this.editingModality();
-
-    if (editing) {
-      this.modalities.update((items) =>
-        items.map((row) => (row.id === editing.id ? item : row)),
-      );
-    } else {
-      this.modalities.update((items) => [...items, item]);
-    }
-
-    this.closeModalityModal();
-  }
-
-  onDeleteModality(item: ModalityFormItem): void {
-    this.modalities.update((items) =>
-      items.filter((row) => row.id !== item.id),
-    );
-  }
-
-  onSearchPerson(): void {
-    const documento = this.form.controls.documentoIdentidad.value?.trim();
-    const nombre = this.form.controls.nombreCompleto.value?.trim();
-
-    if (!documento && !nombre) {
-      this.searchError.set(
-        'Ingrese documento o nombre para realizar la búsqueda.',
-      );
-      return;
-    }
-
-    this.searchError.set(null);
-    this.isSearching.set(true);
-    this.searchModalOpen.set(true);
-    this.searchResults.set([]);
-
-    this.preloadCallService
-      .searchGeneralPerson({ documento, nombre })
-      .pipe(finalize(() => this.isSearching.set(false)))
       .subscribe({
-        next: (results) => this.searchResults.set(results),
-        error: () => {
-          this.searchResults.set([]);
-          this.searchError.set(
-            'No fue posible consultar las personas. Intente de nuevo.',
-          );
+        next: ({ periods, vinculaciones, clasificaciones, dedicaciones, tiposHoras }) => {
+          this.universityPeriods.set(periods ?? []);
+          this.tiposVinculacionCatalog.set(vinculaciones ?? []);
+          this.clasificacionesDocente.set(clasificaciones ?? []);
+          this.dedicacionesDocente.set(dedicaciones ?? []);
+          this.tiposHoras.set(tiposHoras ?? []);
+        },
+        error: (err) => {
+          console.error('Error cargando catálogos de convocatoria:', err);
         },
       });
   }
 
-  onPersonSelected(person: PersonaAutorizaConvocatoriaItem): void {
-    this.form.patchValue({
-      idPersonaNaturalGeneral: person.id,
-      documentoIdentidad: person.documentoIdentidad,
-      nombreCompleto: person.nombreCompleto,
-      telefonoCelular: person.telefonoCelular ?? '',
-    });
-    this.closeSearchModal();
+  onSelectTipoVinculacion(value: string): void {
+    if (!value) return;
+    const selectedId = Number(value);
+    if (!selectedId) return;
+
+    const catalogItem = this.tiposVinculacionCatalog().find((t) => t.id === selectedId);
+    if (!catalogItem) return;
+
+    const current = this.vinculaciones();
+    if (!current.some((v) => v.idTipoVinculacion === selectedId)) {
+      this.vinculaciones.set([
+        ...current,
+        {
+          idTipoVinculacion: selectedId,
+          nombreTipoVinculacion: this.getTipoVinculacionNombre(selectedId),
+          estado: '1',
+        },
+      ]);
+    }
+    this.selectedTipoVinculacionId.set('');
   }
 
-  closeSearchModal(): void {
-    this.searchModalOpen.set(false);
+  toggleNewTipoVinculacionForm(): void {
+    this.showNewTipoVinculacionForm.update((v) => !v);
+  }
+
+  onCreateCustomTipoVinculacion(): void {
+    const idClasificacion = Number(this.selectedNewClasificacionId());
+    const idDedicacion = Number(this.selectedNewDedicacionId());
+    if (!idClasificacion || !idDedicacion) {
+      return;
+    }
+
+    this.isCreatingTipo.set(true);
+    const minVal = this.newMinimo().trim();
+    const maxVal = this.newMaximo().trim();
+    const contrato = this.newTipoContrato().trim();
+    const payload: Partial<TipoVinculacionDTO> = {
+      idClasificacionDocente: idClasificacion,
+      idDedicacionDocente: idDedicacion,
+      tipoContrato: contrato || null,
+      formaPago: this.newFormaPago().trim() || null,
+      tipoHoras: this.newTipoHoras() || null,
+      minimo: minVal ? Number(minVal) : null,
+      maximo: maxVal ? Number(maxVal) : null,
+    };
+
+    this.preloadCallService.createTipoVinculacion(payload).subscribe({
+      next: (created) => {
+        this.isCreatingTipo.set(false);
+        this.tiposVinculacionCatalog.update((list) => [...list, created]);
+        this.vinculaciones.update((list) => [
+          ...list,
+          {
+            idTipoVinculacion: created.id,
+            nombreTipoVinculacion: this.getTipoVinculacionNombre(created.id),
+            estado: '1',
+          },
+        ]);
+        this.selectedNewClasificacionId.set('');
+        this.selectedNewDedicacionId.set('');
+        this.newTipoHoras.set('SEMANAL');
+        this.newTipoContrato.set('');
+        this.newFormaPago.set('');
+        this.newMinimo.set('');
+        this.newMaximo.set('');
+        this.showNewTipoVinculacionForm.set(false);
+      },
+      error: (err) => {
+        this.isCreatingTipo.set(false);
+        console.error('Error creando tipo de vinculación:', err);
+      },
+    });
+  }
+
+  removeVinculacion(idTipoVinculacion: number): void {
+    this.vinculaciones.set(
+      this.vinculaciones().filter((v) => v.idTipoVinculacion !== idTipoVinculacion),
+    );
+  }
+
+  getHorasRange(idTipoVinculacion: number): string {
+    const item = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
+    if (!item) return '-';
+    const min = item.minimo != null ? `${item.minimo}` : '0';
+    const max = item.maximo != null ? `${item.maximo}` : 'N/A';
+    const tipo = item.tipoHoras ? ` (${item.tipoHoras})` : '';
+    return `${min} - ${max} hrs${tipo}`;
+  }
+
+  getFormaPago(idTipoVinculacion: number): string {
+    const item = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
+    return item?.formaPago || '-';
+  }
+
+  getTipoContrato(idTipoVinculacion: number): string {
+    const item = this.tiposVinculacionCatalog().find((t) => t.id === idTipoVinculacion);
+    return item?.tipoContrato || '-';
   }
 
   onSubmit(event: Event): void {
     event.preventDefault();
-    if (this.isReadOnly() || this.form.invalid || this.isSaving()) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    if (this.modalities().length === 0) {
-      this.saveError.set('Agregue al menos una modalidad.');
-      return;
-    }
-
-    const idPersona = this.form.controls.idPersonaNaturalGeneral.value;
-    if (idPersona == null) {
-      this.saveError.set(
-        'Seleccione la persona que autoriza desde la búsqueda.',
-      );
-      return;
-    }
-
-    const value = this.form.getRawValue();
-    const periodo = this.universityPeriods().find(
-      (item) => String(item.id) === value.periodoUniversidad,
-    );
-    const nivelEducativo = this.educationalLevels().find(
-      (item) => String(item.id) === value.nivelEducativo,
-    );
-
-    if (!periodo || !nivelEducativo) {
-      this.saveError.set('Seleccione periodo y nivel educativo.');
-      return;
-    }
-
-    const payload = buildPreloadCallSavePayload({
-      convocatoriaId: this.preloadCall()?.convocatoria?.id,
-      nombre: value.nombre ?? '',
-      descripcion: value.descripcion ?? '',
-      idPersonaNaturalGeneral: idPersona,
-      documentoIdentidad: value.documentoIdentidad ?? '',
-      nombreCompleto: value.nombreCompleto ?? '',
-      periodo,
-      nivelEducativo,
-      fechaInicio: value.fechaInicio ?? '',
-      fechaFin: value.fechaFin ?? '',
-      fechaInicioCtei: value.fechaInicioCtei ?? '',
-      fechaFinCtei: value.fechaFinCtei ?? '',
-      fechaInicioIsu: value.fechaInicioIsu ?? '',
-      fechaFinIsu: value.fechaFinIsu ?? '',
-      fechasMeta: this.fechasMeta(),
-      modalityRows: this.modalities(),
-      contratacion: toContratacionValue(value.esContratacion === true),
-    });
-
     this.saveError.set(null);
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.saveError.set('Por favor complete todos los campos obligatorios.');
+      return;
+    }
+
+    const raw = this.form.getRawValue();
+    const payload: ConvocatoriaFormularioDTO = {
+      id: raw.id,
+      idPeriodoUniversidad: Number(raw.idPeriodoUniversidad),
+      idRelacion: raw.idRelacion,
+      nombre: raw.nombre.trim(),
+      descripcion: raw.descripcion ? raw.descripcion.trim() : null,
+      fechaInicio: raw.fechaInicio,
+      fechaFin: raw.fechaFin,
+      estado: '1',
+      esIntersemestral: raw.esIntersemestral ? '1' : '0',
+      vinculaciones: this.vinculaciones(),
+    };
+
     this.submitPreloadCall.emit(payload);
+  }
+
+  private normalizeDateString(dateValue: string): string {
+    if (!dateValue) return '';
+    return dateValue.split('T')[0];
   }
 }

@@ -13,11 +13,7 @@ import {
   DataTableSearchEvent,
   DataTableToolbarActionEvent,
 } from '../../../../../shared/ui/data-table/table.types';
-import {
-  isHiringContratacion,
-  labelContratacion,
-  PreloadCallItem,
-} from '../../model/preload-call.model';
+import { PreloadCallItem } from '../../model/preload-call.model';
 
 @Component({
   selector: 'app-preload-call-table',
@@ -28,7 +24,7 @@ import {
 export class PreloadCallTable {
   readonly preloadCalls = input<PreloadCallItem[]>([]);
   readonly selectedPreloadCallIds = input<string[]>([]);
-  readonly emptyMessage = input('No hay convocatorias de precarga.');
+  readonly emptyMessage = input('No hay convocatorias registradas.');
   readonly showLinkCallAction = input(false);
 
   readonly addPreloadCall = output<void>();
@@ -37,35 +33,33 @@ export class PreloadCallTable {
   readonly refreshPreloadCall = output<void>();
   readonly deleteAllPreloadCall = output<string[]>();
   readonly selectedPreloadCallIdsChange = output<string[]>();
-  readonly restrictCoordination = output<PreloadCallItem>();
   readonly linkPreloadCall = output<PreloadCallItem>();
-  readonly linkPreassignment = output<PreloadCallItem>();
 
   readonly rowIdentity = (row: PreloadCallItem): string => String(row.id);
 
   readonly columns: DataTableColumn<PreloadCallItem>[] = [
     {
-      id: 'descripcion',
-      header: 'Descripción',
-      cell: (row) => row.descripcion || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'contratacion',
-      header: 'Tipo',
-      cell: (row) => labelContratacion(row.contratacion),
+      id: 'nombre',
+      header: 'Convocatoria',
+      allowHtml: true,
+      cell: (row) => {
+        const nombre = row.nombre || '-';
+        const descripcion = row.descripcion?.trim();
+        if (!descripcion || descripcion === nombre) {
+          return `<div class="font-medium text-gray-900 dark:text-white">${nombre}</div>`;
+        }
+        return `
+          <div class="flex flex-col gap-0.5 max-w-md">
+            <span class="font-medium text-gray-900 dark:text-white">${nombre}</span>
+            <span class="text-xs text-gray-500/80 dark:text-gray-400/80 line-clamp-2">${descripcion}</span>
+          </div>
+        `;
+      },
     },
     {
       id: 'periodoUniversidad',
-      header: 'Periodo universidad',
+      header: 'Periodo',
       cell: (row) => row.periodoUniversidad || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'nivelEducativo',
-      header: 'Nivel educativo',
-      cell: (row) => row.nivelEducativo || '-',
-      formatAsSentence: true,
     },
     {
       id: 'fechaInicio',
@@ -80,9 +74,31 @@ export class PreloadCallTable {
       formatAsDate: true,
     },
     {
-      id: 'nombreCompleto',
-      header: 'Aprobado por',
-      cell: (row) => row.nombreCompleto || '-',
+      id: 'esIntersemestral',
+      header: 'Intersemestral',
+      cell: (row) => (row.esIntersemestral === '1' ? 'Sí' : 'No'),
+    },
+    {
+      id: 'estado',
+      header: 'Estado',
+      allowHtml: true,
+      cell: (row) => {
+        const isActive = row.estado === '1' || row.estado?.toUpperCase() === 'ACTIVO';
+        if (isActive) {
+          return `
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              Activo
+            </span>
+          `;
+        }
+        return `
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 border border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+            <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+            Inactivo
+          </span>
+        `;
+      },
     },
   ];
 
@@ -98,34 +114,17 @@ export class PreloadCallTable {
     if (this.showLinkCallAction()) {
       actions.push({
         id: 'linkCall',
-        label: 'Enlazar convocatoria',
+        label: 'Relacionar convocatoria',
         icon: 'paperClip',
-        visible: (row) => !isHiringContratacion(row.contratacion),
       });
     }
 
     actions.push({
-      id: 'linkPreassignment',
-      label: 'Relacionar preasignación',
-      icon: 'paperClip',
-      visible: (row) => isHiringContratacion(row.contratacion),
+      id: 'delete',
+      label: 'Eliminar',
+      className: 'text-error-600 border-error-300 hover:bg-error-50 text-red-500',
+      icon: 'delete',
     });
-
-    actions.push(
-      {
-        id: 'restrictCoordination',
-        label: 'Restringir coordinación',
-        icon: 'lock',
-        visible: (row) => row.estado === '0',
-      },
-      {
-        id: 'delete',
-        label: 'Eliminar',
-        className:
-          'text-error-600 border-error-300 hover:bg-error-50 text-red-500',
-        icon: 'delete',
-      },
-    );
 
     return actions;
   });
@@ -136,39 +135,27 @@ export class PreloadCallTable {
       return;
     }
 
-    if (event.actionId === 'linkCall') {
-      this.linkPreloadCall.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'linkPreassignment') {
-      this.linkPreassignment.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'restrictCoordination') {
-      this.restrictCoordination.emit(event.row);
-      return;
-    }
-
     if (event.actionId === 'delete') {
       this.deletePreloadCall.emit(event.row);
+      return;
+    }
+
+    if (event.actionId === 'linkCall') {
+      this.linkPreloadCall.emit(event.row);
     }
   }
 
   onToolbarAction(event: DataTableToolbarActionEvent<PreloadCallItem>): void {
+    if (event.actionId === 'add') {
+      this.addPreloadCall.emit();
+    }
+
     if (event.actionId === 'refresh') {
       this.refreshPreloadCall.emit();
-      return;
     }
 
     if (event.actionId === 'deleteAll') {
-      this.deleteAllPreloadCall.emit(event.selectedRowKeys.map(String));
-      return;
-    }
-
-    if (event.actionId === 'add') {
-      this.addPreloadCall.emit();
+      this.deleteAllPreloadCall.emit(this.selectedPreloadCallIds());
     }
   }
 
