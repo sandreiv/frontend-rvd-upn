@@ -1,0 +1,23 @@
+<section
+  class="mt-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+>
+  @if (isLoadingLinkageTypes() && !hasAnyLinkageType()) {
+    <p
+      class="border-b border-gray-200 pb-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+    >
+      Cargando tipos de vinculación...
+    </p>
+  } @else if (hasAnyLinkageType()) {
+    <app-tab-bar
+      [items]="linkageTypeTabs()"
+      [selectedId]="selectedLinkageTypeId()"
+      (selectedIdChange)="onLinkageTypeChange($event)"
+    />
+  } @else {
+    <p
+      class="border-b border-gray-200 pb-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+    >
+      Asigne una convocatoria para ver los tipos de vinculación.
+    </p>
+  }
+</section>

@@ -8,6 +8,10 @@ import {
   CoordinationPreloadCallApi,
   normalizeCoordinationItem,
 } from '../model/coordination.model';
+import {
+  LinkageTypeItem,
+  LinkageTypeListResponse,
+} from '../model/linkage-type.model';
 
 @Injectable({
   providedIn: 'root',
@@ -60,5 +64,19 @@ export class CoordinationService {
     return this.webRequestService
       .get<CoordinationApiItem[]>(`${this.endpoint}/list`, params)
       .pipe(map((items) => items.map(normalizeCoordinationItem)));
+  }
+
+  /**
+   * Lista los tipos de vinculación de una convocatoria.
+   *
+   * @param idConvocatoria Identificador de la convocatoria.
+   * @returns Observable con los tipos de vinculación.
+   */
+  listLinkageTypes(idConvocatoria: number): Observable<LinkageTypeItem[]> {
+    return this.webRequestService
+      .get<LinkageTypeListResponse>(`${this.endpoint}/list-linkage-types`, {
+        idConvocatoria,
+      })
+      .pipe(map((response) => response.tipoVinculaciones ?? []));
   }
 }
