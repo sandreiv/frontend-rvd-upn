@@ -6,7 +6,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { AuthService } from '../../../../../core/service/auth-service';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Button } from '../../../../../shared/ui/button/button';
@@ -22,7 +21,6 @@ import { CoordinationService } from '../../data/coordination.service';
 import {
   CoordinationItem,
   CoordinationPreloadCallApi,
-  UNASSIGNED_PRELOAD_CALL_FILTER,
   isAvalDesarrolloCarga,
 } from '../../model/coordination.model';
 
@@ -41,14 +39,12 @@ import {
 export class ProfessorPreload implements OnInit {
   private readonly coordinationService = inject(CoordinationService);
 
-  private readonly authService = inject(AuthService);
-
   readonly universityPeriods = signal<UniversityPeriodItem[]>([]);
   readonly selectedPeriodId = signal('');
   readonly appliedPeriodId = signal<number | null>(null);
   readonly isLoadingPeriods = signal(false);
 
-  readonly selectedPreloadCallId = signal(UNASSIGNED_PRELOAD_CALL_FILTER);
+  readonly selectedPreloadCallId = signal('');
   readonly appliedFilterPreloadCallId = signal<string | null>(null);
   readonly selectedCoordinationIds = signal<string[]>([]);
   readonly selectedCoordination = signal<CoordinationItem | null>(null);
@@ -75,14 +71,16 @@ export class ProfessorPreload implements OnInit {
       const idPeriodoUniversidad = this.appliedPeriodId();
       const filterId = this.appliedFilterPreloadCallId();
 
-      if (idPeriodoUniversidad == null || filterId === null) {
+      const idConvocatoria = Number(filterId);
+
+      if (
+        idPeriodoUniversidad == null ||
+        filterId == null ||
+        filterId === '' ||
+        Number.isNaN(idConvocatoria)
+      ) {
         return undefined;
       }
-
-      const idConvocatoria =
-        filterId === UNASSIGNED_PRELOAD_CALL_FILTER
-          ? null
-          : Number(filterId);
 
       return { idPeriodoUniversidad, idConvocatoria };
     },
@@ -101,24 +99,12 @@ export class ProfessorPreload implements OnInit {
     })),
   );
 
-  readonly preloadCallOptions = computed<SelectOption[]>(() => {
-    const activeCalls = this.activePreloadCallsResource.value().map((item) => ({
+  readonly preloadCallOptions = computed<SelectOption[]>(() =>
+    this.activePreloadCallsResource.value().map((item) => ({
       value: String(item.id),
       label: item.nombre,
-    }));
-
-    if (this.hideUnassignedPreloadCall()) {
-      return activeCalls;
-    }
-
-    return [
-      {
-        value: UNASSIGNED_PRELOAD_CALL_FILTER,
-        label: 'Sin convocatoria asignada',
-      },
-      ...activeCalls,
-    ];
-  });
+    })),
+  );
 
   readonly coordinations = computed(() => this.coordinationsResource.value());
 
@@ -148,24 +134,13 @@ export class ProfessorPreload implements OnInit {
     return 'Seleccione una convocatoria y pulse Filtrar.';
   });
 
-  readonly hideUnassignedPreloadCall = computed(() => {
-    const roles = this.authService
-      .getRoles()
-      .map((role) => role.trim().toLowerCase());
-
-    return (
-      roles.includes('decano') ||
-      roles.includes('desarrollo academico')
-    );
-  });
-
   ngOnInit(): void {
     void this.loadUniversityPeriods();
   }
 
   onPeriodChange(periodId: string): void {
     this.selectedPeriodId.set(periodId);
-    this.selectedPreloadCallId.set(UNASSIGNED_PRELOAD_CALL_FILTER);
+    this.selectedPreloadCallId.set('');
   }
 
   onPreloadCallChange(preloadCallId: string): void {
@@ -183,9 +158,15 @@ export class ProfessorPreload implements OnInit {
       return;
     }
 
+    const preloadCallId = this.selectedPreloadCallId();
     const nextPeriodId = Number(periodId);
+    const idConvocatoria = Number(preloadCallId);
 
-    if (Number.isNaN(nextPeriodId)) {
+    if (
+      !preloadCallId ||
+      Number.isNaN(nextPeriodId) ||
+      Number.isNaN(idConvocatoria)
+    ) {
       return;
     }
 
@@ -249,10 +230,11 @@ export class ProfessorPreload implements OnInit {
       return;
     }
 
-    const filterId =
-      coordination.idConvocatoria != null
-        ? String(coordination.idConvocatoria)
-        : UNASSIGNED_PRELOAD_CALL_FILTER;
+    if (coordination.idConvocatoria == null) {
+      return;
+    }
+
+    const filterId = String(coordination.idConvocatoria);
 
     this.selectedPreloadCallId.set(filterId);
     this.appliedFilterPreloadCallId.set(filterId);
