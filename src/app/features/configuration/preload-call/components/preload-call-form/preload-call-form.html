@@ -189,6 +189,14 @@
                     />
                   </div>
                 </div>
+
+                <div class="flex items-center pt-2 md:col-span-2">
+                  <app-checkbox
+                    label="¿Es de planta?"
+                    [checked]="newEsPlanta()"
+                    (checkedChange)="setNewEsPlanta($event)"
+                  />
+                </div>
               </div>
 
               <div class="mt-5 flex justify-end gap-2 border-t border-gray-200/80 pt-3 dark:border-white/10">
@@ -218,10 +226,11 @@
           <table class="w-full min-w-full divide-y divide-gray-200 text-sm dark:divide-white/10">
             <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
               <tr>
-                <th class="w-[36%] px-3.5 py-2.5 sm:px-4 sm:py-3">Tipo de vinculación</th>
-                <th class="w-[24%] px-3.5 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">Rango de horas</th>
-                <th class="w-[18%] px-3.5 py-2.5 sm:px-4 sm:py-3">Forma de pago</th>
+                <th class="w-[30%] px-3.5 py-2.5 sm:px-4 sm:py-3">Tipo de vinculación</th>
+                <th class="w-[20%] px-3.5 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">Rango de horas</th>
+                <th class="w-[16%] px-3.5 py-2.5 sm:px-4 sm:py-3">Forma de pago</th>
                 <th class="w-[16%] px-3.5 py-2.5 sm:px-4 sm:py-3">Tipo de contrato</th>
+                <th class="w-[12%] px-3.5 py-2.5 sm:px-4 sm:py-3 text-center">¿Es planta?</th>
                 @if (!isReadOnly()) {
                   <th class="w-[6%] px-2 py-2.5 sm:px-3 sm:py-3 text-center">Acciones</th>
                 }
@@ -241,6 +250,17 @@
                   </td>
                   <td class="px-3.5 py-2.5 text-gray-600 sm:px-4 sm:py-3 dark:text-gray-300">
                     {{ getTipoContrato(v.idTipoVinculacion) }}
+                  </td>
+                  <td class="px-3.5 py-2.5 text-center sm:px-4 sm:py-3">
+                    @if (getEsPlanta(v.idTipoVinculacion)) {
+                      <span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/10 dark:text-success-400">
+                        Sí
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-white/5 dark:text-gray-400">
+                        No
+                      </span>
+                    }
                   </td>
                   @if (!isReadOnly()) {
                     <td class="px-2 py-2.5 text-center sm:px-3 sm:py-3">
@@ -263,6 +283,73 @@
       } @else {
         <p class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
           No se han asociado tipos de vinculación a esta convocatoria.
+        </p>
+      }
+    </app-collapsible-section>
+
+    <hr class="border-gray-200 dark:border-white/5" />
+
+    <app-collapsible-section
+      title="Periodos de extensión"
+      variant="plain"
+      [expanded]="periodoExtensionSectionExpanded()"
+      (expandedChange)="periodoExtensionSectionExpanded.set($event)"
+    >
+      @if (!isReadOnly()) {
+        <div class="flex flex-col gap-3">
+          <div>
+            <app-label>Seleccionar periodo de extensión</app-label>
+            <app-select
+              [options]="availablePeriodoExtensionOptions()"
+              [value]="selectedPeriodoExtensionId()"
+              (valueChange)="onSelectPeriodoExtension($event)"
+              [placeholder]="mainPeriodYear() ? 'Seleccione un periodo de extensión para agregar' : 'Primero seleccione el periodo universitario de la convocatoria'"
+              [disabled]="!selectedMainPeriodId() || availablePeriodoExtensionOptions().length === 0"
+              searchPlaceholder="Buscar periodo de extensión..."
+              [emptyText]="selectedMainPeriodId() ? 'No hay más periodos disponibles para este año y periodo' : 'Seleccione el periodo universitario de la convocatoria'"
+            />
+          </div>
+        </div>
+      }
+
+      @if (periodosExtension().length > 0) {
+        <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+          <table class="w-full min-w-full divide-y divide-gray-200 text-sm dark:divide-white/10">
+            <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
+              <tr>
+                <th class="w-[85%] px-4 py-3">Periodo</th>
+                @if (!isReadOnly()) {
+                  <th class="w-[15%] px-4 py-3 text-center">Acciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/5 dark:bg-transparent">
+              @for (pe of periodosExtension(); track pe.idPeriodoUniversidad) {
+                <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    {{ getPeriodoExtensionNombre(pe.idPeriodoUniversidad) }}
+                  </td>
+                  @if (!isReadOnly()) {
+                    <td class="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        title="Eliminar periodo de extensión"
+                        aria-label="Eliminar periodo de extensión"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10"
+                        (click)="removePeriodoExtension(pe.idPeriodoUniversidad)"
+                      >
+                        <app-icon name="delete" size="sm" />
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          No se han asociado periodos de extensión a esta convocatoria.
         </p>
       }
     </app-collapsible-section>

@@ -51,9 +51,10 @@ export class PreloadCall implements OnInit, OnDestroy {
   readonly universityPeriodOptions = computed((): SelectOption[] =>
     this.universityPeriods().map((period) => {
       const anio = period.anio ?? period.ano ?? '';
+      const codigo = period.codigoPeriodo ? ` (${period.codigoPeriodo})` : '';
       return {
         value: String(period.id),
-        label: `${anio} - ${period.periodo}`,
+        label: `${anio} - ${period.periodo}${codigo}`,
       };
     }),
   );

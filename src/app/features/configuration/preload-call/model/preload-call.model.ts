@@ -22,6 +22,7 @@ export interface TipoVinculacionDTO {
   tipoHoras?: string | null;
   formaPago?: string | null;
   tipoContrato?: string | null;
+  esPlanta?: number | null;
   estado?: string | null;
 }
 
@@ -30,6 +31,12 @@ export interface TipoVinculacionConvocatoriaItem {
   idTipoVinculacion: number;
   nombreTipoVinculacion?: string | null;
   estado?: string | null;
+}
+
+export interface PeriodoExtensionDTO {
+  id?: number | null;
+  idPeriodoUniversidad: number;
+  nombrePeriodo?: string | null;
 }
 
 export interface PreloadCallItem {
@@ -77,6 +84,7 @@ export interface ConvocatoriaFormularioDTO {
   estado?: string | null;
   esIntersemestral: string;
   vinculaciones: TipoVinculacionConvocatoriaItem[];
+  periodosExtension?: PeriodoExtensionDTO[];
   fechas?: PreloadCallDetailFecha[];
 }
 
@@ -87,6 +95,7 @@ export interface UniversityPeriodItem {
   ano?: number;
   anio?: number;
   periodo: string;
+  codigoPeriodo?: string | null;
 }
 
 export interface PersonaAutorizaConvocatoriaItem {
