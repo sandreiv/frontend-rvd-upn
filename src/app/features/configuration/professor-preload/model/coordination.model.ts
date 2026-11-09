@@ -291,6 +291,8 @@ export interface ProfessorSearchResult {
   categoriaCatedratico: CoordinationLookupItem | null;
   escalafon: ProfessorEscalafon | null;
   cargaDocente?: ProfessorCargaDocenteSummary | null;
+  valorPunto: number | null;
+  asignacionSalarial: number | null;
 }
 
 export interface WorkDate {

@@ -6,7 +6,7 @@ import { LoadRestrictionPage } from './load-restriction/pages/load-restriction-p
 import { ProjectCalls } from './project-calls/pages/project-calls/project-calls';
 import { ProjectTypes } from './project-types/pages/project-types/project-types';
 import { Projects } from './projects/pages/projects/projects';
-import { Novelties } from './novelties/pages/novelties/novelties';
+
 import { PointsValidity } from './points-validity/pages/points-validity/points-validity';
 
 export const administrationRoutes: Routes = [
@@ -25,10 +25,6 @@ export const administrationRoutes: Routes = [
       {
         path: 'restriccion-carga',
         component: LoadRestrictionPage,
-      },
-      {
-        path: 'novedades',
-        component: Novelties,
       },
       {
         path: 'puntos-vigencia',
