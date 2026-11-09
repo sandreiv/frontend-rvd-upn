@@ -31,6 +31,94 @@
         <app-icon name="plus" size="sm" />
         Agregar docente
       </app-button>
+
+      @if (isLoadingProfessors() && !currentProfessors().length) {
+        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          Cargando docentes...
+        </p>
+      } @else if (currentProfessors().length) {
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          @for (professor of currentProfessors(); track professor.idCargaDocente) {
+            <article
+              class="flex items-start justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 transition hover:border-gray-300 hover:shadow-theme-xs dark:border-white/5 dark:bg-white/3 dark:hover:border-white/10"
+            >
+              <div class="min-w-0 flex-1">
+                <p
+                  class="truncate text-sm font-semibold text-gray-900 dark:text-white/90"
+                >
+                  {{ professorDisplayName(professor) }}
+                </p>
+                <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  @let statusBadge = professorStatusBadge(professor);
+                  @if (statusBadge) {
+                    <span [class]="statusBadge.badgeClass">
+                      <span
+                        [class]="statusBadge.dotClass"
+                        aria-hidden="true"
+                      ></span>
+                      {{ statusBadge.label }}
+                    </span>
+                  }
+                  @let activitiesBadge = activitiesStatusBadge(professor);
+                  @if (activitiesBadge) {
+                    <span [class]="activitiesBadge.badgeClass">
+                      <span
+                        [class]="activitiesBadge.dotClass"
+                        aria-hidden="true"
+                      ></span>
+                      {{ activitiesBadge.label }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <button
+                #professorMenuBtn
+                type="button"
+                class="dropdown-toggle inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                [class.bg-gray-100]="openMenuKey() === professorMenuKey(professor)"
+                [class.dark:bg-white/10]="openMenuKey() === professorMenuKey(professor)"
+                [attr.aria-label]="'Acciones para ' + professorDisplayName(professor)"
+                [attr.aria-expanded]="openMenuKey() === professorMenuKey(professor)"
+                (click)="toggleProfessorMenu(professorMenuKey(professor))"
+              >
+                <app-icon name="ellipsisVertical" size="sm" />
+              </button>
+
+              <app-dropdown
+                [isOpen]="openMenuKey() === professorMenuKey(professor)"
+                [anchor]="professorMenuBtn"
+                className="w-56 p-2"
+                (close)="closeProfessorMenu()"
+              >
+                @for (action of resolveProfessorActions(); track action.id) {
+                  <app-item
+                    (itemClick)="onProfessorMenuAction(action.id, professor)"
+                  >
+                    <span
+                      class="inline-flex items-center gap-2"
+                      [class]="action.className ?? ''"
+                    >
+                      <app-icon [name]="action.icon" size="xs" />
+                      {{ action.label }}
+                    </span>
+                  </app-item>
+                }
+              </app-dropdown>
+            </article>
+          }
+        </div>
+      } @else {
+        <p
+          class="mt-4 rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+        >
+          No hay docentes de
+          <span class="font-medium text-gray-700 dark:text-gray-300">
+            {{ selectedLinkageTypeLabel() }}
+          </span>
+          para esta coordinación.
+        </p>
+      }
     </div>
   }
 </section>
@@ -41,4 +129,13 @@
   [idCoordinacion]="coordination().id"
   [linkageType]="selectedLinkageType()"
   (close)="closeProfessorAddModal()"
+/>
+
+<app-professor-activities-modal
+  [isOpen]="isActivitiesModalOpen()"
+  [professor]="activitiesProfessor()"
+  [linkageLabel]="selectedLinkageTypeLabel()"
+  [coordinationLabel]="coordination().descripcion || coordination().nombre"
+  [periodLabel]="coordination().periodoUniversidad"
+  (close)="closeActivitiesModal()"
 />

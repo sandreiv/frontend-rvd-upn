@@ -11,6 +11,7 @@ import {
   ValuePointsPreload,
 } from '../model/coordination.model';
 import { AddProfessorPayload } from '../model/add-professor.model';
+import { ProfessorLoadItem } from '../model/professor-load.model';
 import {
   LinkageTypeItem,
   LinkageTypeListResponse,
@@ -86,6 +87,21 @@ export class CoordinationService {
         idConvocatoria,
       })
       .pipe(map((response) => response.tipoVinculaciones ?? []));
+  }
+
+  /**
+   * Lista los docentes asociados a un tipo de vinculación de la convocatoria.
+   *
+   * @param idTipoVinculacionConvocatoria Identificador de la vinculación en la convocatoria.
+   * @returns Observable con los docentes de esa vinculación.
+   */
+  listProfessors(
+    idTipoVinculacionConvocatoria: number,
+  ): Observable<ProfessorLoadItem[]> {
+    return this.webRequestService.get<ProfessorLoadItem[]>(
+      `${this.endpoint}/list-professors`,
+      { idTipoVinculacionConvocatoria },
+    );
   }
 
   /**
