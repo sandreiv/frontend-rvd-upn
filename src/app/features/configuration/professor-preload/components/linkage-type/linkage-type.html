@@ -38,6 +38,7 @@
 <app-professor-add-modal
   [isOpen]="isProfessorAddModalOpen()"
   [anio]="coordination().anioUniversidad"
+  [idCoordinacion]="coordination().id"
   [linkageType]="selectedLinkageType()"
   (close)="closeProfessorAddModal()"
 />

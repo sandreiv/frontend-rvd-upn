@@ -4,6 +4,24 @@ export interface ConvocatoriaDates {
   fechaFin: string;
 }
 
+export interface AddProfessorPayload {
+  idPersonaGeneral: number;
+  idTipoVinculacionConvocatoria: number;
+  idCategoriaCatedratico: number;
+  idCoordinacion: number;
+  fechaInicio?: string;
+  fechaFin?: string;
+  valorContrato?: number;
+  valorPrestaciones?: number;
+  asignacionSalarial?: number;
+  totalContrato?: number;
+  horas?: string;
+  valorHora?: number;
+  puntos?: string;
+  valorPunto?: number;
+  semanas?: string;
+}
+
 export interface AddProfessorRequest {
   idCargaDocente?: number;
   idCarga: number;

@@ -17,10 +17,12 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  finalize,
   of,
   switchMap,
   tap,
 } from 'rxjs';
+import { ToastService } from '../../../../../core/service/toastService';
 import { Label } from '../../../../../shared/components/form/label/label';
 import {
   TypeaheadOption,
@@ -37,7 +39,9 @@ import { ProfessorSearchResult } from '../../model/coordination.model';
 import { LinkageTypeItem } from '../../model/linkage-type.model';
 import {
   ContractValue,
+  AddProfessorFormSnapshot,
   assignmentFieldsForPayment,
+  buildAddProfessorPayload,
   buildContractValueQuery,
   countWeeks,
   formatContractHours,
@@ -64,12 +68,14 @@ import {
 })
 export class ProfessorAddModal {
   private readonly coordinationService = inject(CoordinationService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchTerm$ = new Subject<string>();
   private readonly contractInputs$ = new Subject<void>();
 
   readonly isOpen = input(false);
   readonly anio = input<number | null>(null);
+  readonly idCoordinacion = input<number | null>(null);
   readonly linkageType = input<LinkageTypeItem | null>(null);
   readonly close = output<void>();
 
@@ -77,6 +83,7 @@ export class ProfessorAddModal {
   readonly searchResults = signal<ProfessorSearchResult[]>([]);
   readonly isSearching = signal(false);
   readonly selectedProfessor = signal<ProfessorSearchResult | null>(null);
+  readonly isSaving = signal(false);
   readonly isPlantLinkage = computed(() =>
     plantLinkage(this.linkageType()?.esPlanta),
   );
@@ -195,6 +202,71 @@ export class ProfessorAddModal {
     this.searchTerm$.next(query.trim());
   }
 
+  onSave(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
+    const professor = this.selectedProfessor();
+    if (professor == null) {
+      this.toastService.show('Seleccione un docente.', 'error', 'Docente');
+      return;
+    }
+
+    const idCategoriaCatedratico =
+      professor.categoriaCatedratico?.id ??
+      professor.escalafon?.idCategoriaCatedratico ??
+      null;
+    const idTipoVinculacionConvocatoria =
+      this.linkageType()?.idTipoVinculacionConvocatoria ?? null;
+    const idCoordinacion = this.idCoordinacion();
+
+    if (idCategoriaCatedratico == null) {
+      this.toastService.show(
+        'El docente no tiene categoría.',
+        'error',
+        'Categoría',
+      );
+      return;
+    }
+
+    if (idTipoVinculacionConvocatoria == null || idCoordinacion == null) {
+      this.toastService.show(
+        'No se pudo identificar la vinculación o la coordinación.',
+        'error',
+        'Carga docente',
+      );
+      return;
+    }
+
+    if (!this.isPlantLinkage()) {
+      this.syncCalculatedWeeks();
+    }
+
+    const raw = this.professorForm.getRawValue() as Record<string, unknown>;
+    const payload = buildAddProfessorPayload(
+      this.readProfessorSnapshot(
+        raw,
+        professor.id,
+        idTipoVinculacionConvocatoria,
+        idCategoriaCatedratico,
+        idCoordinacion,
+      ),
+    );
+
+    this.isSaving.set(true);
+    this.coordinationService
+      .addProfessor(payload)
+      .pipe(
+        finalize(() => this.isSaving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.close.emit(),
+        error: () => undefined,
+      });
+  }
+
   onProfessorSelected(option: TypeaheadOption): void {
     const professor = (option.data as ProfessorSearchResult | undefined) ?? null;
     this.selectedProfessor.set(professor);
@@ -305,6 +377,34 @@ export class ProfessorAddModal {
       horasSemanales: this.readControl(raw, 'horasSemanales'),
       valorHora: this.readControl(raw, 'valorHora'),
     });
+  }
+
+  private readProfessorSnapshot(
+    raw: Record<string, unknown>,
+    idPersonaGeneral: number,
+    idTipoVinculacionConvocatoria: number,
+    idCategoriaCatedratico: number,
+    idCoordinacion: number,
+  ): AddProfessorFormSnapshot {
+    return {
+      plant: this.isPlantLinkage(),
+      formaPago: this.linkageType()?.formaPago ?? null,
+      idPersonaGeneral,
+      idTipoVinculacionConvocatoria,
+      idCategoriaCatedratico,
+      idCoordinacion,
+      fechaInicio: this.readControl(raw, 'fechaInicio'),
+      fechaFin: this.readControl(raw, 'fechaFin'),
+      valorContrato: this.readControl(raw, 'valorContrato'),
+      valorPrestaciones: this.readControl(raw, 'valorPrestaciones'),
+      asignacionSalarial: this.readControl(raw, 'asignacionSalarial'),
+      totalContrato: this.readControl(raw, 'totalContrato'),
+      horas: this.readControl(raw, 'horasSemanales'),
+      valorHora: this.readControl(raw, 'valorHora'),
+      puntos: this.readControl(raw, 'numeroPuntos'),
+      valorPunto: this.readControl(raw, 'valorPunto'),
+      semanas: this.readControl(raw, 'semanas'),
+    };
   }
 
   private readControl(raw: Record<string, unknown>, key: string): string {

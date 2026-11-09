@@ -10,6 +10,7 @@ import {
   ProfessorSearchResult,
   ValuePointsPreload,
 } from '../model/coordination.model';
+import { AddProfessorPayload } from '../model/add-professor.model';
 import {
   LinkageTypeItem,
   LinkageTypeListResponse,
@@ -120,6 +121,20 @@ export class CoordinationService {
     return this.webRequestService.get<ProfessorSearchResult[]>(
       `${this.endpoint}/search-career-professor`,
       this.buildProfessorSearchQuery(params, anio),
+    );
+  }
+
+  /**
+   * Agrega un docente a la carga de la coordinación.
+   * El estado, la vigencia y la auditoría los completa el backend.
+   *
+   * @param payload Datos del docente y de la vinculación.
+   * @returns Observable vacío cuando el registro se guarda.
+   */
+  addProfessor(payload: AddProfessorPayload): Observable<void> {
+    return this.webRequestService.post<void>(
+      `${this.endpoint}/add-professor`,
+      payload,
     );
   }
 

@@ -5,6 +5,7 @@ export interface LinkageTypeLookup {
 
 export interface LinkageTypeItem {
   id: number;
+  idTipoVinculacionConvocatoria: number;
   clasificacionDocente: LinkageTypeLookup;
   dedicacionDocente: LinkageTypeLookup;
   minimo: string | null;

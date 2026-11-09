@@ -1,3 +1,5 @@
+import { AddProfessorPayload } from './add-professor.model';
+
 export type ContractModalityKind = 'catedra' | 'tiempoCompletoOcasional';
 
 export interface ProfessorFieldConfig {
@@ -482,6 +484,85 @@ function parseDecimal(value: string): number | null {
 
   const numeric = Number(text.replace(',', '.'));
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+export interface AddProfessorFormSnapshot {
+  plant: boolean;
+  formaPago: string | null;
+  idPersonaGeneral: number;
+  idTipoVinculacionConvocatoria: number;
+  idCategoriaCatedratico: number;
+  idCoordinacion: number;
+  fechaInicio: string;
+  fechaFin: string;
+  valorContrato: string;
+  valorPrestaciones: string;
+  asignacionSalarial: string;
+  totalContrato: string;
+  horas: string;
+  valorHora: string;
+  puntos: string;
+  valorPunto: string;
+  semanas: string;
+}
+
+export function buildAddProfessorPayload(
+  snapshot: AddProfessorFormSnapshot,
+): AddProfessorPayload {
+  const payload: AddProfessorPayload = {
+    idPersonaGeneral: snapshot.idPersonaGeneral,
+    idTipoVinculacionConvocatoria: snapshot.idTipoVinculacionConvocatoria,
+    idCategoriaCatedratico: snapshot.idCategoriaCatedratico,
+    idCoordinacion: snapshot.idCoordinacion,
+  };
+
+  if (snapshot.plant) {
+    return payload;
+  }
+
+  assignText(payload, 'fechaInicio', snapshot.fechaInicio);
+  assignText(payload, 'fechaFin', snapshot.fechaFin);
+  assignText(payload, 'horas', snapshot.horas);
+  assignText(payload, 'semanas', snapshot.semanas);
+  assignMoney(payload, 'valorContrato', snapshot.valorContrato);
+  assignMoney(payload, 'valorPrestaciones', snapshot.valorPrestaciones);
+  assignMoney(payload, 'totalContrato', snapshot.totalContrato);
+
+  if (resolvePaymentForm(snapshot.formaPago) === 'CATEDRA') {
+    const valorHora =
+      parseDecimal(snapshot.valorHora) ?? parseCurrencyCOP(snapshot.valorHora);
+    if (valorHora != null) {
+      payload.valorHora = valorHora;
+    }
+    return payload;
+  }
+
+  assignText(payload, 'puntos', snapshot.puntos);
+  assignMoney(payload, 'asignacionSalarial', snapshot.asignacionSalarial);
+  assignMoney(payload, 'valorPunto', snapshot.valorPunto);
+  return payload;
+}
+
+function assignText(
+  payload: AddProfessorPayload,
+  key: 'fechaInicio' | 'fechaFin' | 'horas' | 'puntos' | 'semanas',
+  value: string,
+): void {
+  const text = value.trim();
+  if (text) {
+    payload[key] = text;
+  }
+}
+
+function assignMoney(
+  payload: AddProfessorPayload,
+  key: 'valorContrato' | 'valorPrestaciones' | 'asignacionSalarial' | 'totalContrato' | 'valorPunto',
+  value: string,
+): void {
+  const amount = parseCurrencyCOP(value);
+  if (amount != null) {
+    payload[key] = amount;
+  }
 }
 
 function isValidDateRange(fechaInicio: string, fechaFin: string): boolean {

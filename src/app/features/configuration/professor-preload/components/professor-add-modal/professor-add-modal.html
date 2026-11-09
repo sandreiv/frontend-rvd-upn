@@ -105,6 +105,8 @@
     <app-button type="button" variant="outline" (btnClick)="close.emit()">
       Cancelar
     </app-button>
-    <app-button type="button">Guardar</app-button>
+    <app-button type="button" [disabled]="isSaving()" (btnClick)="onSave()">
+      Guardar
+    </app-button>
   </div>
 </app-modal>
