@@ -19,10 +19,13 @@ import {
   LinkageTypeItem,
   linkageTypeLabel,
 } from '../../model/linkage-type.model';
+import { Button } from '../../../../../shared/ui/button/button';
+import { Icon } from '../../../../../shared/ui/icon/icon';
+import { ProfessorAddModal } from '../professor-add-modal/professor-add-modal';
 
 @Component({
   selector: 'app-linkage-type',
-  imports: [TabBar],
+  imports: [TabBar, Button, Icon, ProfessorAddModal],
   templateUrl: './linkage-type.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -30,8 +33,8 @@ export class LinkageType {
   private readonly coordinationService = inject(CoordinationService);
 
   readonly coordination = input.required<CoordinationItem>();
-
   readonly selectedLinkageTypeId = signal<TabBarId | null>(null);
+  readonly isProfessorAddModalOpen = signal(false);
 
   readonly linkageTypesResource = rxResource({
     params: () => {
@@ -64,6 +67,13 @@ export class LinkageType {
     () => this.linkageTypeTabs().length > 0,
   );
 
+  readonly selectedLinkageType = computed(() => {
+    const selectedId = this.selectedLinkageTypeId();
+    return (
+      this.linkageTypes().find((item) => item.id === selectedId) ?? null
+    );
+  });
+
   constructor() {
     effect(() => {
       const tabs = this.linkageTypeTabs();
@@ -83,5 +93,13 @@ export class LinkageType {
 
   onLinkageTypeChange(linkageTypeId: TabBarId | null): void {
     this.selectedLinkageTypeId.set(linkageTypeId);
+  }
+
+  onProfessorAddModalOpen(): void {
+    this.isProfessorAddModalOpen.set(true);
+  }
+
+  closeProfessorAddModal(): void {
+    this.isProfessorAddModalOpen.set(false);
   }
 }

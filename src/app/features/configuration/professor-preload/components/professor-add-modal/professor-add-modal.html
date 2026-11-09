@@ -1,0 +1,110 @@
+<app-modal
+  [isOpen]="isOpen()"
+  className="mx-4 w-full max-w-4xl p-0"
+  (close)="close.emit()"
+>
+  <div class="flex items-start gap-3 px-6 py-6 sm:px-8">
+    <span
+      class="inline-flex size-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+    >
+      <app-icon name="userCircle" size="sm" />
+    </span>
+    <div>
+      <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+        Agregar nuevo docente
+      </h3>
+      <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+        Agregar un docente nuevo a la precarga.
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="space-y-6 border-t border-gray-200 px-6 py-6 sm:px-8 dark:border-white/10"
+  >
+
+    <section
+      class="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 lg:p-6"
+    >
+      <div
+        class="-mx-5 mb-4 flex items-center gap-2 border-b border-gray-200 px-5 pb-4 lg:-mx-6 lg:px-6 dark:border-white/10"
+      >
+        <app-icon name="academicCap" size="sm" classes="text-gray-500" />
+        <h4 class="text-sm font-semibold text-gray-800 dark:text-white/90">
+          Selección de docente
+        </h4>
+      </div>
+
+      @if (isOpen() && isProfessorActive()) {
+        <div class="mb-4">
+          <app-label>Buscar docente</app-label>
+          <app-typeahead-select
+            [items]="searchResults()"
+            [optionAdapter]="professorOptionAdapter"
+            [loading]="isSearching()"
+            placeholder="Documento o nombre..."
+            emptyText="Sin resultados"
+            (queryChange)="onSearchProfessor($event)"
+            (optionSelected)="onProfessorSelected($event)"
+          />
+        </div>
+      }
+
+      @if (!isPlantLinkage()) {
+        <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/5">
+        <p class="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Detalle de asignación
+          @if (selectedProfessor(); as professor) {
+            <span class="text-gray-400">
+              · {{ professor.nombreCompleto }} · {{ professor.documentoIdentidad }}
+            </span>
+          } @else {
+            <span class="text-gray-400">· Seleccione un docente</span>
+          }
+        </p>
+
+        <div
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          [formGroup]="professorForm"
+        >
+          @for (field of fields(); track field.key) {
+            @if (field.key === 'fechaLabor') {
+              <div class="sm:col-span-2">
+                <app-date-range-picker
+                  [formGroup]="professorForm"
+                  startControlName="fechaInicio"
+                  endControlName="fechaFin"
+                  startId="professorFechaInicio"
+                  endId="professorFechaFin"
+                  startLabel="Fecha inicio"
+                  endLabel="Fecha fin"
+                  startPlaceholder="Fecha inicio"
+                  endPlaceholder="Fecha fin"
+                  [showLabels]="true"
+                />
+              </div>
+            } @else {
+              <div>
+                <app-label>{{ field.label }}</app-label>
+                <app-input-field
+                  [type]="field.control"
+                  [formControlName]="field.key"
+                />
+              </div>
+            }
+          }
+        </div>
+        </div>
+      }
+    </section>
+  </div>
+
+  <div
+    class="flex justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
+  >
+    <app-button type="button" variant="outline" (btnClick)="close.emit()">
+      Cancelar
+    </app-button>
+    <app-button type="button">Guardar</app-button>
+  </div>
+</app-modal>

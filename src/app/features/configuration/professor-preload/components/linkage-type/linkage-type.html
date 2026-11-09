@@ -17,7 +17,27 @@
     <p
       class="border-b border-gray-200 pb-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
     >
-      Asigne una convocatoria para ver los tipos de vinculación.
+      Asigne tipos de vinculación para la convocatoria.
     </p>
   }
+  @if (hasAnyLinkageType()) {
+    <div class="mt-4">
+      <app-button
+        type="button"
+        size="sm"
+        className="h-11 shrink-0 whitespace-nowrap"
+        (btnClick)="onProfessorAddModalOpen()"
+      >
+        <app-icon name="plus" size="sm" />
+        Agregar docente
+      </app-button>
+    </div>
+  }
 </section>
+
+<app-professor-add-modal
+  [isOpen]="isProfessorAddModalOpen()"
+  [anio]="coordination().anioUniversidad"
+  [linkageType]="selectedLinkageType()"
+  (close)="closeProfessorAddModal()"
+/>

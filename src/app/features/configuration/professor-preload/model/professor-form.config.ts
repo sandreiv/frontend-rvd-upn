@@ -9,138 +9,9 @@ export interface ProfessorFieldConfig {
   role?: 'categoria';
 }
 
-export const PROFESSOR_FIELDS: Record<ContractModalityKind, ProfessorFieldConfig[]> = {
-  tiempoCompletoOcasional: [
-    { 
-      key: 'numeroPuntos', 
-      label: 'Número de puntos', 
-      control: 'number',
-      readonly: true,
-    },
-    { 
-      key: 'valorPunto', 
-      label: 'Valor punto', 
-      control: 'text',
-      readonly: true,
-    },
-    { 
-      key: 'asignacionSalarial', 
-      label: 'Asignación salarial', 
-      control: 'text',
-      readonly: true,
-    },
-    {
-      key: 'categoriaCatedratico',
-      label: 'Categoría del docente',
-      control: 'text',
-      readonly: true
-    },
-    {
-      key: 'fechaLabor',
-      label: 'Fecha labor',
-      control: 'select',
-      placeholder: 'Seleccione el rango',
-    },
-    {
-      key: 'semanas',
-      label: 'Número de semanas',
-      control: 'number',
-      readonly: true,
-    },
-    {
-      key: 'vacaciones',
-      label: 'Días de vacaciones',
-      control: 'number',
-      readonly: true,
-    },
-    {
-      key: 'valorContrato',
-      label: 'Valor del contrato',
-      control: 'text',
-      readonly: true,
-    },
-    {
-      key: 'valorPrestaciones',
-      label: 'Valor prestaciones',
-      control: 'text',
-      readonly: true,
-    },
-    {
-      key: 'totalContrato',
-      label: 'Total del contrato',
-      control: 'text',
-      readonly: true,
-    },
-    {
-      key: 'horasSemanales',
-      label: 'Horas semanales',
-      control: 'text',
-      readonly: true,
-    },
-  ],
-  catedra: [
-    {
-      key: 'categoriaCatedratico',
-      label: 'Categoría catedrático',
-      control: 'text',
-      readonly: true,
-    },
-    {
-      key: 'fechaLabor',
-      label: 'Fecha labor',
-      control: 'select',
-      placeholder: 'Seleccione el rango',
-    },
-    {
-      key: 'semanas',
-      label: 'Número de semanas',
-      control: 'number',
-      readonly: true,
-    },
-    { 
-      key: 'valorHora', 
-      label: 'Valor hora', 
-      control: 'text',
-      readonly: true,
-    },
-  ],
-};
 
-export function resolveModalityKind(nombre: string | null | undefined,): ContractModalityKind | null {
-  if (!nombre) {
-    return null;
-  }
 
-  const value = nombre.toLocaleLowerCase('es-CO');
-  if (value.includes('catedra') || value.includes('cátedra')) {
-    return 'catedra';
-  }
 
-  if (value.includes('ocasional')) {
-    return 'tiempoCompletoOcasional';
-  }
-
-  return null;
-}
-
-export function resolveAssignmentFields(
-  kind: ContractModalityKind | null,
-  hasIdentifiedProfessor: boolean,
-  lockFechaLabor: boolean,
-): ProfessorFieldConfig[] {
-  if (!kind) {
-    return [];
-  }
-
-  return PROFESSOR_FIELDS[kind].map((field) =>
-    resolveAssignmentField(
-      field,
-      kind,
-      hasIdentifiedProfessor,
-      lockFechaLabor,
-    ),
-  );
-}
 
 export function resolveWeeklyHoursLabel(
   rangoHoras: string | null | undefined,
@@ -154,16 +25,7 @@ export function resolveWeeklyHoursLabel(
   return rangoHoras?.trim() ?? '';
 }
 
-export function professorDisplayName(
-  nombreCompleto: string | null | undefined,
-  idPersonaGeneral: number | null | undefined,
-): string {
-  if (idPersonaGeneral == null) {
-    return 'NN';
-  }
 
-  return nombreCompleto?.trim() || 'NN';
-}
 
 function resolveAssignmentField(
   field: ProfessorFieldConfig,
@@ -291,6 +153,15 @@ export interface ContractValues {
   totalContrato: number;
 }
 
+export function countWeeks(fechaInicio: string, fechaFin: string): number | null {
+  const days = countInclusiveDays(fechaInicio, fechaFin);
+  if (days <= 0) {
+    return null;
+  }
+
+  return Math.ceil(days / 7);
+}
+
 /**
  * Cuenta dias de labor incluyendo fecha inicio y fecha fin,
  * igual que ValorContratacionCalculator del backend.
@@ -376,4 +247,247 @@ export function formatCurrencyCOP(value: number | string | null): string {
   }
 
   return currencyFormatter.format(numeric);
+}
+
+export type PaymentForm = 'SALARIO' | 'CATEDRA';
+
+export interface ContractValueQuery {
+  idTipoVinculacion: number;
+  fechaInicio: string;
+  fechaFin: string;
+  asignacionSalarial?: number;
+  puntos?: string;
+  valorPunto?: number;
+  horasSemanales?: number;
+  semanas?: number;
+  valorHora?: number;
+}
+
+export interface ContractValue {
+  valorContrato: number | null;
+  totalPrestaciones: number | null;
+  totalContrato: number | null;
+}
+
+export interface ContractFormSnapshot {
+  formaPago: string | null;
+  idTipoVinculacion: number | null;
+  fechaInicio: string;
+  fechaFin: string;
+  numeroPuntos: string;
+  valorPunto: string;
+  asignacionSalarial: string;
+  semanas: string;
+  horasSemanales: string;
+  valorHora: string;
+}
+
+const SALARIO_ASSIGNMENT_FIELDS: ProfessorFieldConfig[] = [
+  { key: 'numeroPuntos', label: 'Número de puntos', control: 'number', readonly: true },
+  { key: 'valorPunto', label: 'Valor punto', control: 'text', readonly: true },
+  { key: 'asignacionSalarial', label: 'Asignación salarial', control: 'text', readonly: true },
+  { key: 'categoriaCatedratico', label: 'Categoría del docente', control: 'text', readonly: true },
+  { key: 'fechaLabor', label: 'Fecha labor', control: 'select' },
+  { key: 'semanas', label: 'Número de semanas', control: 'number', readonly: false },
+  { key: 'vacaciones', label: 'Días de vacaciones', control: 'number' },
+  { key: 'valorContrato', label: 'Valor del contrato', control: 'text', readonly: true },
+  { key: 'valorPrestaciones', label: 'Valor prestaciones', control: 'text', readonly: true },
+  { key: 'totalContrato', label: 'Total del contrato', control: 'text', readonly: false },
+  { key: 'horasSemanales', label: 'Horas semanales', control: 'text', readonly: true },
+];
+
+const CATEDRA_ASSIGNMENT_FIELDS: ProfessorFieldConfig[] = [
+  { key: 'categoriaCatedratico', label: 'Categoría del docente', control: 'text', readonly: true },
+  { key: 'fechaLabor', label: 'Fecha labor', control: 'select' },
+  { key: 'semanas', label: 'Número de semanas', control: 'number', readonly: false },
+];
+
+export interface ContractHours {
+  minimo: string | null;
+  maximo: string | null;
+}
+
+export function formatContractHours(
+  minimo: string | null | undefined,
+  maximo: string | null | undefined,
+): string {
+  const minimum = minimo?.trim() ?? '';
+  const maximum = maximo?.trim() ?? '';
+
+  if (!minimum) {
+    return maximum;
+  }
+
+  if (!maximum) {
+    return minimum;
+  }
+
+  return `${minimum} - ${maximum}`;
+}
+
+export function resolvePaymentForm(
+  formaPago: string | null | undefined,
+): PaymentForm | null {
+  const value = formaPago?.trim().toLocaleUpperCase('es-CO') ?? '';
+  if (value === 'SALARIO' || value === 'CATEDRA') {
+    return value;
+  }
+
+  return null;
+}
+
+export function isPlantLinkage(esPlanta: number | null | undefined): boolean {
+  return esPlanta === 1;
+}
+
+export function assignmentFieldsForPayment(
+  formaPago: string | null | undefined,
+  esPlanta?: number | null,
+): ProfessorFieldConfig[] {
+  if (isPlantLinkage(esPlanta)) {
+    return [];
+  }
+
+  if (resolvePaymentForm(formaPago) === 'CATEDRA') {
+    return CATEDRA_ASSIGNMENT_FIELDS;
+  }
+
+  return SALARIO_ASSIGNMENT_FIELDS;
+}
+
+export function professorFormFieldKeys(): string[] {
+  return [...SALARIO_ASSIGNMENT_FIELDS, ...CATEDRA_ASSIGNMENT_FIELDS]
+    .map((field) => field.key)
+    .filter(
+      (key, index, keys) => key !== 'fechaLabor' && keys.indexOf(key) === index,
+    );
+}
+
+export function isLockedAssignmentField(key: string): boolean {
+  const field = [...SALARIO_ASSIGNMENT_FIELDS, ...CATEDRA_ASSIGNMENT_FIELDS].find(
+    (item) => item.key === key,
+  );
+
+  return field?.readonly === true;
+}
+
+export function parseCurrencyCOP(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  const normalized = value
+    .replace(/[^\d,.-]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const numeric = Number(normalized);
+
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+export function buildContractValueQuery(
+  snapshot: ContractFormSnapshot,
+): ContractValueQuery | null {
+  const paymentForm = resolvePaymentForm(snapshot.formaPago);
+  const fechaInicio = snapshot.fechaInicio.trim();
+  const fechaFin = snapshot.fechaFin.trim();
+
+  if (
+    paymentForm == null ||
+    snapshot.idTipoVinculacion == null ||
+    !isValidDateRange(fechaInicio, fechaFin)
+  ) {
+    return null;
+  }
+
+  if (paymentForm === 'SALARIO') {
+    return buildSalaryQuery(snapshot, fechaInicio, fechaFin);
+  }
+
+  return buildLectureQuery(snapshot, fechaInicio, fechaFin);
+}
+
+function buildSalaryQuery(
+  snapshot: ContractFormSnapshot,
+  fechaInicio: string,
+  fechaFin: string,
+): ContractValueQuery | null {
+  const asignacionSalarial = parseCurrencyCOP(snapshot.asignacionSalarial);
+  const valorPunto = parseCurrencyCOP(snapshot.valorPunto);
+  const puntos = snapshot.numeroPuntos.trim();
+
+  if (asignacionSalarial == null && (valorPunto == null || !puntos)) {
+    return null;
+  }
+
+  return {
+    idTipoVinculacion: snapshot.idTipoVinculacion as number,
+    fechaInicio,
+    fechaFin,
+    ...(asignacionSalarial != null ? { asignacionSalarial } : {}),
+    ...(valorPunto != null ? { valorPunto } : {}),
+    ...(puntos ? { puntos } : {}),
+  };
+}
+
+function buildLectureQuery(
+  snapshot: ContractFormSnapshot,
+  fechaInicio: string,
+  fechaFin: string,
+): ContractValueQuery | null {
+  const horasSemanales = parseWeeklyHours(snapshot.horasSemanales);
+  const semanas = parseDecimal(snapshot.semanas);
+  const valorHora =
+    parseDecimal(snapshot.valorHora) ?? parseCurrencyCOP(snapshot.valorHora);
+
+  if (
+    horasSemanales == null ||
+    horasSemanales <= 0 ||
+    semanas == null ||
+    semanas <= 0 ||
+    valorHora == null
+  ) {
+    return null;
+  }
+
+  return {
+    idTipoVinculacion: snapshot.idTipoVinculacion as number,
+    fechaInicio,
+    fechaFin,
+    horasSemanales,
+    semanas,
+    valorHora,
+  };
+}
+
+function parseWeeklyHours(value: string): number | null {
+  const parts = value
+    .split('-')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  const hours = parts.length > 1 ? parts[parts.length - 1] : value;
+
+  return parseDecimal(hours ?? '');
+}
+
+function parseDecimal(value: string): number | null {
+  const text = value.trim();
+  if (!text) {
+    return null;
+  }
+
+  const numeric = Number(text.replace(',', '.'));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function isValidDateRange(fechaInicio: string, fechaFin: string): boolean {
+  if (!fechaInicio || !fechaFin) {
+    return false;
+  }
+
+  return fechaFin > fechaInicio;
 }
