@@ -104,6 +104,7 @@ export class LinkageType {
   readonly coordination = input.required<CoordinationItem>();
   readonly selectedLinkageTypeId = signal<TabBarId | null>(null);
   readonly isProfessorAddModalOpen = signal(false);
+  readonly detailProfessor = signal<ProfessorLoadItem | null>(null);
   readonly isActivitiesModalOpen = signal(false);
   readonly activitiesProfessor = signal<ProfessorLoadItem | null>(null);
   readonly professorsRefresh = signal(0);
@@ -244,12 +245,18 @@ export class LinkageType {
   }
 
   onProfessorAddModalOpen(): void {
+    this.detailProfessor.set(null);
     this.isProfessorAddModalOpen.set(true);
   }
 
   closeProfessorAddModal(): void {
+    const viewingDetail = this.detailProfessor() != null;
     this.isProfessorAddModalOpen.set(false);
-    this.professorsRefresh.update((value) => value + 1);
+    this.detailProfessor.set(null);
+
+    if (!viewingDetail) {
+      this.professorsRefresh.update((value) => value + 1);
+    }
   }
 
   professorMenuKey(professor: ProfessorLoadItem): string {
@@ -296,6 +303,12 @@ export class LinkageType {
 
   onProfessorMenuAction(actionId: string, professor: ProfessorLoadItem): void {
     this.closeProfessorMenu();
+
+    if (actionId === 'detalle') {
+      this.detailProfessor.set(professor);
+      this.isProfessorAddModalOpen.set(true);
+      return;
+    }
 
     if (actionId !== 'actividades') {
       return;

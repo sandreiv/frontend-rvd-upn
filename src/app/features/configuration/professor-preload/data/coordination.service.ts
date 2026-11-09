@@ -1,7 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
-import { SearchGeneralPersonParams, UniversityPeriodItem } from '../../preload-call/model/preload-call.model';
+import {
+  SearchGeneralPersonParams,
+  UniversityPeriodItem,
+} from '../../preload-call/model/preload-call.model';
 import {
   CoordinationApiItem,
   CoordinationItem,
@@ -12,15 +15,9 @@ import {
 } from '../model/coordination.model';
 import { AddProfessorPayload } from '../model/add-professor.model';
 import { ProfessorLoadItem } from '../model/professor-load.model';
-import {
-  LinkageTypeItem,
-  LinkageTypeListResponse,
-} from '../model/linkage-type.model';
-import {
-  ContractHours,
-  ContractValue,
-  ContractValueQuery,
-} from '../model/professor-form.config';
+import { ActivityRestrictionItem, ActivityTypeNode } from '../model/professor-activities.model';
+import { LinkageTypeItem, LinkageTypeListResponse } from '../model/linkage-type.model';
+import { ContractHours, ContractValue, ContractValueQuery } from '../model/professor-form.config';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +32,7 @@ export class CoordinationService {
    * @param idPeriodoUniversidad Identificador del periodo universitario.
    * @returns Observable con las convocatorias activas del periodo.
    */
-  getActivePreloadCall(idPeriodoUniversidad: number,): Observable<CoordinationPreloadCallApi[]> {
+  getActivePreloadCall(idPeriodoUniversidad: number): Observable<CoordinationPreloadCallApi[]> {
     return this.webRequestService.get<CoordinationPreloadCallApi[]>(
       `${this.endpoint}/list-active-calls`,
       { idPeriodoUniversidad },
@@ -61,7 +58,10 @@ export class CoordinationService {
    * @param idConvocatoria Identificador opcional de la convocatoria.
    * @returns Observable con las coordinaciones encontradas.
    */
-  getCoordinations(idPeriodoUniversidad: number, idConvocatoria?: number | null,): Observable<CoordinationItem[]> {
+  getCoordinations(
+    idPeriodoUniversidad: number,
+    idConvocatoria?: number | null,
+  ): Observable<CoordinationItem[]> {
     const params: Record<string, number> = {
       idPeriodoUniversidad,
     };
@@ -95,12 +95,32 @@ export class CoordinationService {
    * @param idTipoVinculacionConvocatoria Identificador de la vinculación en la convocatoria.
    * @returns Observable con los docentes de esa vinculación.
    */
-  listProfessors(
-    idTipoVinculacionConvocatoria: number,
-  ): Observable<ProfessorLoadItem[]> {
-    return this.webRequestService.get<ProfessorLoadItem[]>(
-      `${this.endpoint}/list-professors`,
-      { idTipoVinculacionConvocatoria },
+  listProfessors(idTipoVinculacionConvocatoria: number): Observable<ProfessorLoadItem[]> {
+    return this.webRequestService.get<ProfessorLoadItem[]>(`${this.endpoint}/list-professors`, {
+      idTipoVinculacionConvocatoria,
+    });
+  }
+
+  /**
+   * Lista el árbol de tipos de actividad. Solo llegan los padres;
+   * cada nodo incluye sus descendientes en hijos.
+   *
+   * @returns Observable con los tipos de actividad activos e inactivos.
+   */
+  listActivityTypes(): Observable<ActivityTypeNode[]> {
+    return this.webRequestService.get<ActivityTypeNode[]>(`${this.endpoint}/list-activity-types`);
+  }
+
+  /**
+   * Lista las actividades que no se muestran para un tipo de vinculación.
+   *
+   * @param idTipoVinculacion Identificador de RVDIES.TIPOVINCULACION.
+   * @returns Observable con las restricciones. Vacío si no hay ninguna.
+   */
+  listActivityRestrictions(idTipoVinculacion: number): Observable<ActivityRestrictionItem[]> {
+    return this.webRequestService.get<ActivityRestrictionItem[]>(
+      `${this.endpoint}/list-activity-restrictions`,
+      { idTipoVinculacion },
     );
   }
 
@@ -148,10 +168,7 @@ export class CoordinationService {
    * @returns Observable vacío cuando el registro se guarda.
    */
   addProfessor(payload: AddProfessorPayload): Observable<void> {
-    return this.webRequestService.post<void>(
-      `${this.endpoint}/add-professor`,
-      payload,
-    );
+    return this.webRequestService.post<void>(`${this.endpoint}/add-professor`, payload);
   }
 
   /**
@@ -162,10 +179,9 @@ export class CoordinationService {
    * @returns Observable con el mínimo y el máximo guardados.
    */
   getContractHours(idTipoVinculacion: number): Observable<ContractHours> {
-    return this.webRequestService.get<ContractHours>(
-      `${this.endpoint}/contract-hours`,
-      { idTipoVinculacion },
-    );
+    return this.webRequestService.get<ContractHours>(`${this.endpoint}/contract-hours`, {
+      idTipoVinculacion,
+    });
   }
 
   /**
@@ -192,10 +208,7 @@ export class CoordinationService {
       params['puntos'] = query.puntos.trim();
     }
 
-    return this.webRequestService.get<ContractValue>(
-      `${this.endpoint}/contract-value`,
-      params,
-    );
+    return this.webRequestService.get<ContractValue>(`${this.endpoint}/contract-value`, params);
   }
 
   private buildProfessorSearchQuery(
@@ -227,6 +240,4 @@ export class CoordinationService {
 
     params[key] = value;
   }
-
-
 }

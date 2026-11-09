@@ -11,10 +11,14 @@
     </span>
     <div>
       <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
-        Agregar nuevo docente
+        {{ readOnly() ? 'Detalle del docente' : 'Agregar nuevo docente' }}
       </h3>
       <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-        Agregar un docente nuevo a la precarga.
+        {{
+          readOnly()
+            ? 'Información registrada de la carga docente.'
+            : 'Agregar un docente nuevo a la precarga.'
+        }}
       </p>
     </div>
   </div>
@@ -35,7 +39,7 @@
         </h4>
       </div>
 
-      @if (isOpen() && isProfessorActive()) {
+      @if (isOpen() && isProfessorActive() && !readOnly()) {
         <div class="mb-4">
           <app-label>Buscar docente</app-label>
           <app-typeahead-select
@@ -54,7 +58,9 @@
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/5">
         <p class="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
           Detalle de asignación
-          @if (selectedProfessor(); as professor) {
+          @if (readOnly() && detail(); as loaded) {
+            <span class="text-gray-400">· {{ loaded.nombreCompleto }}</span>
+          } @else if (selectedProfessor(); as professor) {
             <span class="text-gray-400">
               · {{ professor.nombreCompleto }} · {{ professor.documentoIdentidad }}
             </span>
@@ -103,10 +109,12 @@
     class="flex justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
   >
     <app-button type="button" variant="outline" (btnClick)="close.emit()">
-      Cancelar
+      {{ readOnly() ? 'Cerrar' : 'Cancelar' }}
     </app-button>
-    <app-button type="button" [disabled]="isSaving()" (btnClick)="onSave()">
-      Guardar
-    </app-button>
+    @if (!readOnly()) {
+      <app-button type="button" [disabled]="isSaving()" (btnClick)="onSave()">
+        Guardar
+      </app-button>
+    }
   </div>
 </app-modal>

@@ -37,6 +37,7 @@ import { SearchGeneralPersonParams } from '../../../preload-call/model/preload-c
 import { CoordinationService } from '../../data/coordination.service';
 import { ProfessorSearchResult } from '../../model/coordination.model';
 import { LinkageTypeItem } from '../../model/linkage-type.model';
+import { ProfessorLoadItem } from '../../model/professor-load.model';
 import {
   ContractValue,
   AddProfessorFormSnapshot,
@@ -77,6 +78,8 @@ export class ProfessorAddModal {
   readonly anio = input<number | null>(null);
   readonly idCoordinacion = input<number | null>(null);
   readonly linkageType = input<LinkageTypeItem | null>(null);
+  readonly readOnly = input(false);
+  readonly detail = input<ProfessorLoadItem | null>(null);
   readonly close = output<void>();
 
   readonly isProfessorActive = signal(true);
@@ -119,7 +122,7 @@ export class ProfessorAddModal {
 
   constructor() {
     effect(() => {
-      if (!this.isOpen()) {
+      if (!this.isOpen() || this.readOnly()) {
         return;
       }
 
@@ -134,13 +137,19 @@ export class ProfessorAddModal {
         return;
       }
 
+      if (this.readOnly()) {
+        this.applyDetail(this.detail());
+        return;
+      }
+
+      this.setFormReadOnly(false);
       this.isProfessorActive.set(true);
       this.professorForm.reset();
       this.clearSearch();
     });
 
     effect((onCleanup) => {
-      if (!this.isOpen()) {
+      if (!this.isOpen() || this.readOnly()) {
         return;
       }
 
@@ -180,6 +189,10 @@ export class ProfessorAddModal {
     this.professorForm.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
+        if (this.readOnly()) {
+          return;
+        }
+
         this.syncCalculatedWeeks();
         this.contractInputs$.next();
       });
@@ -203,7 +216,7 @@ export class ProfessorAddModal {
   }
 
   onSave(): void {
-    if (this.isSaving()) {
+    if (this.readOnly() || this.isSaving()) {
       return;
     }
 
@@ -326,7 +339,61 @@ export class ProfessorAddModal {
     this.applyContractValue(null);
   }
 
+  private applyDetail(detail: ProfessorLoadItem | null): void {
+    this.selectedProfessor.set(null);
+    this.professorForm.reset({}, { emitEvent: false });
+    this.setFormReadOnly(true);
+
+    if (detail == null) {
+      return;
+    }
+
+    this.professorForm.patchValue(
+      {
+        numeroPuntos: detail.puntos ?? '',
+        valorPunto: formatCurrencyCOP(detail.valorPunto),
+        asignacionSalarial: formatCurrencyCOP(detail.asignacionSalarial),
+        fechaInicio: this.dateOnly(detail.cargaFechaInicio),
+        fechaFin: this.dateOnly(detail.cargaFechaFin),
+        semanas: detail.semanas ?? '',
+        horasSemanales: detail.horas ?? '',
+        valorHora: formatCurrencyCOP(detail.valorHora),
+        valorContrato: formatCurrencyCOP(detail.valorContrato),
+        valorPrestaciones: formatCurrencyCOP(detail.valorPrestaciones),
+        totalContrato: formatCurrencyCOP(detail.totalContrato),
+      },
+      { emitEvent: false },
+    );
+  }
+
+  private setFormReadOnly(locked: boolean): void {
+    const keys = [...professorFormFieldKeys(), 'fechaInicio', 'fechaFin'];
+
+    for (let index = 0; index < keys.length; index += 1) {
+      const control = this.professorForm.get(keys[index]);
+      if (!control) {
+        continue;
+      }
+
+      const disabled = locked || isLockedAssignmentField(keys[index]);
+      if (disabled) {
+        control.disable({ emitEvent: false });
+        continue;
+      }
+
+      control.enable({ emitEvent: false });
+    }
+  }
+
+  private dateOnly(value: string | null): string {
+    return value?.trim().slice(0, 10) ?? '';
+  }
+
   private loadContractValue() {
+    if (this.readOnly()) {
+      return EMPTY;
+    }
+
     const query = this.resolveContractQuery();
     if (!query) {
       this.applyContractValue(null);

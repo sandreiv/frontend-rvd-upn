@@ -1,67 +1,114 @@
-<app-modal
-  [isOpen]="isOpen()"
-  className="mx-4 w-full max-w-5xl p-0"
-  (close)="close.emit()"
->
-  <header class="px-6 pb-5 pt-6 sm:px-8 sm:pt-8">
-    <div class="flex items-start gap-3 pr-10">
-      <span
-        class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-      >
-        <app-icon name="academicCap" size="sm" />
-      </span>
-      <div class="min-w-0">
-        <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
-          Gestionar actividades
-        </h3>
-        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-          Distribuye la carga académica del docente.
-        </p>
-        <div class="mt-3 flex flex-wrap items-center gap-2">
-          <span
-            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            Docente · {{ professorDisplayName() }}
-          </span>
-          <span
-            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            {{ linkageText() }}
-          </span>
-          <span
-            class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            Coordinación · {{ coordinationText() }}
-          </span>
-          @if (periodLabel()) {
+<app-modal [isOpen]="isOpen()" className="mx-4 w-full max-w-5xl p-0" (close)="close.emit()">
+  <div class="flex max-h-[85vh] flex-col">
+    <header class="shrink-0 px-6 pb-5 pt-6 sm:px-8 sm:pt-8">
+      <div class="flex items-start gap-3 pr-10">
+        <span
+          class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+        >
+          <app-icon name="academicCap" size="sm" />
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Gestionar actividades</h3>
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            Distribuye la carga académica del docente.
+          </p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
             <span
-              class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
             >
-              <app-icon name="calendar" size="xs" />
-              {{ periodLabel() }}
+              Docente · {{ professorDisplayName() }}
             </span>
-          }
+            <span
+              class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              {{ linkageText() }}
+            </span>
+            <span
+              class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              Coordinación · {{ coordinationText() }}
+            </span>
+            @if (periodLabel()) {
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              >
+                <app-icon name="calendar" size="xs" />
+                {{ periodLabel() }}
+              </span>
+            }
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <div
-    class="border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
-  >
-    <p
-      class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+    <div
+      class="min-h-0 flex-1 overflow-y-auto border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
     >
-      Aún no hay actividades registradas para este docente.
-    </p>
-  </div>
+      @if (isLoadingActivities()) {
+        <p
+          class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+        >
+          Cargando actividades del docente...
+        </p>
+      } @else if (activitiesError()) {
+        <p
+          class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+        >
+          No fue posible cargar las actividades.
+        </p>
+      } @else if (visibleActivities().length) {
+        <div class="flex flex-col gap-3">
+          @for (item of visibleActivities(); track item.activity.id) {
+            <app-collapsible-section
+              class="block"
+              contentClassName="flex flex-col gap-4"
+              [expanded]="isActivityExpanded(item.activity.id)"
+              (expandedChange)="onActivityExpandedChange(item.activity.id, $event)"
+            >
+              <div collapsibleSectionHeader class="flex min-w-0 flex-1 items-center gap-3">
+                <span
+                  class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl {{
+                    item.iconBgClass
+                  }}"
+                >
+                  <app-icon [name]="item.icon" size="sm" [classes]="item.iconColorClass" />
+                </span>
+                <h4 class="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white/90">
+                  {{ item.activity.nombre }}
+                </h4>
+              </div>
 
-  <footer
-    class="flex justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
-  >
-    <app-button type="button" variant="outline" (btnClick)="close.emit()">
-      Cancelar
-    </app-button>
-    <app-button type="button" (btnClick)="close.emit()">Guardar</app-button>
-  </footer>
+              @switch (item.view) {
+                @case ('direct') {
+                  <app-direct [activity]="item.activity" />
+                }
+                @case ('research') {
+                  <app-research [activity]="item.activity" />
+                }
+                @case ('extension') {
+                  <app-extension [activity]="item.activity" />
+                }
+                @case ('management') {
+                  <app-management [activity]="item.activity" />
+                }
+              }
+            </app-collapsible-section>
+          }
+        </div>
+      } @else {
+        <p
+          class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+        >
+          No hay categorías de actividades disponibles para este tipo de vinculación.
+        </p>
+      }
+    </div>
+
+    <footer
+      class="flex shrink-0 justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
+    >
+      <app-button type="button" variant="outline" (btnClick)="close.emit()"> Cancelar </app-button>
+      <app-button type="button" [disabled]="true">Guardar</app-button>
+    </footer>
+  </div>
 </app-modal>
