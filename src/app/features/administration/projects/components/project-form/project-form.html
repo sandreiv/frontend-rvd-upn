@@ -14,113 +14,59 @@
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Nombre</app-label>
-      <app-input-field
-        formControlName="nombre"
-        placeholder="Ingrese el nombre"
-      />
+      <app-label>Nombre del proyecto</app-label>
+      <app-input-field formControlName="nombre" placeholder="Ingrese el nombre del proyecto" />
     </div>
 
     <div>
-      <app-label>Descripción</app-label>
+      <app-label>Acta de consejo</app-label>
       <app-input-field
-        formControlName="descripcion"
-        placeholder="Ingrese la descripción"
+        formControlName="actaConsejo"
+        placeholder="Acta de consejo del proyecto"
       />
     </div>
   </div>
 
-  <div class="mt-4">
-    <fieldset
-      class="m-0 min-w-0 border-0 p-0"
-      [disabled]="isProductMode()"
-      [class.pointer-events-none]="isProductMode()"
-      [class.opacity-50]="isProductMode()"
-    >
-      <app-date-range-picker
-        [formGroup]="form"
-        startControlName="fechaInicio"
-        endControlName="fechaFin"
-        startId="proyectoFechaInicio"
-        endId="proyectoFechaFin"
-        startPlaceholder="Fecha inicio"
-        endPlaceholder="Fecha fin"
-        [showLabels]="true"
-      />
-    </fieldset>
-  </div>
-
-  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Monto</app-label>
-      <app-input-field
-        formControlName="monto"
-        placeholder="Monto"
-        (focus)="onMontoFocus()"
-        (blurred)="onMontoBlur()"
-      />
-      @if (montoMaximoLabel()) {
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Monto máximo del tipo: {{ montoMaximoLabel() }}
-        </p>
-      }
-      @if (montoMaximoInvalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El monto no puede superar el máximo permitido del tipo de proyecto.
-        </p>
-      }
-    </div>
-
-    <div>
-      <app-label>Convocatoria proyecto</app-label>
-
-      <fieldset
-        class="m-0 min-w-0 border-0 p-0"
-        [disabled]="isProductMode()"
-      >
-        <app-select
-          formControlName="idConvocatoriaProyectos"
-          [options]="convocatoriaOptions()"
+      <app-label>Tipo de actividad</app-label>
+      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isProductMode()">
+        <app-tree-select
+          formControlName="idTipoActividad"
+          [items]="rawTipoActividades()"
+          valueKey="id"
+          labelKey="nombre"
+          parentKey="idPadre"
+          selectableKey="esSeleccionable"
+          placeholder="Seleccione tipo de actividad"
+          searchPlaceholder="Buscar actividad..."
           [disabled]="isProductMode()"
-          placeholder="Seleccione convocatoria"
         />
       </fieldset>
     </div>
 
     <div>
-      <app-label>Tipo proyecto</app-label>
-
-      <fieldset
-        class="m-0 min-w-0 border-0 p-0"
-        [disabled]="isProductMode()"
-      >
-        <app-select
-          formControlName="idTipoProyecto"
-          [options]="tipoProyectoOptions()"
+      <app-label>Coordinación</app-label>
+      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isProductMode()">
+        <app-typeahead-select
+          formControlName="idCoordinacion"
+          [items]="filteredCoordinations()"
+          [optionAdapter]="coordinationOptionAdapter"
           [disabled]="isProductMode()"
-          placeholder="Seleccione tipo"
+          placeholder="Buscar coordinación"
+          emptyText="No se encontraron resultados"
+          (queryChange)="onSearchCoordination($event)"
         />
       </fieldset>
     </div>
   </div>
 
   <div class="mt-4">
-    <app-label>Coordinación</app-label>
-
-    <fieldset
-      class="m-0 min-w-0 border-0 p-0"
-      [disabled]="isProductMode()"
-    >
-      <app-typeahead-select
-        formControlName="idCoordinacion"
-        [items]="filteredCoordinations()"
-        [optionAdapter]="coordinationOptionAdapter"
-        [disabled]="isProductMode()"
-        placeholder="Buscar coordinación"
-        emptyText="No se encontraron resultados"
-        (queryChange)="onSearchCoordination($event)"
-      />
-    </fieldset>
+    <app-label>Descripción</app-label>
+    <app-input-field
+      formControlName="descripcion"
+      placeholder="Ingrese la descripción del proyecto"
+    />
   </div>
 
   <div class="mt-5 flex justify-end gap-3">

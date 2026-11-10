@@ -1,3 +1,9 @@
+/**
+ * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
+ * Modificaciones:
+ * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación para esquema general con Tipo de Actividades y Docentes
+ * 10/11/2026 - Leonel Antonio Perez Rios - Búsqueda de personas conectada al servicio de proyectos y remoción de tipo de actividad
+ */
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,12 +23,11 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
-  firstValueFrom,
   of,
   Subject,
   switchMap,
@@ -31,27 +36,19 @@ import { Button } from '../../../../../shared/ui/button/button';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
 import {
-  Option,
-  Select,
-} from '../../../../../shared/components/form/select/select';
-import {
   TypeaheadOption,
   TypeaheadSelect,
 } from '../../../../../shared/components/form/typeahead-select/typeahead-select';
-import { ActivityTypesService } from '../../../activity-types/data/activity-types.service';
-import { PreloadCallService } from '../../../../configuration/preload-call/data/preload-call.service';
+import { ProjectsService } from '../../data/projects.service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../../configuration/preload-call/model/preload-call.model';
 import {
   ProjectPersonFormData,
   ProjectPersonItem,
 } from '../../model/projects.model';
-import { ActivityTypeItem } from '../../../activity-types/model/activity-types.model';
 import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 
 type ProjectPersonFormGroup = FormGroup<{
   idPersonaGeneral: FormControl<string>;
-  idTipoActividad: FormControl<string>;
-  tipo: FormControl<string>;
   horas: FormControl<number | null>;
   observacion: FormControl<string>;
   esActivo: FormControl<boolean>;
@@ -63,17 +60,15 @@ type ProjectPersonFormGroup = FormGroup<{
     ReactiveFormsModule,
     Label,
     InputField,
-    Select,
     Button,
     TypeaheadSelect,
-    Checkbox
-],
+    Checkbox,
+  ],
   templateUrl: './project-person-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectPersonForm implements OnInit, OnChanges {
-  private readonly activityTypesService = inject(ActivityTypesService);
-  private readonly preloadCallService = inject(PreloadCallService);
+  private readonly projectsService = inject(ProjectsService);
   private readonly searchTerm$ = new Subject<string>();
 
   person = input<ProjectPersonItem | null>(null);
@@ -85,7 +80,6 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
   @Output() savePerson = new EventEmitter<ProjectPersonFormData>();
 
-  readonly activityTypeOptions = signal<Option[]>([]);
   readonly filteredPeople = signal<PersonaAutorizaConvocatoriaItem[]>([]);
 
   readonly isCreateMode = computed(() => this.person() == null);
@@ -108,14 +102,6 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    idTipoActividad: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    tipo: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
     horas: new FormControl<number | null>(null, {
       validators: [Validators.required, Validators.min(0)],
     }),
@@ -128,78 +114,51 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     }),
   });
 
-  readonly selectedIdTipoActividad = toSignal(
-    this.form.controls.idTipoActividad.valueChanges,
-    { initialValue: '' }
-  );
-
   readonly horas = toSignal(
     this.form.controls.horas.valueChanges,
-    { initialValue: null }
-  );
-
-  readonly selectedTipoActividad = computed(() => 
-    this.tiposActividadResource
-      .value()
-      .find((item) => String(item.id) === this.selectedIdTipoActividad())
+    { initialValue: null },
   );
 
   readonly horasValidation = computed(() => {
-    const tipoActividad = this.selectedTipoActividad();
     const horas = this.horas();
 
-    if (!tipoActividad || horas == null) {
+    if (horas == null || horas <= 0) {
       return {
         valid: false,
         bajoMinimo: false,
         sobreMaximo: false,
-        minimo: false,
-        maximo: false
+        minimo: 1,
+        maximo: 40,
       };
     }
 
-    const minimo = Number(tipoActividad.minimoHoras);
-    const maximo = Number(tipoActividad.maximoHoras);
-
     return {
-      valid: (horas >= minimo) && (horas <= maximo),
-      bajoMinimo: horas < minimo,
-      sobreMaximo: horas > maximo,
-      minimo,
-      maximo
+      valid: true,
+      bajoMinimo: false,
+      sobreMaximo: false,
+      minimo: 1,
+      maximo: 40,
     };
   });
-
-  
-  private readonly tiposActividadResource = rxResource({
-    stream: () =>
-      this.activityTypesService.listActivityTypes(),
-    defaultValue: [] as ActivityTypeItem[],
-  });
-
 
   constructor() {
     this.searchTerm$
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        switchMap((term) => {
-          const params = /^\d+$/.test(term)
-            ? { documento: term }
-            : { nombre: term };
-          return this.preloadCallService
-            .searchGeneralPerson(params)
+        switchMap((term) =>
+          this.projectsService
+            .searchPersons(term)
             .pipe(
               catchError(() => of([] as PersonaAutorizaConvocatoriaItem[])),
-            );
-        }),
+            ),
+        ),
         takeUntilDestroyed(),
       )
       .subscribe((rows) => this.filteredPeople.set(rows.slice(0, 20)));
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.loadActivityTypes();
+  ngOnInit(): void {
     this.patchForm();
   }
 
@@ -241,29 +200,11 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.savePerson.emit({
       idProyecto: this.projectId(),
       idPersonaGeneral: Number(raw.idPersonaGeneral),
-      idTipoActividad: Number(raw.idTipoActividad),
-      tipo: raw.tipo.trim(),
       horas: String(raw.horas ?? 0),
       observacion: raw.observacion.trim() || null,
+      estado: raw.esActivo ? '1' : '0',
       esActivo: raw.esActivo ? '1' : '0',
     });
-  }
-
-  private async loadActivityTypes(): Promise<void> {
-    try {
-      const rows = await firstValueFrom(
-        this.activityTypesService.listActivityTypes(),
-      );
-      this.activityTypeOptions.set(
-        (rows ?? []).map((item) => ({
-          value: String(item.id),
-          label: item.nombre?.trim() || String(item.id),
-        })),
-      );
-    } catch (error) {
-      console.error(error);
-      this.activityTypeOptions.set([]);
-    }
   }
 
   private ensureSelectedPerson(): void {
@@ -295,13 +236,10 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.form.reset({
       idPersonaGeneral:
         item?.idPersonaGeneral != null ? String(item.idPersonaGeneral) : '',
-      idTipoActividad:
-        item?.idTipoActividad != null ? String(item.idTipoActividad) : '',
-      tipo: item?.tipo ?? '',
       horas:
         item?.horas != null && item.horas !== '' ? Number(item.horas) : null,
       observacion: item?.observacion ?? '',
-      esActivo: this.isChecked(item?.esActivo),
+      esActivo: this.isChecked(item?.esActivo || item?.estado),
     });
   }
 

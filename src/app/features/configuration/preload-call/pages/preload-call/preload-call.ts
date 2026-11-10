@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -22,7 +22,9 @@ import {
   ConvocatoriaFormularioDTO,
   PreloadCallItem,
   UniversityPeriodItem,
+  formatUniversityPeriodLabel,
 } from '../../model/preload-call.model';
+import { formatSentenceValue } from '../../../../../shared/utils/normalized-text.util';
 
 @Component({
   selector: 'app-preload-call',
@@ -48,6 +50,7 @@ export class PreloadCall implements OnInit, OnDestroy {
   });
 
   readonly universityPeriods = computed(() => this.universityPeriodsResource.value());
+
   readonly universityPeriodOptions = computed((): SelectOption[] =>
     this.universityPeriods().map((period) => {
       const anio = period.anio ?? period.ano ?? '';
@@ -55,6 +58,7 @@ export class PreloadCall implements OnInit, OnDestroy {
       return {
         value: String(period.id),
         label: `${anio} - ${period.periodo}${codigo}`,
+        badge: formatSentenceValue(period.tipoPeriodo?.trim()) || undefined,
       };
     }),
   );
@@ -137,6 +141,11 @@ export class PreloadCall implements OnInit, OnDestroy {
   onFilterByPeriod(): void {
     const selected = this.selectedUniversityPeriodId();
     this.activeFilterPeriodId.set(selected ? Number(selected) : null);
+  }
+
+  onClearFilter(): void {
+    this.selectedUniversityPeriodId.set('');
+    this.activeFilterPeriodId.set(null);
   }
 
   openPreloadCallForm(): void {

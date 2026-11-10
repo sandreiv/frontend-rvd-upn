@@ -1,4 +1,4 @@
-export interface ClasificacionDocenteItem {
+﻿export interface ClasificacionDocenteItem {
   id: number;
   descripcion: string;
 }
@@ -96,6 +96,19 @@ export interface UniversityPeriodItem {
   anio?: number;
   periodo: string;
   codigoPeriodo?: string | null;
+  idTipoPeriodo?: number | null;
+  tipoPeriodo?: string | null;
+}
+
+export function formatUniversityPeriodLabel(period: UniversityPeriodItem): string {
+  const anio = period.anio ?? period.ano ?? '';
+  let tipo = '';
+  if (period.tipoPeriodo?.trim()) {
+    const raw = period.tipoPeriodo.trim().toLowerCase();
+    tipo = ` · ${raw.charAt(0).toUpperCase() + raw.slice(1)}`;
+  }
+  const codigo = period.codigoPeriodo ? ` (${period.codigoPeriodo})` : '';
+  return `${anio} - ${period.periodo}${codigo}${tipo}`;
 }
 
 export interface PersonaAutorizaConvocatoriaItem {

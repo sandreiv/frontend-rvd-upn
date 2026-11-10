@@ -1,4 +1,4 @@
-<div
+﻿<div
   class="grid gap-4"
   [class.lg:grid-cols-2]="showPreloadCallForm()"
 >
@@ -11,7 +11,8 @@
     >
       <div sectionFrameHeaderActions class="flex items-center gap-3">
         <app-select
-          class="w-full sm:w-64"
+          class="w-full sm:w-72"
+          labelFormat="none"
           [options]="universityPeriodOptions()"
           [value]="selectedUniversityPeriodId()"
           (valueChange)="selectedUniversityPeriodId.set($event)"
@@ -26,6 +27,14 @@
         >
           Filtrar
         </app-button>
+        @if (activeFilterPeriodId() != null) {
+          <app-button
+            variant="outline"
+            (btnClick)="onClearFilter()"
+          >
+            Limpiar
+          </app-button>
+        }
       </div>
 
       <app-preload-call-table

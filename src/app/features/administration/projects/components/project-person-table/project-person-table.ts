@@ -1,3 +1,9 @@
+/**
+ * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
+ * Modificaciones:
+ * 09/11/2026 - Leonel Antonio Perez Rios - Ajuste de columnas para participantes y roles en esquema general
+ * 10/11/2026 - Leonel Antonio Perez Rios - Remoción de columna rol inexistente en BD
+ */
 import {
   ChangeDetectionStrategy,
   Component,
@@ -44,15 +50,9 @@ export class ProjectPersonTable {
       formatAsSentence: true,
     },
     {
-      id: 'tipoActividad',
-      header: 'Tipo actividad',
-      cell: (row) => resolveProjectLookupName(row.tipoActividad),
-      formatAsSentence: true,
-    },
-    {
-      id: 'tipo',
-      header: 'Tipo',
-      cell: (row) => row.tipo || '-',
+      id: 'documento',
+      header: 'Documento',
+      cell: (row) => row.documento || '-',
     },
     {
       id: 'horas',
@@ -66,9 +66,9 @@ export class ProjectPersonTable {
       formatAsSentence: true,
     },
     {
-      id: 'esActivo',
-      header: 'Es activo',
-      cell: (row) => this.formatYesNo(row.esActivo),
+      id: 'estado',
+      header: 'Activo',
+      cell: (row) => this.formatYesNo(row.esActivo || row.estado),
     },
   ];
 
@@ -119,7 +119,7 @@ export class ProjectPersonTable {
     this.selectedPersonIds.set(keys.map((key) => String(key)));
   }
 
-  private formatYesNo(value: string | null): string {
+  private formatYesNo(value: string | null | undefined): string {
     const normalized = String(value ?? '').trim().toUpperCase();
 
     return normalized === '1' || normalized === 'S' || normalized === 'SI' || normalized === 'TRUE'

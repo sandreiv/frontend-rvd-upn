@@ -161,7 +161,7 @@ export class TypeaheadSelect implements ControlValueAccessor {
     }
 
     const query = this.searchText.trim();
-    if (query.length >= this.minChars || this.resolvedOptions.length > 0) {
+    if (query.length >= this.minChars) {
       this.isOpen = true;
     }
   }

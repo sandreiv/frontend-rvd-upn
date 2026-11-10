@@ -1,4 +1,4 @@
-<form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="onSubmit($event)">
+﻿<form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="onSubmit($event)">
   <div class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-white/5 dark:border-white/5 dark:bg-white/3">
     <app-collapsible-section
       title="Información de la convocatoria"
@@ -28,6 +28,7 @@
           <app-label>Periodo universitario</app-label>
           <app-select
             formControlName="idPeriodoUniversidad"
+            labelFormat="none"
             [options]="universityPeriodOptions()"
             placeholder="Seleccione el periodo"
             searchPlaceholder="Buscar periodo..."
@@ -88,7 +89,7 @@
                 type="button"
                 title="Registrar nuevo tipo de vinculación"
                 aria-label="Registrar nuevo tipo de vinculación"
-                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 shadow-theme-xs transition hover:bg-gray-50 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 shadow-theme-xs transition hover:bg-gray-50 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/3"
                 (click)="toggleNewTipoVinculacionForm()"
               >
                 <app-icon name="plus" size="sm" />
@@ -97,7 +98,7 @@
           </div>
 
           @if (showNewTipoVinculacionForm()) {
-            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-5 dark:border-white/10 dark:bg-white/[0.03]">
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-5 dark:border-white/10 dark:bg-white/3">
               <div class="mb-4 flex items-center justify-between border-b border-gray-200/80 pb-3 dark:border-white/10">
                 <div>
                   <h6 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -238,7 +239,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/5 dark:bg-transparent">
               @for (v of vinculaciones(); track v.idTipoVinculacion) {
-                <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                <tr class="hover:bg-gray-50 dark:hover:bg-white/2">
                   <td class="px-3.5 py-2.5 font-medium text-gray-900 sm:px-4 sm:py-3 dark:text-white">
                     {{ getTipoVinculacionNombre(v.idTipoVinculacion) }}
                   </td>
@@ -300,6 +301,7 @@
           <div>
             <app-label>Seleccionar periodo de extensión</app-label>
             <app-select
+              labelFormat="none"
               [options]="availablePeriodoExtensionOptions()"
               [value]="selectedPeriodoExtensionId()"
               (valueChange)="onSelectPeriodoExtension($event)"
@@ -325,7 +327,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/5 dark:bg-transparent">
               @for (pe of periodosExtension(); track pe.idPeriodoUniversidad) {
-                <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                <tr class="hover:bg-gray-50 dark:hover:bg-white/2">
                   <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
                     {{ getPeriodoExtensionNombre(pe.idPeriodoUniversidad) }}
                   </td>

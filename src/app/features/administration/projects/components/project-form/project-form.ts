@@ -1,25 +1,24 @@
+/**
+ * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
+ * Modificaciones:
+ * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación del formulario para esquema general de proyectos
+ * 10/11/2026 - Leonel Antonio Perez Rios - Carga de actividades jerárquicas desde ProjectsService
+ * 10/11/2026 - Leonel Antonio Perez Rios - Integración del componente jerárquico tipo árbol (TreeSelect)
+ */
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   EventEmitter,
+  inject,
+  input,
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-  computed,
-  inject,
-  input,
   signal,
+  SimpleChanges,
 } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -33,29 +32,16 @@ import {
 import { Button } from '../../../../../shared/ui/button/button';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
-import {
-  Option,
-  Select,
-} from '../../../../../shared/components/form/select/select';
-import { DateRangePicker } from '../../../../../shared/components/form/date-range-picker/date-range-picker';
+import { TreeSelect } from '../../../../../shared/components/form/tree-select/tree-select';
 import {
   TypeaheadOption,
   TypeaheadSelect,
 } from '../../../../../shared/components/form/typeahead-select/typeahead-select';
-import {
-  formatCurrencyInput,
-  formatCurrencyValue,
-  parseCurrencyToNumber,
-} from '../../../../../shared/utils/currency.util';
-import { ProjectCallsService } from '../../../project-calls/data/project-calls.service';
-import { ProjectTypesService } from '../../../project-types/data/project-types.service';
-import { ProjectTypeItem } from '../../../project-types/model/project-types.model';
-import { PreloadCallService } from '../../../../configuration/preload-call/data/preload-call.service';
+import { ProjectsService } from '../../data/projects.service';
 import {
   ProjectFormData,
   ProjectItem,
-  resolveProjectTypeLimits,
-  toDateOnly,
+  TipoActividadProyectoItem,
 } from '../../model/projects.model';
 
 interface CoordinationOption {
@@ -67,32 +53,19 @@ interface CoordinationOption {
 type ProjectFormGroup = FormGroup<{
   nombre: FormControl<string>;
   descripcion: FormControl<string>;
-  monto: FormControl<string>;
-  fechaInicio: FormControl<string>;
-  fechaFin: FormControl<string>;
-  idConvocatoriaProyectos: FormControl<string>;
-  idTipoProyecto: FormControl<string>;
+  actaConsejo: FormControl<string>;
+  idTipoActividad: FormControl<string>;
   idCoordinacion: FormControl<string>;
 }>;
 
 @Component({
   selector: 'app-project-form',
-  imports: [
-    ReactiveFormsModule,
-    Label,
-    InputField,
-    Select,
-    Button,
-    DateRangePicker,
-    TypeaheadSelect,
-  ],
+  imports: [ReactiveFormsModule, Label, InputField, TreeSelect, Button, TypeaheadSelect],
   templateUrl: './project-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectForm implements OnInit, OnChanges {
-  private readonly projectCallsService = inject(ProjectCallsService);
-  private readonly projectTypesService = inject(ProjectTypesService);
-  private readonly preloadCallService = inject(PreloadCallService);
+  private readonly projectsService = inject(ProjectsService);
   private readonly searchTerm$ = new Subject<string>();
 
   project = input<ProjectItem | null>(null);
@@ -101,37 +74,17 @@ export class ProjectForm implements OnInit, OnChanges {
   editTitle = input('Editar proyecto');
   description = input('Registra la información básica del proyecto.');
   parentProjectId = input<number | null>(null);
-  parentProjectCallId = input<number | null>(null);
-  parentProjectTypeId = input<number | null>(null);
   parentCoordinationId = input<number | null>(null);
   parentCoordinationName = input('');
-  parentStartDate = input<string | null>(null);
-  parentEndDate = input<string | null>(null);
+  parentTipoActividadId = input<number | null>(null);
 
-  readonly isProductMode = computed(
-    () => this.parentProjectId() != null,
-  );
+  readonly isProductMode = computed(() => this.parentProjectId() != null);
 
   @Output() cancel = new EventEmitter<void>();
   @Output() saveProject = new EventEmitter<ProjectFormData>();
 
-  readonly convocatoriaOptions = signal<Option[]>([]);
-  readonly tipoProyectoOptions = signal<Option[]>([]);
-  readonly projectTypes = signal<ProjectTypeItem[]>([]);
-  readonly selectedProjectType = signal<ProjectTypeItem | null>(null);
+  readonly rawTipoActividades = signal<TipoActividadProyectoItem[]>([]);
   readonly filteredCoordinations = signal<CoordinationOption[]>([]);
-
-  readonly selectedTypeLimits = computed(() =>
-    resolveProjectTypeLimits(this.selectedProjectType()),
-  );
-
-  readonly montoMaximoLabel = computed(() => {
-    const max = this.selectedTypeLimits().montoMaximo;
-    if (max == null) {
-      return '';
-    }
-    return formatCurrencyValue(max);
-  });
 
   readonly form: ProjectFormGroup = new FormGroup({
     nombre: new FormControl('', {
@@ -140,25 +93,13 @@ export class ProjectForm implements OnInit, OnChanges {
     }),
     descripcion: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(500)],
+      validators: [Validators.maxLength(1000)],
     }),
-    monto: new FormControl('', {
+    actaConsejo: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, this.montoMaximoValidator()],
+      validators: [Validators.maxLength(100)],
     }),
-    fechaInicio: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    fechaFin: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    idConvocatoriaProyectos: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    idTipoProyecto: new FormControl('', {
+    idTipoActividad: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -174,25 +115,13 @@ export class ProjectForm implements OnInit, OnChanges {
         debounceTime(300),
         distinctUntilChanged(),
         switchMap((term) =>
-          this.preloadCallService
-            .searchCoordination(term)
+          this.projectsService
+            .searchCoordinations(term)
             .pipe(catchError(() => of([] as CoordinationOption[]))),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((rows) => this.filteredCoordinations.set(rows.slice(0, 20)));
-
-    this.form.controls.idTipoProyecto.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe((id) => this.onTipoProyectoChange(id));
-
-    this.form.controls.monto.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => {
-        this.form.controls.monto.updateValueAndValidity({
-          emitEvent: false,
-        });
-      });
+      .subscribe((rows) => this.filteredCoordinations.set(rows));
   }
 
   async ngOnInit(): Promise<void> {
@@ -204,22 +133,12 @@ export class ProjectForm implements OnInit, OnChanges {
     if (
       changes['project'] ||
       changes['parentProjectId'] ||
-      changes['parentProjectCallId'] ||
-      changes['parentProjectTypeId'] ||
       changes['parentCoordinationId'] ||
       changes['parentCoordinationName'] ||
-      changes['parentStartDate'] ||
-      changes['parentEndDate'] 
+      changes['parentTipoActividadId']
     ) {
       this.patchForm();
     }
-  }
-
-  get montoMaximoInvalid(): boolean {
-    const control = this.form.controls.monto;
-    return (
-      control.hasError('montoMaximo') && (control.touched || control.dirty)
-    );
   }
 
   readonly coordinationOptionAdapter = (item: unknown): TypeaheadOption => {
@@ -235,110 +154,46 @@ export class ProjectForm implements OnInit, OnChanges {
     if (this.isProductMode()) {
       return;
     }
-
     const normalized = term.trim();
-
     if (normalized.length < 2) {
       this.filteredCoordinations.set([]);
       return;
     }
-
     this.searchTerm$.next(normalized);
-  }
-
-  onMontoFocus(): void {
-    const numeric = parseCurrencyToNumber(this.form.controls.monto.value);
-    this.form.controls.monto.setValue(
-      numeric == null ? '' : String(numeric),
-      { emitEvent: false },
-    );
-  }
-
-  onMontoBlur(): void {
-    this.form.controls.monto.setValue(
-      formatCurrencyInput(this.form.controls.monto.value),
-      { emitEvent: false },
-    );
-    this.form.controls.monto.updateValueAndValidity({ emitEvent: false });
   }
 
   onSubmit(): void {
     this.form.markAllAsTouched();
-    this.onMontoBlur();
 
     if (this.form.invalid || this.isSaving()) {
       return;
     }
 
     const raw = this.form.getRawValue();
-    const monto = parseCurrencyToNumber(raw.monto);
     const parentId = this.parentProjectId();
 
     this.saveProject.emit({
       nombre: raw.nombre.trim(),
-      descripcion: raw.descripcion.trim(),
-      monto: String(monto ?? 0),
-      fechaInicio: raw.fechaInicio,
-      fechaFin: raw.fechaFin,
-      idConvocatoriaProyectos: Number(raw.idConvocatoriaProyectos),
-      idTipoProyecto: Number(raw.idTipoProyecto),
+      descripcion: raw.descripcion.trim() || null,
+      actaConsejo: raw.actaConsejo.trim() || null,
+      idTipoActividad: Number(raw.idTipoActividad),
       idCoordinacion: Number(raw.idCoordinacion),
       idProyectoPadre: parentId,
+      estado: '1',
     });
-  }
-
-  private montoMaximoValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const monto = parseCurrencyToNumber(control.value);
-      const max = this.selectedTypeLimits().montoMaximo;
-
-      if (monto == null || max == null) {
-        return null;
-      }
-
-      return monto > max ? { montoMaximo: { max, actual: monto } } : null;
-    };
-  }
-
-  private onTipoProyectoChange(id: string): void {
-    const type =
-      this.projectTypes().find((item) => String(item.id) === id) ?? null;
-    this.selectedProjectType.set(type);
-    this.form.controls.monto.updateValueAndValidity({ emitEvent: false });
   }
 
   private async loadSelectOptions(): Promise<void> {
     try {
-      const [calls, types] = await Promise.all([
-        firstValueFrom(this.projectCallsService.listProjectCalls()),
-        firstValueFrom(this.projectTypesService.listProjectTypes()),
-      ]);
-
-      this.projectTypes.set(types ?? []);
-      this.convocatoriaOptions.set(
-        (calls ?? []).map((item) => ({
-          value: String(item.id),
-          label: item.nombre?.trim() || String(item.id),
-        })),
-      );
-      this.tipoProyectoOptions.set(
-        (types ?? []).map((item) => ({
-          value: String(item.id),
-          label: item.nombre?.trim() || String(item.id),
-        })),
-      );
+      const types = await firstValueFrom(this.projectsService.listProjectActivityTypes());
+      this.rawTipoActividades.set(types ?? []);
     } catch (error) {
       console.error(error);
-      this.projectTypes.set([]);
-      this.convocatoriaOptions.set([]);
-      this.tipoProyectoOptions.set([]);
+      this.rawTipoActividades.set([]);
     }
   }
 
-  private ensureSelectedCoordination(
-    idCoordinacion: number | null | undefined,
-    nombreCoordinacion: string | null | undefined,
-  ): void {
+  private ensureSelectedCoordination(idCoordinacion: number | null | undefined, nombreCoordinacion: string | null | undefined,): void {
     if (idCoordinacion == null) {
       return;
     }
@@ -363,77 +218,22 @@ export class ProjectForm implements OnInit, OnChanges {
     const item = this.project();
     const productMode = this.isProductMode();
 
-    const projectCallId = productMode
-      ? this.parentProjectCallId()
-      : item?.idConvocatoriaProyectos;
-
-    const projectTypeId = productMode
-      ? this.parentProjectTypeId()
-      : item?.idTipoProyecto;
-
-    const coordinationId = productMode
-      ? this.parentCoordinationId()
-      : item?.idCoordinacion;
-      
-    const startDate = productMode
-      ? this.parentStartDate()
-      : item?.fechaInicio;
-
-    const endDate = productMode
-      ? this.parentEndDate()
-      : item?.fechaFin;  
-
-
-
-    console.log('DEBUG FECHAS PRODUCTO', {
-  productMode,
-  parentStartDate: this.parentStartDate(),
-  parentEndDate: this.parentEndDate(),
-  startDate,
-  endDate,
-  startDateNormalized: toDateOnly(startDate),
-  endDateNormalized: toDateOnly(endDate),
-});
-
-
-
-
-
+    const coordinationId = productMode ? this.parentCoordinationId() : item?.idCoordinacion;
 
     const coordinationName = productMode
       ? this.parentCoordinationName()
       : item?.coordinacion?.nombre;
 
-    const tipoId =
-      projectTypeId != null
-        ? String(projectTypeId)
-        : '';
+    const tipoActividadId = productMode ? this.parentTipoActividadId() : item?.idTipoActividad;
 
-    this.ensureSelectedCoordination(
-      coordinationId,
-      coordinationName,
-    );
+    this.ensureSelectedCoordination(coordinationId, coordinationName);
 
     this.form.reset({
       nombre: item?.nombre ?? '',
       descripcion: item?.descripcion ?? '',
-      monto: formatCurrencyInput(item?.monto),
-      fechaInicio: toDateOnly(startDate),
-      fechaFin: toDateOnly(endDate),
-
-      idConvocatoriaProyectos:
-        projectCallId != null
-          ? String(projectCallId)
-          : '',
-
-      idTipoProyecto: tipoId,
-
-      idCoordinacion:
-        coordinationId != null
-          ? String(coordinationId)
-          : '',
+      actaConsejo: item?.actaConsejo ?? '',
+      idTipoActividad: tipoActividadId != null ? String(tipoActividadId) : '',
+      idCoordinacion: coordinationId != null ? String(coordinationId) : '',
     });
-
-    this.onTipoProyectoChange(tipoId);
   }
 }
