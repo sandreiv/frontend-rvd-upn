@@ -1,0 +1,23 @@
+@if (activity().hijos.length) {
+  <section class="flex flex-col gap-2">
+    <h5 class="text-sm font-semibold text-gray-800 dark:text-white/90">
+      {{ activity().nombre }}
+    </h5>
+    <div class="flex flex-col gap-3 border-l border-gray-200 pl-4 dark:border-white/10">
+      @for (node of activity().hijos; track node.id) {
+        <app-support [activity]="node" />
+      }
+    </div>
+  </section>
+} @else {
+  <article class="rounded-xl border border-gray-200 px-4 py-3 dark:border-white/10">
+    <p class="text-sm font-medium text-gray-800 dark:text-white/90">
+      {{ activity().nombre }}
+    </p>
+    @if (activity().descripcion && activity().descripcion !== activity().nombre) {
+      <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+        {{ activity().descripcion }}
+      </p>
+    }
+  </article>
+}

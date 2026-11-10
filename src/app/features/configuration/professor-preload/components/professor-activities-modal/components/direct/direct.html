@@ -1,1 +1,18 @@
-<app-activity-branch [nodes]="activity().hijos" [emptyLabel]="emptyLabel(activity())" />
+@if (activity().hijos.length) {
+  <div class="flex flex-col gap-4">
+    @for (node of activity().hijos; track node.id) {
+      @switch (componentKey(node)) {
+        @case ('ASIGNATURA') {
+          <app-subject [activity]="node" />
+        }
+        @case ('APOYO') {
+          <app-support [activity]="node" />
+        }
+      }
+    }
+  </div>
+} @else {
+  <p class="text-sm text-gray-500 dark:text-gray-400">
+    {{ emptyLabel(activity()) }}
+  </p>
+}
