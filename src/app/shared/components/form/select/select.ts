@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -20,12 +20,14 @@ export interface Option {
   value: string;
   label: string;
   group?: string;
+  badge?: string;
   disabled?: boolean;
 }
 
 type NormalizedOption = Option & {
   label: string;
   group?: string;
+  badge?: string;
   disabled?: boolean;
 };
 
@@ -56,7 +58,7 @@ export class Select implements ControlValueAccessor {
   panelClassName = input('');
   defaultValue = input('');
   disabled = input(false);
-  labelFormat = input<'sentence' | 'uppercase'>('sentence');
+  labelFormat = input<'sentence' | 'uppercase' | 'none'>('sentence');
 
   enableSearch = input(true);
   searchPlaceholder = input('Buscar...');

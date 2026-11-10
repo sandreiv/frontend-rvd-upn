@@ -1,3 +1,8 @@
+/**
+ * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
+ * Modificaciones:
+ * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación del módulo para la administración general de proyectos y participantes
+ */
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,10 +22,6 @@ import { ProjectTable } from '../../components/project-table/project-table';
 import { ProjectPersonForm } from '../../components/project-person-form/project-person-form';
 import { ProjectPersonTable } from '../../components/project-person-table/project-person-table';
 import { ProjectsService } from '../../data/projects.service';
-import { ProjectCallsService } from '../../../project-calls/data/project-calls.service';
-import { ProjectTypesService } from '../../../project-types/data/project-types.service';
-import { CoordinationService } from '../../../../configuration/professor-preload/data/coordination.service';
-import { PreloadCallService } from '../../../../configuration/preload-call/data/preload-call.service';
 import { ActivityTypesService } from '../../../activity-types/data/activity-types.service';
 import {
   enrichProjectItem,
@@ -30,8 +31,6 @@ import {
   ProjectPersonItem,
   resolveProjectTypeLimits,
 } from '../../model/projects.model';
-import { ProjectTypeItem } from '../../../project-types/model/project-types.model';
-import { CoordinationItem } from '../../../../configuration/professor-preload/model/coordination.model';
 
 type ProjectsView = 'projects' | 'products' | 'persons';
 
@@ -51,10 +50,6 @@ type ProjectsView = 'projects' | 'products' | 'persons';
 })
 export class Projects implements OnInit, OnDestroy {
   private readonly projectsService = inject(ProjectsService);
-  private readonly projectCallsService = inject(ProjectCallsService);
-  private readonly projectTypesService = inject(ProjectTypesService);
-  private readonly coordinationService = inject(CoordinationService);
-  private readonly preloadCallService = inject(PreloadCallService);
   private readonly activityTypesService = inject(ActivityTypesService);
   private readonly breadcrumbTitle = inject(BreadcrumbTitle);
 
@@ -80,11 +75,7 @@ export class Projects implements OnInit, OnDestroy {
   readonly idsToDelete = signal<number[]>([]);
   readonly deleteTarget = signal<'project' | 'person'>('project');
 
-  private convocatoriaMap = new Map<number, string>();
-  private tipoMap = new Map<number, string>();
-  private coordinacionMap = new Map<number, string>();
   private activityTypeMap = new Map<number, string>();
-  private projectTypesById = new Map<number, ProjectTypeItem>();
 
   readonly isProductsView = computed(() => this.activeView() === 'products');
   readonly isPersonsView = computed(() => this.activeView() === 'persons');
@@ -94,10 +85,7 @@ export class Projects implements OnInit, OnDestroy {
     if (!parent) {
       return null;
     }
-
-    return resolveProjectTypeLimits(
-      this.projectTypesById.get(parent.idTipoProyecto),
-    );
+    return resolveProjectTypeLimits(null);
   });
 
   readonly participantsSoftAlert = computed(() => {
@@ -510,28 +498,10 @@ export class Projects implements OnInit, OnDestroy {
 
   private async loadCatalogMaps(): Promise<void> {
     try {
-      const [calls, types, coordinations, activityTypes] = await Promise.all([
-        firstValueFrom(this.projectCallsService.listProjectCalls()),
-        firstValueFrom(this.projectTypesService.listProjectTypes()),
-        this.loadCoordinationsCatalog(),
-        firstValueFrom(this.activityTypesService.listActivityTypes()),
-      ]);
+      const activityTypes = await firstValueFrom(
+        this.activityTypesService.listActivityTypes(),
+      );
 
-      this.convocatoriaMap = new Map(
-        (calls ?? []).map((item) => [item.id, item.nombre]),
-      );
-      this.projectTypesById = new Map(
-        (types ?? []).map((item) => [item.id, item]),
-      );
-      this.tipoMap = new Map(
-        (types ?? []).map((item) => [item.id, item.nombre]),
-      );
-      this.coordinacionMap = new Map(
-        (coordinations ?? []).map((item) => [
-          item.id,
-          item.descripcion || item.nombre,
-        ]),
-      );
       this.activityTypeMap = new Map(
         (activityTypes ?? []).map((item) => [item.id, item.nombre]),
       );
@@ -540,39 +510,11 @@ export class Projects implements OnInit, OnDestroy {
     }
   }
 
-  private async loadCoordinationsCatalog(): Promise<CoordinationItem[]> {
-    const periods = await firstValueFrom(
-      this.preloadCallService.getUniversityPeriod(),
-    );
-
-    if (!periods?.length) {
-      return [];
-    }
-
-    const lists = await Promise.all(
-      periods.map((period) =>
-        firstValueFrom(
-          this.coordinationService.getCoordinations(period.id),
-        ),
-      ),
-    );
-
-    const byId = new Map<number, CoordinationItem>();
-
-    lists.flat().forEach((item) => {
-      byId.set(item.id, item);
-    });
-
-    return [...byId.values()];
-  }
-
   private enrichProjects(rows: ProjectItem[]): ProjectItem[] {
     return rows.map((item) =>
       enrichProjectItem(
         item,
-        this.convocatoriaMap,
-        this.tipoMap,
-        this.coordinacionMap,
+        this.activityTypeMap,
       ),
     );
   }
@@ -581,10 +523,10 @@ export class Projects implements OnInit, OnDestroy {
     return rows.map((item) => ({
       ...item,
       tipoActividad: {
-        id: item.idTipoActividad,
+        id: item.idTipoActividad ?? 0,
         nombre:
           item.tipoActividad?.nombre ||
-          this.activityTypeMap.get(item.idTipoActividad) ||
+          (item.idTipoActividad ? this.activityTypeMap.get(item.idTipoActividad) : '') ||
           '',
       },
     }));

@@ -1,3 +1,8 @@
+/**
+ * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
+ * Modificaciones:
+ * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación para esquema general con Tipo de Actividades y Coordinación
+ */
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,7 +22,6 @@ import {
 import {
   ProjectItem,
   resolveProjectLookupName,
-  toDateOnly,
 } from '../../model/projects.model';
 
 @Component({
@@ -51,39 +55,31 @@ export class ProjectTable {
       formatAsSentence: true,
     },
     {
+      id: 'tipoActividad',
+      header: 'Tipo actividad',
+      cell: (row) => resolveProjectLookupName(row.tipoActividad),
+      formatAsSentence: true,
+    },
+    {
+      id: 'coordinacion',
+      header: 'Coordinación',
+      cell: (row) => resolveProjectLookupName(row.coordinacion),
+      formatAsSentence: true,
+    },
+    {
+      id: 'actaConsejo',
+      header: 'Acta de Consejo',
+      cell: (row) => row.actaConsejo || '-',
+    },
+    {
+      id: 'totalDocentes',
+      header: 'Docentes',
+      cell: (row) => String(row.totalDocentes ?? 0),
+    },
+    {
       id: 'descripcion',
       header: 'Descripción',
       cell: (row) => row.descripcion || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'fechaInicio',
-      header: 'Fecha inicio',
-      cell: (row) => toDateOnly(row.fechaInicio) || '-',
-      formatAsDate: true,
-    },
-    {
-      id: 'fechaFin',
-      header: 'Fecha fin',
-      cell: (row) => toDateOnly(row.fechaFin) || '-',
-      formatAsDate: true,
-    },
-    {
-      id: 'monto',
-      header: 'Monto',
-      cell: (row) => row.monto || '-',
-      formatAsCurrency: true,
-    },
-    {
-      id: 'convocatoria',
-      header: 'Convocatoria',
-      cell: (row) => resolveProjectLookupName(row.convocatoriaProyectos),
-      formatAsSentence: true,
-    },
-    {
-      id: 'tipoProyecto',
-      header: 'Tipo proyecto',
-      cell: (row) => resolveProjectLookupName(row.tipoProyecto),
       formatAsSentence: true,
     },
   ];
@@ -104,7 +100,7 @@ export class ProjectTable {
         { id: 'persons', label: 'Agregar persona', icon: 'user' },
         {
           id: 'products',
-          label: 'Agregar/ver productos',
+          label: 'Ver productos',
           icon: 'documentPlus',
         },
       );

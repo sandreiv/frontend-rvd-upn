@@ -29,22 +29,6 @@
       </div>
     }
 
-    @if (participantsSoftAlert(); as participantsAlert) {
-      <div
-        class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300"
-      >
-        {{ participantsAlert }}
-      </div>
-    }
-
-    @if (productsSoftAlert(); as productsAlert) {
-      <div
-        class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300"
-      >
-        {{ productsAlert }}
-      </div>
-    }
-
     @if (isPersonsView()) {
       @if (showForm()) {
         <app-project-person-form
@@ -52,19 +36,10 @@
           [projectId]="parentProject()!.id"
           [isSaving]="isSaving()"
           [currentPersonCount]="persons().length"
-          [maxParticipantes]="parentTypeLimits()?.maximoParticipantes ?? null"
           (cancel)="closeForm()"
           (savePerson)="onSavePerson($event)"
         />
       } @else {
-        @if (!canAddPerson()) {
-          <div
-            class="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-300"
-          >
-            Se alcanzó el máximo de participantes permitido para este tipo de
-            proyecto.
-          </div>
-        }
         <app-project-person-table
           [persons]="persons()"
           [selectedPersonIds]="selectedPersonIds()"
@@ -85,12 +60,9 @@
           [editTitle]="formEditTitle()"
           [description]="formDescription()"
           [parentProjectId]="parentProject()?.id ?? null"
-          [parentProjectCallId]="parentProject()?.idConvocatoriaProyectos ?? null"
-          [parentProjectTypeId]="parentProject()?.idTipoProyecto ?? null"
           [parentCoordinationId]="parentProject()?.idCoordinacion ?? null"
           [parentCoordinationName]="parentProject()?.coordinacion?.nombre ?? ''"
-          [parentStartDate]="parentProject()?.fechaInicio ?? null"
-          [parentEndDate]="parentProject()?.fechaFin ?? null"
+          [parentTipoActividadId]="parentProject()?.idTipoActividad ?? null"
           (cancel)="closeForm()"
           (saveProject)="onSaveProject($event)"
         />

@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -34,6 +34,7 @@ import {
   TipoVinculacionConvocatoriaItem,
   TipoVinculacionDTO,
   UniversityPeriodItem,
+  formatUniversityPeriodLabel,
 } from '../../model/preload-call.model';
 
 @Component({
@@ -164,6 +165,7 @@ export class PreloadCallForm implements OnInit {
       return {
         value: String(period.id),
         label: `${anio} - ${period.periodo}${codigo}`,
+        badge: formatSentenceValue(period.tipoPeriodo?.trim()) || undefined,
       };
     }),
   );
@@ -190,6 +192,7 @@ export class PreloadCallForm implements OnInit {
         return {
           value: String(p.id),
           label: `${anio} - ${p.periodo}${codigo}`,
+          badge: formatSentenceValue(p.tipoPeriodo?.trim()) || undefined,
         };
       });
   });
@@ -362,13 +365,13 @@ export class PreloadCallForm implements OnInit {
   }
 
   getPeriodoExtensionNombre(idPeriodoUniversidad: number): string {
+    const period = this.universityPeriods().find((p) => p.id === idPeriodoUniversidad);
+    if (period) {
+      return formatUniversityPeriodLabel(period);
+    }
     const current = this.periodosExtension().find((p) => p.idPeriodoUniversidad === idPeriodoUniversidad);
     if (current?.nombrePeriodo) return current.nombrePeriodo;
-    const period = this.universityPeriods().find((p) => p.id === idPeriodoUniversidad);
-    if (!period) return `Periodo #${idPeriodoUniversidad}`;
-    const anio = period.anio ?? period.ano ?? '';
-    const codigo = period.codigoPeriodo ? ` (${period.codigoPeriodo})` : '';
-    return `${anio} - ${period.periodo}${codigo}`;
+    return `Periodo #${idPeriodoUniversidad}`;
   }
 
   toggleNewTipoVinculacionForm(): void {

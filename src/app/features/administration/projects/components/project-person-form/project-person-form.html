@@ -8,7 +8,7 @@
       {{ person() ? 'Editar persona del proyecto' : 'Agregar persona' }}
     </h4>
     <p class="text-xs text-gray-500 dark:text-gray-400">
-      Asocia una persona y su actividad al proyecto seleccionado.
+      Asocia un docente y sus horas de dedicación al proyecto seleccionado.
     </p>
   </div>
 
@@ -23,31 +23,15 @@
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Nombre completo persona</app-label>
+      <app-label>Docente</app-label>
       <app-typeahead-select
         formControlName="idPersonaGeneral"
         [items]="filteredPeople()"
         [optionAdapter]="personOptionAdapter"
-        placeholder="Buscar por nombre o documento"
+        placeholder="Buscar docente"
         emptyText="No se encontraron resultados"
         (queryChange)="onSearchPerson($event)"
       />
-    </div>
-
-    <div>
-      <app-label>Tipo actividad</app-label>
-      <app-select
-        formControlName="idTipoActividad"
-        [options]="activityTypeOptions()"
-        placeholder="Seleccione tipo de actividad"
-      />
-    </div>
-  </div>
-
-  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-    <div>
-      <app-label>Tipo</app-label>
-      <app-input-field formControlName="tipo" placeholder="Tipo" />
     </div>
 
     <div>
@@ -63,8 +47,7 @@
         <div
           class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
         >
-          El mínimo de horas para este tipo de actividad es
-          {{ horasValidation().minimo }}.
+          El mínimo de horas es {{ horasValidation().minimo }}.
         </div>
       }
 
@@ -72,25 +55,24 @@
         <div
           class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
         >
-          El máximo de horas para este tipo de actividad es
-          {{ horasValidation().maximo }}.
+          El máximo de horas es {{ horasValidation().maximo }}.
         </div>
       }
     </div>
+  </div>
 
-    <div>
-      <app-label>Observación</app-label>
-      <app-input-field
-        formControlName="observacion"
-        placeholder="Observación"
-      />
-    </div>
+  <div class="mt-4">
+    <app-label>Observación</app-label>
+    <app-input-field
+      formControlName="observacion"
+      placeholder="Observación"
+    />
   </div>
 
   <div class="mt-4 rounded-lg border border-gray-100 p-3 dark:border-white/10">
     <div class="mb-2">
       <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
-        Es activo
+        Activo
       </h5>
       <p class="text-xs text-gray-500 dark:text-gray-400">
         Define si el proyecto esta activo para el docente.
