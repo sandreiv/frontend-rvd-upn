@@ -30,7 +30,7 @@
   <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
       <app-label>Tipo de actividad</app-label>
-      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isProductMode()">
+      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isSubprojectMode()">
         <app-tree-select
           formControlName="idTipoActividad"
           [items]="rawTipoActividades()"
@@ -40,19 +40,19 @@
           selectableKey="esSeleccionable"
           placeholder="Seleccione tipo de actividad"
           searchPlaceholder="Buscar actividad..."
-          [disabled]="isProductMode()"
+          [disabled]="isSubprojectMode()"
         />
       </fieldset>
     </div>
 
     <div>
       <app-label>Coordinación</app-label>
-      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isProductMode()">
+      <fieldset class="m-0 min-w-0 border-0 p-0" [disabled]="isSubprojectMode()">
         <app-typeahead-select
           formControlName="idCoordinacion"
           [items]="filteredCoordinations()"
           [optionAdapter]="coordinationOptionAdapter"
-          [disabled]="isProductMode()"
+          [disabled]="isSubprojectMode()"
           placeholder="Buscar coordinación"
           emptyText="No se encontraron resultados"
           (queryChange)="onSearchCoordination($event)"

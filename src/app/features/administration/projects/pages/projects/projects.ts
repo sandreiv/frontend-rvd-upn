@@ -2,6 +2,8 @@
  * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación del módulo para la administración general de proyectos y participantes
+ * 10/11/2026 - Leonel Antonio Perez Rios - Migración a TreeTable unificando proyectos y subproyectos en árbol jerárquico
+ * 10/11/2026 - Leonel Antonio Perez Rios - Refactorización completa de código limpio, sin elementos en desuso y separación modular
  */
 import {
   ChangeDetectionStrategy,
@@ -29,10 +31,10 @@ import {
   ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
-  resolveProjectTypeLimits,
 } from '../../model/projects.model';
 
-type ProjectsView = 'projects' | 'products' | 'persons';
+type ProjectsView = 'projects' | 'persons';
+type DeleteTarget = 'project' | 'person';
 
 @Component({
   selector: 'app-projects',
@@ -57,11 +59,9 @@ export class Projects implements OnInit, OnDestroy {
   readonly parentProject = signal<ProjectItem | null>(null);
 
   readonly projects = signal<ProjectItem[]>([]);
-  readonly products = signal<ProjectItem[]>([]);
   readonly persons = signal<ProjectPersonItem[]>([]);
 
   readonly selectedProjectIds = signal<string[]>([]);
-  readonly selectedProductIds = signal<string[]>([]);
   readonly selectedPersonIds = signal<string[]>([]);
 
   readonly selectedProject = signal<ProjectItem | null>(null);
@@ -71,130 +71,36 @@ export class Projects implements OnInit, OnDestroy {
   readonly showDeleteModal = signal(false);
   readonly isSaving = signal(false);
   readonly isDeleting = signal(false);
-  readonly isLoading = signal(false);
   readonly idsToDelete = signal<number[]>([]);
-  readonly deleteTarget = signal<'project' | 'person'>('project');
+  readonly deleteTarget = signal<DeleteTarget>('project');
 
   private activityTypeMap = new Map<number, string>();
 
-  readonly isProductsView = computed(() => this.activeView() === 'products');
   readonly isPersonsView = computed(() => this.activeView() === 'persons');
-
-  readonly parentTypeLimits = computed(() => {
-    const parent = this.parentProject();
-    if (!parent) {
-      return null;
-    }
-    return resolveProjectTypeLimits(null);
-  });
-
-  readonly participantsSoftAlert = computed(() => {
-    if (!this.isPersonsView()) {
-      return null;
-    }
-
-    const min = this.parentTypeLimits()?.minimoParticipantes;
-    if (min == null) {
-      return null;
-    }
-
-    const missing = min - this.persons().length;
-    if (missing <= 0) {
-      return null;
-    }
-
-    return `Faltan ${missing} para cumplir con el mínimo de participantes.`;
-  });
-
-  readonly productsSoftAlert = computed(() => {
-    if (!this.isProductsView()) {
-      return null;
-    }
-
-    const min = this.parentTypeLimits()?.minimoProductos;
-    if (min == null) {
-      return null;
-    }
-
-    const missing = min - this.products().length;
-    if (missing <= 0) {
-      return null;
-    }
-
-    return `Faltan ${missing} productos para cumplir con el mínimo requerido.`;
-  });
-
-  readonly canAddPerson = computed(() => {
-    const max = this.parentTypeLimits()?.maximoParticipantes;
-    if (max == null) {
-      return true;
-    }
-
-    return this.persons().length < max;
-  });
-
-  readonly displayedProjects = computed(() =>
-    this.isProductsView() ? this.products() : this.projects(),
-  );
-
-  readonly displayedSelectedIds = computed(() =>
-    this.isProductsView()
-      ? this.selectedProductIds()
-      : this.selectedProjectIds(),
-  );
-
-  readonly nestedBannerTitle = computed(() => {
-    const parent = this.parentProject()?.nombre ?? '';
-    if (this.isProductsView()) {
-      return `Productos de: ${parent}`;
-    }
-    if (this.isPersonsView()) {
-      return `Personas de: ${parent}`;
-    }
-    return '';
-  });
-
-  readonly nestedBannerDescription = computed(() => {
-    if (this.isProductsView()) {
-      return 'Administra los productos del proyecto seleccionado.';
-    }
-    if (this.isPersonsView()) {
-      return 'Administra las personas asociadas al proyecto seleccionado.';
-    }
-    return '';
-  });
+  readonly isSubprojectMode = computed(() => this.parentProject() != null);
 
   readonly formTitle = computed(() =>
-    this.isProductsView() ? 'Nuevo producto' : 'Nuevo proyecto',
+    this.isSubprojectMode() ? 'Nuevo subproyecto' : 'Nuevo proyecto',
   );
 
   readonly formEditTitle = computed(() =>
-    this.isProductsView() ? 'Editar producto' : 'Editar proyecto',
+    this.isSubprojectMode() ? 'Editar subproyecto' : 'Editar proyecto',
   );
 
   readonly formDescription = computed(() =>
-    this.isProductsView()
-      ? 'Registra un producto asociado al proyecto padre.'
+    this.isSubprojectMode()
+      ? 'Registra un subproyecto asociado al proyecto principal.'
       : 'Registra la información básica del proyecto.',
-  );
-
-  readonly tableEmptyMessage = computed(() =>
-    this.isProductsView()
-      ? 'No hay productos registrados.'
-      : 'No hay proyectos registrados.',
-  );
-
-  readonly tableSearchPlaceholder = computed(() =>
-    this.isProductsView() ? 'Buscar producto...' : 'Buscar proyecto...',
   );
 
   readonly deleteModalTitle = computed(() => {
     if (this.deleteTarget() === 'person') {
       return this.idsToDelete().length > 1
-        ? 'Eliminar personas'
-        : 'Eliminar persona';
+        ? 'Eliminar participantes'
+        : 'Eliminar participante';
     }
-    const label = this.isProductsView() ? 'producto' : 'proyecto';
+    const isSubproject = this.selectedProject()?.idProyectoPadre != null;
+    const label = isSubproject ? 'subproyecto' : 'proyecto';
     return this.idsToDelete().length > 1
       ? `Eliminar ${label}s`
       : `Eliminar ${label}`;
@@ -204,14 +110,15 @@ export class Projects implements OnInit, OnDestroy {
     const count = this.idsToDelete().length;
     if (this.deleteTarget() === 'person') {
       if (count > 1) {
-        return `¿Seguro que deseas eliminar las ${count} personas seleccionadas?`;
+        return `¿Seguro que deseas eliminar los ${count} participantes seleccionados?`;
       }
       return `¿Seguro que deseas eliminar a "${this.selectedPerson()?.nombreCompleto ?? ''}"?`;
     }
 
-    const label = this.isProductsView() ? 'producto' : 'proyecto';
+    const isSubproject = this.selectedProject()?.idProyectoPadre != null;
+    const label = isSubproject ? 'subproyecto' : 'proyecto';
     if (count > 1) {
-      return `¿Seguro que deseas eliminar los ${count} ${label}s seleccionados?`;
+      return `¿Seguro que deseas eliminar los ${count} registros seleccionados?`;
     }
     return `¿Seguro que deseas eliminar el ${label} "${this.selectedProject()?.nombre ?? ''}"?`;
   });
@@ -233,27 +140,40 @@ export class Projects implements OnInit, OnDestroy {
   backToProjects(): void {
     this.activeView.set('projects');
     this.parentProject.set(null);
-    this.products.set([]);
     this.persons.set([]);
-    this.selectedProductIds.set([]);
     this.selectedPersonIds.set([]);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
     this.showForm.set(false);
   }
 
-  openCreateForm(): void {
-    if (this.isPersonsView() && !this.canAddPerson()) {
-      return;
-    }
-
+  openCreateProject(): void {
+    this.parentProject.set(null);
     this.selectedProject.set(null);
+    this.selectedPerson.set(null);
+    this.showForm.set(true);
+  }
+
+  openCreateSubproject(parent: ProjectItem): void {
+    this.parentProject.set(parent);
+    this.selectedProject.set(null);
+    this.selectedPerson.set(null);
+    this.showForm.set(true);
+  }
+
+  openCreatePerson(): void {
     this.selectedPerson.set(null);
     this.showForm.set(true);
   }
 
   openEditProject(project: ProjectItem): void {
     this.selectedProject.set(project);
+    if (project.idProyectoPadre) {
+      const parent = this.projects().find((p) => p.id === project.idProyectoPadre) ?? null;
+      this.parentProject.set(parent);
+    } else {
+      this.parentProject.set(null);
+    }
     this.showForm.set(true);
   }
 
@@ -264,17 +184,11 @@ export class Projects implements OnInit, OnDestroy {
 
   closeForm(): void {
     this.showForm.set(false);
-    this.selectedProject.set(null);
     this.selectedPerson.set(null);
-  }
-
-  async openProductsView(project: ProjectItem): Promise<void> {
-    this.parentProject.set(project);
-    this.activeView.set('products');
-    this.showForm.set(false);
-    this.selectedProject.set(null);
-    this.selectedProductIds.set([]);
-    await this.refreshProducts();
+    if (!this.isPersonsView()) {
+      this.selectedProject.set(null);
+      this.parentProject.set(null);
+    }
   }
 
   async openPersonsView(project: ProjectItem): Promise<void> {
@@ -396,10 +310,6 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   onSelectedProjectIdsChange(ids: string[]): void {
-    if (this.isProductsView()) {
-      this.selectedProductIds.set(ids);
-      return;
-    }
     this.selectedProjectIds.set(ids);
   }
 
@@ -408,10 +318,6 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   async refreshCurrentList(): Promise<void> {
-    if (this.isProductsView()) {
-      await this.refreshProducts();
-      return;
-    }
     if (this.isPersonsView()) {
       await this.refreshPersons();
       return;
@@ -420,33 +326,11 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   async refreshProjects(): Promise<void> {
-    this.isLoading.set(true);
     try {
-      const rows = await firstValueFrom(this.projectsService.listProjects());
+      const rows = await firstValueFrom(this.projectsService.listAllProjects());
       this.projects.set(this.enrichProjects(rows ?? []));
     } catch (error) {
       console.error(error);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  async refreshProducts(): Promise<void> {
-    const parent = this.parentProject();
-    if (!parent?.id) {
-      return;
-    }
-
-    this.isLoading.set(true);
-    try {
-      const rows = await firstValueFrom(
-        this.projectsService.listProducts(parent.id),
-      );
-      this.products.set(this.enrichProjects(rows ?? []));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      this.isLoading.set(false);
     }
   }
 
@@ -456,7 +340,6 @@ export class Projects implements OnInit, OnDestroy {
       return;
     }
 
-    this.isLoading.set(true);
     try {
       const rows = await firstValueFrom(
         this.projectsService.listProjectPersons(parent.id),
@@ -464,8 +347,6 @@ export class Projects implements OnInit, OnDestroy {
       this.persons.set(this.enrichPersons(rows ?? []));
     } catch (error) {
       console.error(error);
-    } finally {
-      this.isLoading.set(false);
     }
   }
 
@@ -477,12 +358,7 @@ export class Projects implements OnInit, OnDestroy {
         this.projectsService.deleteBulkProjects({ ids }),
       );
     }
-
-    if (this.isProductsView()) {
-      this.selectedProductIds.set([]);
-    } else {
-      this.selectedProjectIds.set([]);
-    }
+    this.selectedProjectIds.set([]);
   }
 
   private async deletePersons(ids: number[]): Promise<void> {

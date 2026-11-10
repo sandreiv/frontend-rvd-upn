@@ -1,13 +1,17 @@
-<app-data-table
+<app-tree-table
   [columns]="columns"
   [rows]="activityTypes()"
-  [rowIdentity]="rowIdentity"
   [rowActions]="rowActions()"
   [enableSelection]="true"
+  [enableBulkActions]="true"
+  [showDeleteButton]="true"
   [selectedRowKeys]="selectedActivityTypeIds()"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+  (selectedIdsChange)="selectedActivityTypeIds.set($event)"
   [emptyMessage]="emptyMessage()"
   [searchPlaceholder]="searchPlaceholder()"
-  (toolbarAction)="onToolbarAction($event)"
-  (rowAction)="onRowAction($event)"
-  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+  (add)="addActivityType.emit()"
+  (refresh)="refreshActivityTypes.emit()"
+  (deleteAll)="deleteAll.emit($event)"
+  (action)="onAction($event)"
 />

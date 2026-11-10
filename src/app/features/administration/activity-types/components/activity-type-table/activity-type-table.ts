@@ -1,16 +1,27 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, model } from '@angular/core';
-import { DataTable } from '../../../../../shared/ui/data-table/data-table';
 import {
-  DataTableActionEvent,
-  DataTableColumn,
-  DataTableRowAction,
-  DataTableToolbarActionEvent,
-} from '../../../../../shared/ui/data-table/table.types';
-import { ActivityTypeItem } from '../../model/activity-types.model';
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+  computed,
+  input,
+  model,
+} from '@angular/core';
+import { TreeTable } from '../../../../../shared/ui/tree-table/tree-table';
+import {
+  TreeTableActionEvent,
+  TreeTableColumn,
+  TreeTableRowAction,
+} from '../../../../../shared/ui/tree-table/tree-table.types';
+import {
+  ActivityTypeItem,
+  TIPO_ACTIVIDAD_COMPONENTE_LABELS,
+} from '../../model/activity-types.model';
+import { formatSentenceValue } from '../../../../../shared/utils/normalized-text.util';
 
 @Component({
   selector: 'app-activity-type-table',
-  imports: [DataTable],
+  imports: [TreeTable],
   templateUrl: './activity-type-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -19,23 +30,22 @@ export class ActivityTypeTable {
   selectedActivityTypeIds = model<string[]>([]);
   emptyMessage = input('No hay tipos de actividades registrados.');
   searchPlaceholder = input('Buscar tipo de actividad...');
-  showChildrenAction = input(true);
 
-  @Output() viewChildren = new EventEmitter<ActivityTypeItem>();
-  @Output() refreshActivityTypes = new EventEmitter<void>();
   @Output() addActivityType = new EventEmitter<void>();
+  @Output() addChildActivityType = new EventEmitter<ActivityTypeItem>();
   @Output() editActivityType = new EventEmitter<ActivityTypeItem>();
   @Output() deleteActivityType = new EventEmitter<ActivityTypeItem>();
   @Output() deleteAll = new EventEmitter<number[]>();
+  @Output() refreshActivityTypes = new EventEmitter<void>();
 
-  readonly rowIdentity = (row: ActivityTypeItem): string => String(row.id);
-
-  readonly columns: DataTableColumn<ActivityTypeItem>[] = [
+  readonly columns: TreeTableColumn<ActivityTypeItem>[] = [
     {
       id: 'nombre',
       header: 'Nombre',
-      cell: (row) => row.nombre || '-',
-      formatAsSentence: true,
+      cell: (row) => {
+        const nombre = formatSentenceValue(row.nombre);
+        return row.orden ? `${row.orden}. ${nombre}` : nombre;
+      },
     },
     {
       id: 'descripcion',
@@ -44,14 +54,9 @@ export class ActivityTypeTable {
       formatAsSentence: true,
     },
     {
-      id: 'codigo',
-      header: 'Código',
-      cell: (row) => row.codigo || '-',
-    },
-    {
-      id: 'ptd',
-      header: 'Plan de trabajo digital',
-      cell: (row) => this.formatPtd(row.ptd),
+      id: 'componente',
+      header: 'Componente',
+      cell: (row) => this.formatComponente(row.componente),
     },
     {
       id: 'minimoHoras',
@@ -64,97 +69,73 @@ export class ActivityTypeTable {
       cell: (row) => row.maximoHoras ?? '-',
     },
     {
-      id: 'orden',
-      header: 'Orden',
-      cell: (row) => row.orden ?? '-',
-    },
-    {
       id: 'estado',
       header: 'Estado',
-      cell: (row) => this.formatStatus(row.estado),
+      allowHtml: true,
+      cell: (row) => this.formatStatusBadge(row.estado),
     },
   ];
 
-  readonly rowActions = computed<DataTableRowAction<ActivityTypeItem>[]>(() => {
-    const actions: DataTableRowAction<ActivityTypeItem>[] = [];
+  readonly rowActions = computed<TreeTableRowAction<ActivityTypeItem>[]>(() => [
+    {
+      id: 'add-child',
+      label: 'Agregar actividad hija',
+      icon: 'plus',
+    },
+    {
+      id: 'edit',
+      label: 'Editar',
+      icon: 'pencil',
+    },
+    {
+      id: 'delete',
+      label: 'Eliminar',
+      icon: 'delete',
+      className: 'text-red-500',
+    },
+  ]);
 
-    if (this.showChildrenAction()) {
-        actions.push({
-        id: 'children',
-        label: 'Agregar/ver actividades hijas',
-        icon: 'bookOpen',
-        });
-    }
-
-    actions.push(
-        {
-        id: 'edit',
-        label: 'Editar',
-        icon: 'pencil',
-        },
-        {
-        id: 'delete',
-        label: 'Eliminar',
-        icon: 'delete',
-        className: 'text-red-500',
-        },
-    );
-
-    return actions;
-  });
-
-  onToolbarAction(event: DataTableToolbarActionEvent<ActivityTypeItem>): void {
-    if (event.actionId === 'refresh') {
-      this.refreshActivityTypes.emit();
-      return;
-    }
-
-    if (event.actionId === 'add') {
-      this.addActivityType.emit();
-      return;
-    }
-
-    if (event.actionId === 'deleteAll') {
-      this.deleteAll.emit(
-        event.selectedIds
-          .map((id) => Number(id))
-          .filter((id) => Number.isFinite(id)),
-      );
-    }
-  }
-
-  onRowAction(event: DataTableActionEvent<ActivityTypeItem>): void {
-    if (event.actionId === 'children') {
-        this.viewChildren.emit(event.row);
-        return;
-    }
-
-    if (event.actionId === 'edit') {
+  onAction(event: TreeTableActionEvent<ActivityTypeItem>): void {
+    if (event.actionId === 'add-child') {
+      this.addChildActivityType.emit(event.row);
+    } else if (event.actionId === 'edit') {
       this.editActivityType.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'delete') {
+    } else if (event.actionId === 'delete') {
       this.deleteActivityType.emit(event.row);
     }
   }
 
   onSelectedIdsChange(keys: Array<string | number>): void {
-    this.selectedActivityTypeIds.set(keys.map((key) => String(key)));
+    this.selectedActivityTypeIds.set(keys.map((k) => String(k)));
   }
 
-  private formatStatus(value: string): string {
+  private formatStatusBadge(value: string): string {
     const normalized = String(value ?? '').trim().toUpperCase();
+    const isActive =
+      normalized === '1' || normalized === 'ACTIVO' || normalized === 'A';
 
-    return normalized === '1' || normalized === 'ACTIVO' || normalized === 'A'
-      ? 'Activo'
-      : 'Inactivo';
+    if (isActive) {
+      return `
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Activo
+        </span>
+      `;
+    }
+
+    return `
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 border border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+        <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+        Inactivo
+      </span>
+    `;
   }
 
-  private formatPtd(
-    value: string | null,
-  ): string {
-    return value === '1' ? 'Sí' : 'No';
-  }
+  private formatComponente(value: string | null | undefined): string {
+    if (!value) {
+      return '-';
+    }
 
+    return TIPO_ACTIVIDAD_COMPONENTE_LABELS[value] ?? value;
+  }
 }

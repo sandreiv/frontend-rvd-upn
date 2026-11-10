@@ -1,20 +1,20 @@
 <app-section-frame
   title="Proyectos"
-  description="Administra proyectos, productos asociados y personas del proyecto."
+  description="Administra los proyectos, subproyectos asociados y participantes del proyecto."
   iconName="briefcase"
   iconVariant="brand"
 >
   <div class="space-y-5">
-    @if (isProductsView() || isPersonsView()) {
+    @if (isPersonsView()) {
       <div
         class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
           <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-            {{ nestedBannerTitle() }}
+            Participantes de: {{ parentProject()?.nombre ?? '' }}
           </h4>
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {{ nestedBannerDescription() }}
+            Administra los docentes participantes del proyecto seleccionado.
           </p>
         </div>
 
@@ -27,15 +27,12 @@
           Volver a proyectos
         </app-button>
       </div>
-    }
 
-    @if (isPersonsView()) {
       @if (showForm()) {
         <app-project-person-form
           [person]="selectedPerson()"
-          [projectId]="parentProject()!.id"
+          [projectId]="parentProject()?.id ?? 0"
           [isSaving]="isSaving()"
-          [currentPersonCount]="persons().length"
           (cancel)="closeForm()"
           (savePerson)="onSavePerson($event)"
         />
@@ -45,7 +42,7 @@
           [selectedPersonIds]="selectedPersonIds()"
           (selectedPersonIdsChange)="onSelectedPersonIdsChange($event)"
           (refreshPersons)="refreshPersons()"
-          (addPerson)="openCreateForm()"
+          (addPerson)="openCreatePerson()"
           (editPerson)="openEditPerson($event)"
           (deletePerson)="requestDeletePerson($event)"
           (deleteAll)="requestBulkDeletePersons($event)"
@@ -68,19 +65,16 @@
         />
       } @else {
         <app-project-table
-          [projects]="displayedProjects()"
-          [selectedProjectIds]="displayedSelectedIds()"
-          [emptyMessage]="tableEmptyMessage()"
-          [searchPlaceholder]="tableSearchPlaceholder()"
-          [showNestedActions]="!isProductsView()"
+          [projects]="projects()"
+          [selectedProjectIds]="selectedProjectIds()"
           (selectedProjectIdsChange)="onSelectedProjectIdsChange($event)"
           (refreshProjects)="refreshCurrentList()"
-          (addProject)="openCreateForm()"
+          (addProject)="openCreateProject()"
+          (addSubproject)="openCreateSubproject($event)"
           (editProject)="openEditProject($event)"
           (deleteProject)="requestDeleteProject($event)"
           (deleteAll)="requestBulkDeleteProjects($event)"
           (viewPersons)="openPersonsView($event)"
-          (viewProducts)="openProductsView($event)"
         />
       }
     }

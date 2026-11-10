@@ -4,19 +4,20 @@
  * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación del formulario para esquema general de proyectos
  * 10/11/2026 - Leonel Antonio Perez Rios - Carga de actividades jerárquicas desde ProjectsService
  * 10/11/2026 - Leonel Antonio Perez Rios - Integración del componente jerárquico tipo árbol (TreeSelect)
+ * 10/11/2026 - Leonel Antonio Perez Rios - Refactorización de código limpio, constantes y soporte a subproyectos
  */
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   EventEmitter,
-  inject,
-  input,
   OnChanges,
   OnInit,
   Output,
-  signal,
   SimpleChanges,
+  computed,
+  inject,
+  input,
+  signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,6 +44,12 @@ import {
   ProjectItem,
   TipoActividadProyectoItem,
 } from '../../model/projects.model';
+
+const NOMBRE_MAX_LENGTH = 255;
+const DESCRIPCION_MAX_LENGTH = 1000;
+const ACTA_MAX_LENGTH = 100;
+const SEARCH_DEBOUNCE_TIME = 300;
+const MIN_SEARCH_CHARS = 2;
 
 interface CoordinationOption {
   id: number;
@@ -78,7 +85,7 @@ export class ProjectForm implements OnInit, OnChanges {
   parentCoordinationName = input('');
   parentTipoActividadId = input<number | null>(null);
 
-  readonly isProductMode = computed(() => this.parentProjectId() != null);
+  readonly isSubprojectMode = computed(() => this.parentProjectId() != null);
 
   @Output() cancel = new EventEmitter<void>();
   @Output() saveProject = new EventEmitter<ProjectFormData>();
@@ -89,15 +96,15 @@ export class ProjectForm implements OnInit, OnChanges {
   readonly form: ProjectFormGroup = new FormGroup({
     nombre: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(255)],
+      validators: [Validators.required, Validators.maxLength(NOMBRE_MAX_LENGTH)],
     }),
     descripcion: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.maxLength(1000)],
+      validators: [Validators.maxLength(DESCRIPCION_MAX_LENGTH)],
     }),
     actaConsejo: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.maxLength(100)],
+      validators: [Validators.maxLength(ACTA_MAX_LENGTH)],
     }),
     idTipoActividad: new FormControl('', {
       nonNullable: true,
@@ -112,7 +119,7 @@ export class ProjectForm implements OnInit, OnChanges {
   constructor() {
     this.searchTerm$
       .pipe(
-        debounceTime(300),
+        debounceTime(SEARCH_DEBOUNCE_TIME),
         distinctUntilChanged(),
         switchMap((term) =>
           this.projectsService
@@ -151,11 +158,11 @@ export class ProjectForm implements OnInit, OnChanges {
   };
 
   onSearchCoordination(term: string): void {
-    if (this.isProductMode()) {
+    if (this.isSubprojectMode()) {
       return;
     }
     const normalized = term.trim();
-    if (normalized.length < 2) {
+    if (normalized.length < MIN_SEARCH_CHARS) {
       this.filteredCoordinations.set([]);
       return;
     }
@@ -170,7 +177,6 @@ export class ProjectForm implements OnInit, OnChanges {
     }
 
     const raw = this.form.getRawValue();
-    const parentId = this.parentProjectId();
 
     this.saveProject.emit({
       nombre: raw.nombre.trim(),
@@ -178,7 +184,7 @@ export class ProjectForm implements OnInit, OnChanges {
       actaConsejo: raw.actaConsejo.trim() || null,
       idTipoActividad: Number(raw.idTipoActividad),
       idCoordinacion: Number(raw.idCoordinacion),
-      idProyectoPadre: parentId,
+      idProyectoPadre: this.parentProjectId(),
       estado: '1',
     });
   }
@@ -193,7 +199,10 @@ export class ProjectForm implements OnInit, OnChanges {
     }
   }
 
-  private ensureSelectedCoordination(idCoordinacion: number | null | undefined, nombreCoordinacion: string | null | undefined,): void {
+  private ensureSelectedCoordination(
+    idCoordinacion: number | null | undefined,
+    nombreCoordinacion: string | null | undefined,
+  ): void {
     if (idCoordinacion == null) {
       return;
     }
@@ -216,15 +225,19 @@ export class ProjectForm implements OnInit, OnChanges {
 
   private patchForm(): void {
     const item = this.project();
-    const productMode = this.isProductMode();
+    const subprojectMode = this.isSubprojectMode();
 
-    const coordinationId = productMode ? this.parentCoordinationId() : item?.idCoordinacion;
+    const coordinationId = subprojectMode
+      ? this.parentCoordinationId()
+      : item?.idCoordinacion;
 
-    const coordinationName = productMode
+    const coordinationName = subprojectMode
       ? this.parentCoordinationName()
       : item?.coordinacion?.nombre;
 
-    const tipoActividadId = productMode ? this.parentTipoActividadId() : item?.idTipoActividad;
+    const tipoActividadId = subprojectMode
+      ? this.parentTipoActividadId()
+      : item?.idTipoActividad;
 
     this.ensureSelectedCoordination(coordinationId, coordinationName);
 

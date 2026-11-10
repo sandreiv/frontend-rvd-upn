@@ -13,11 +13,19 @@ export class ActivityTypesService {
   private readonly endpoint = '/configuration/administration/activity-types';
 
   /**
-   * Lista los tipos de actividad configurados en el sistema.
+   * Lista todos los tipos de actividad con su estructura jerárquica completa.
    *
-   * @returns Observable con los tipos de actividad disponibles.
-  */
+   * @returns Observable con la totalidad de los tipos de actividad configurados.
+   */
+  listAllActivityTypes(): Observable<ActivityTypeItem[]> {
+    return this.webRequestService.get<ActivityTypeItem[]>(`${this.endpoint}/all`);
+  }
 
+  /**
+   * Lista los tipos de actividad configurados en el sistema (padres).
+   *
+   * @returns Observable con los tipos de actividad principales.
+   */
   listActivityTypes(): Observable<ActivityTypeItem[]> {
     return this.webRequestService.get<ActivityTypeItem[]>(`${this.endpoint}/list`);
   }
@@ -27,8 +35,7 @@ export class ActivityTypesService {
    *
    * @param payload Información del tipo de actividad a registrar.
    * @returns Observable sin contenido cuando el registro finaliza correctamente.
-  */
-
+   */
   saveActivityType(payload: ActivityTypeFormData): Observable<void> {
     return this.webRequestService.post<void>(`${this.endpoint}/save`, payload);
   }
@@ -39,8 +46,7 @@ export class ActivityTypesService {
    * @param id Identificador del tipo de actividad.
    * @param payload Información actualizada del tipo de actividad.
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
-  */
-
+   */
   updateActivityType(id: number, payload: ActivityTypeFormData): Observable<void> {
     return this.webRequestService.put<void>(`${this.endpoint}/update/${id}`, payload);
   }
@@ -50,8 +56,7 @@ export class ActivityTypesService {
    *
    * @param id Identificador del tipo de actividad.
    * @returns Observable sin contenido cuando la eliminación finaliza correctamente.
-  */
-
+   */
   deleteActivityType(id: number): Observable<void> {
     return this.webRequestService.delete<void>(`${this.endpoint}/delete/${id}`);
   }
@@ -61,8 +66,7 @@ export class ActivityTypesService {
    *
    * @param payload Identificadores de los tipos de actividad a eliminar.
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
-  */
-
+   */
   deleteBulkActivityTypes(payload: DeleteBulkActivityTypesRequest): Observable<void> {
     return this.webRequestService.post<void>(`${this.endpoint}/delete-bulk`, payload);
   }
@@ -72,11 +76,10 @@ export class ActivityTypesService {
    *
    * @param idPadre Identificador del tipo de actividad padre.
    * @returns Observable con los tipos de actividad hijos.
-  */
-
+   */
   listChildActivityTypes(idPadre: number): Observable<ActivityTypeItem[]> {
     return this.webRequestService.get<ActivityTypeItem[]>(
-    `${this.endpoint}/${idPadre}/children/list`,
+      `${this.endpoint}/${idPadre}/children/list`,
     );
   }
 
@@ -86,16 +89,14 @@ export class ActivityTypesService {
    * @param idPadre Identificador del tipo de actividad padre.
    * @param payload Información del tipo de actividad hijo.
    * @returns Observable sin contenido cuando el registro finaliza correctamente.
-  */
-
+   */
   saveChildActivityType(
     idPadre: number,
     payload: ActivityTypeFormData,
-    ): Observable<void> {
+  ): Observable<void> {
     return this.webRequestService.post<void>(
-        `${this.endpoint}/${idPadre}/children/save`,
-        payload,
+      `${this.endpoint}/${idPadre}/children/save`,
+      payload,
     );
   }
-
 }

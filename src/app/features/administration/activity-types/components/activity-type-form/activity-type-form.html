@@ -66,22 +66,6 @@
 
   <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Código</app-label>
-      <app-select
-        formControlName="codigo"
-        [options]="codeOptions"
-        placeholder="Seleccione el código"
-        labelFormat="uppercase"
-      />
-
-      @if (form.controls.codigo.touched && form.controls.codigo.invalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El código es obligatorio.
-        </p>
-      }
-    </div>
-
-    <div>
       <app-label>Componente</app-label>
       <app-select
         formControlName="componente"
@@ -101,106 +85,143 @@
         Define la tarjeta de precarga docente asociada a este tipo.
       </p>
     </div>
-  </div>
 
-  <div
-    class="mt-4 rounded-lg border border-gray-100 p-3
-          dark:border-white/10"
-  >
-    <div class="mb-2">
-      <h5
-        class="text-sm font-semibold text-gray-900
-              dark:text-white"
-      >
-        Plan de trabajo digital
-      </h5>
+    <div>
+      <app-label>Orden</app-label>
+      <app-input-field
+        formControlName="orden"
+        placeholder="Ej: 1 (opcional al crear)"
+      />
 
-      <p
-        class="text-xs text-gray-500
-              dark:text-gray-400"
-      >
-        Define si este tipo de actividad aplica al
-        Plan de Trabajo Digital.
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Posición u orden de visualización (automático si se deja vacío al registrar).
       </p>
     </div>
-
-    <app-checkbox
-      label="Plan de trabajo digital"
-      [checked]="form.controls.ptd.value"
-      (checkedChange)="
-        form.controls.ptd.setValue($event)
-      "
-    />
   </div>
 
   <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Mínimo de horas</app-label>
-      <app-input-field
-        type="number"
-        formControlName="minimoHoras"
-        placeholder="Mínimo de horas"
-        min="0"
+      <app-label>Actividad de la que depende (opcional)</app-label>
+      <app-tree-select
+        formControlName="idDependencia"
+        [items]="dependencyTreeItems()"
+        valueKey="id"
+        labelKey="nombre"
+        parentKey="idPadre"
+        selectableKey="esSeleccionable"
+        placeholder="Seleccione la actividad de dependencia"
+        searchPlaceholder="Buscar actividad..."
       />
 
-      @if (
-        form.controls.minimoHoras.touched && form.controls.minimoHoras.invalid
-      ) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El mínimo de horas es obligatorio.
-        </p>
-      }
-    </div>
-
-    <div>
-      <app-label>Máximo de horas</app-label>
-      <app-input-field
-        type="number"
-        formControlName="maximoHoras"
-        placeholder="Máximo de horas"
-        min="0"
-      />
-
-      @if (
-        form.controls.maximoHoras.touched && form.controls.maximoHoras.invalid
-      ) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El máximo de horas es obligatorio.
-        </p>
-      }
-
-      @if (hoursRangeInvalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El máximo de horas debe ser mayor al mínimo de horas.
-        </p>
-      }
-
-      @if (parentMaxHoursInvalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La suma de máximos de las hijas no puede superar
-          {{ parentMaxHoras() }} horas del padre. Disponibles:
-          {{ remainingParentHours() }}.
-        </p>
-      }
-    </div>
-  </div>
-
-  <div class="mt-4 rounded-lg border border-gray-100 p-3 dark:border-white/10">
-    <div class="mb-2">
-      <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
-        Estado del tipo de actividad
-      </h5>
-      <p class="text-xs text-gray-500 dark:text-gray-400">
-        Define si este tipo de actividad estará activo para su uso en el
-        sistema.
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Aplica cuando esta actividad depende de otra ingresada previamente (ej: apoyo a la docencia).
       </p>
     </div>
 
-    <app-checkbox
-      label="Activo"
-      [checked]="form.controls.estado.value"
-      (checkedChange)="form.controls.estado.setValue($event)"
-    />
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <app-label>Mínimo de horas</app-label>
+        <app-input-field
+          type="number"
+          formControlName="minimoHoras"
+          placeholder="Mínimo de horas"
+          min="0"
+        />
+
+        @if (
+          form.controls.minimoHoras.touched && form.controls.minimoHoras.invalid
+        ) {
+          <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+            El mínimo de horas es obligatorio.
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label>Máximo de horas</app-label>
+        <app-input-field
+          type="number"
+          formControlName="maximoHoras"
+          placeholder="Máximo de horas"
+          min="0"
+        />
+
+        @if (
+          form.controls.maximoHoras.touched && form.controls.maximoHoras.invalid
+        ) {
+          <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+            El máximo de horas es obligatorio.
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (hoursRangeInvalid) {
+    <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
+      El máximo de horas debe ser mayor o igual al mínimo de horas.
+    </p>
+  }
+
+  @if (parentMaxHoursInvalid) {
+    <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
+      La suma de máximos de las hijas no puede superar
+      {{ parentMaxHoras() }} horas del padre. Disponibles:
+      {{ remainingParentHours() }}.
+    </p>
+  }
+
+  <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
+      <div class="mb-2">
+        <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Docencia directa
+        </h5>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Cuenta como horas lectivas frente a grupo.
+        </p>
+      </div>
+
+      <app-checkbox
+        label="Es docencia directa"
+        [checked]="form.controls.docenciaDirecta.value"
+        (checkedChange)="form.controls.docenciaDirecta.setValue($event)"
+      />
+    </div>
+
+    <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
+      <div class="mb-2">
+        <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Horas semestrales
+        </h5>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Total por semestre (en vez de semanales).
+        </p>
+      </div>
+
+      <app-checkbox
+        label="Cómputo semestral"
+        [checked]="form.controls.horasPorSemestre.value"
+        (checkedChange)="form.controls.horasPorSemestre.setValue($event)"
+      />
+    </div>
+
+    <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
+      <div class="mb-2">
+        <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Estado
+        </h5>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Disponible para su uso en el sistema.
+        </p>
+      </div>
+
+      <app-checkbox
+        label="Activo"
+        [checked]="form.controls.estado.value"
+        (checkedChange)="form.controls.estado.setValue($event)"
+      />
+    </div>
   </div>
 
   <div class="mt-5 flex justify-end gap-3">

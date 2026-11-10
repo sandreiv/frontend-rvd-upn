@@ -3,6 +3,7 @@
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Servicio para administración de proyectos y participantes en esquema general
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de listado de tipos de actividad y búsqueda de personas desde el mismo endpoint
+ * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de método para listar todos los proyectos y productos jerárquicamente
  */
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -23,6 +24,15 @@ import {
 export class ProjectsService {
   private readonly webRequestService = inject(WebRequestService);
   private readonly endpoint = '/configuration/administration/projects';
+
+  /**
+   * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
+   *
+   * @returns Observable con todos los proyectos y productos.
+   */
+  listAllProjects(): Observable<ProjectItem[]> {
+    return this.webRequestService.get<ProjectItem[]>(`${this.endpoint}/all`);
+  }
 
   /**
    * Lista los proyectos registrados en el módulo de administración.

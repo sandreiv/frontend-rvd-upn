@@ -3,6 +3,7 @@
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Ajuste de columnas para participantes y roles en esquema general
  * 10/11/2026 - Leonel Antonio Perez Rios - Remoción de columna rol inexistente en BD
+ * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de badge para la columna de estado y refactorización limpia
  */
 import {
   ChangeDetectionStrategy,
@@ -19,10 +20,7 @@ import {
   DataTableRowAction,
   DataTableToolbarActionEvent,
 } from '../../../../../shared/ui/data-table/table.types';
-import {
-  ProjectPersonItem,
-  resolveProjectLookupName,
-} from '../../model/projects.model';
+import { ProjectPersonItem } from '../../model/projects.model';
 
 @Component({
   selector: 'app-project-person-table',
@@ -67,8 +65,9 @@ export class ProjectPersonTable {
     },
     {
       id: 'estado',
-      header: 'Activo',
-      cell: (row) => this.formatYesNo(row.esActivo || row.estado),
+      header: 'Estado',
+      allowHtml: true,
+      cell: (row) => this.formatStatusBadge(row.esActivo || row.estado),
     },
   ];
 
@@ -82,9 +81,7 @@ export class ProjectPersonTable {
     },
   ];
 
-  onToolbarAction(
-    event: DataTableToolbarActionEvent<ProjectPersonItem>,
-  ): void {
+  onToolbarAction(event: DataTableToolbarActionEvent<ProjectPersonItem>): void {
     if (event.actionId === 'refresh') {
       this.refreshPersons.emit();
       return;
@@ -96,11 +93,10 @@ export class ProjectPersonTable {
     }
 
     if (event.actionId === 'deleteAll') {
-      this.deleteAll.emit(
-        event.selectedIds
-          .map((id) => Number(id))
-          .filter((id) => Number.isFinite(id)),
-      );
+      const numericIds = event.selectedIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id));
+      this.deleteAll.emit(numericIds);
     }
   }
 
@@ -119,11 +115,29 @@ export class ProjectPersonTable {
     this.selectedPersonIds.set(keys.map((key) => String(key)));
   }
 
-  private formatYesNo(value: string | null | undefined): string {
+  private formatStatusBadge(value: string | null | undefined): string {
     const normalized = String(value ?? '').trim().toUpperCase();
+    const isActive =
+      normalized === '1' ||
+      normalized === 'S' ||
+      normalized === 'SI' ||
+      normalized === 'ACTIVO' ||
+      normalized === 'TRUE';
 
-    return normalized === '1' || normalized === 'S' || normalized === 'SI' || normalized === 'TRUE'
-      ? 'Sí'
-      : 'No';
+    if (isActive) {
+      return `
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Activo
+        </span>
+      `;
+    }
+
+    return `
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 border border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+        <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+        Inactivo
+      </span>
+    `;
   }
 }

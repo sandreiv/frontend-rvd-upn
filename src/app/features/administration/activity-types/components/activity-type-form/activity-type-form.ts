@@ -22,8 +22,8 @@ import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
 import { Option, Select } from '../../../../../shared/components/form/select/select';
+import { TreeSelect } from '../../../../../shared/components/form/tree-select/tree-select';
 import {
-  ACTIVITY_TYPE_CODE_OPTIONS,
   ACTIVITY_TYPE_COMPONENTE_OPTIONS,
   ActivityTypeFormData,
   ActivityTypeItem,
@@ -32,21 +32,19 @@ import {
 type ActivityTypeFormGroup = FormGroup<{
   nombre: FormControl<string>;
   descripcion: FormControl<string>;
-  codigo: FormControl<string>;
   componente: FormControl<string | null>;
+  orden: FormControl<string>;
+  idDependencia: FormControl<string | null>;
+  docenciaDirecta: FormControl<boolean>;
+  horasPorSemestre: FormControl<boolean>;
   minimoHoras: FormControl<number | null>;
   maximoHoras: FormControl<number | null>;
-  ptd: FormControl<boolean>;
   estado: FormControl<boolean>;
 }>;
 
 const hoursRangeValidator: ValidatorFn = (
   control: AbstractControl,
 ): ValidationErrors | null => {
-  if (control.get('ptd')?.value === true) {
-    return null;
-  }
-
   const minimo = Number(control.get('minimoHoras')?.value);
   const maximo = Number(control.get('maximoHoras')?.value);
 
@@ -54,39 +52,110 @@ const hoursRangeValidator: ValidatorFn = (
     return null;
   }
 
-  return maximo <= minimo ? { hoursRange: true } : null;
+  return maximo < minimo ? { hoursRange: true } : null;
 };
+
+/**
+ * Obtiene recursivamente todos los identificadores de los nodos descendientes (hijos, nietos, etc.)
+ */
+function getDescendantIds(
+  items: ActivityTypeItem[],
+  rootId: number,
+): Set<number> {
+  const descendantIds = new Set<number>();
+  const queue = [rootId];
+
+  while (queue.length > 0) {
+    const parentId = queue.shift()!;
+    for (const item of items) {
+      if (item.idPadre === parentId && !descendantIds.has(item.id)) {
+        descendantIds.add(item.id);
+        queue.push(item.id);
+      }
+    }
+  }
+
+  return descendantIds;
+}
+
+function parseBooleanState(value: unknown): boolean {
+  if (value == null || value === '') {
+    return true;
+  }
+  const normalized = String(value).trim().toUpperCase();
+  return normalized === '1' || normalized === 'ACTIVO' || normalized === 'A';
+}
 
 @Component({
   selector: 'app-activity-type-form',
-  imports: [ReactiveFormsModule, Label, InputField, Select, Checkbox, Button],
+  imports: [
+    ReactiveFormsModule,
+    Label,
+    InputField,
+    Select,
+    TreeSelect,
+    Checkbox,
+    Button,
+  ],
   templateUrl: './activity-type-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivityTypeForm implements OnChanges {
-  activityType = input<ActivityTypeItem | null>(null);
-  isSaving = input(false);
-  title = input('Nuevo tipo de actividad');
-  editTitle = input('Editar tipo de actividad');
-  description = input(
-    'Registra actividades padre. El orden se calculará automáticamente.',
+  readonly activityType = input<ActivityTypeItem | null>(null);
+  readonly allActivityTypes = input<ActivityTypeItem[]>([]);
+  readonly isSaving = input(false);
+  readonly title = input('Nuevo tipo de actividad');
+  readonly editTitle = input('Editar tipo de actividad');
+  readonly description = input(
+    'Registra o modifica la información del tipo de actividad.',
   );
-  parentMinHoras = input<number | null>(null);
-  parentMaxHoras = input<number | null>(null);
-  siblingsMaxHoursSum = input(0);
+  readonly parentMinHoras = input<number | null>(null);
+  readonly parentMaxHoras = input<number | null>(null);
+  readonly siblingsMaxHoursSum = input(0);
 
-  @Output() cancel = new EventEmitter<void>();
-  @Output() saveActivityType = new EventEmitter<ActivityTypeFormData>();
+  @Output() readonly cancel = new EventEmitter<void>();
+  @Output() readonly saveActivityType = new EventEmitter<ActivityTypeFormData>();
 
-  readonly codeOptions: Option[] = ACTIVITY_TYPE_CODE_OPTIONS;
   readonly componenteOptions: Option[] = ACTIVITY_TYPE_COMPONENTE_OPTIONS;
+
+  readonly dependencyTreeItems = computed(() => {
+    const currentItem = this.activityType();
+    const currentId = currentItem?.id ?? null;
+    const all = this.allActivityTypes();
+
+    const blockedIds =
+      currentId != null
+        ? getDescendantIds(all, currentId).add(currentId)
+        : new Set<number>();
+
+    return all.map((item) => {
+      const isCurrent = currentId != null && item.id === currentId;
+      const isDescendant =
+        currentId != null && blockedIds.has(item.id) && !isCurrent;
+      const isBlocked = isCurrent || isDescendant;
+
+      let nombre = item.orden ? `${item.orden}. ${item.nombre}` : item.nombre;
+      if (isCurrent) {
+        nombre += ' (Actividad actual)';
+      } else if (isDescendant) {
+        nombre += ' (Subactividad)';
+      }
+
+      return {
+        id: String(item.id),
+        idPadre: item.idPadre ? String(item.idPadre) : null,
+        nombre,
+        disabled: isBlocked,
+        esSeleccionable: !isBlocked,
+      };
+    });
+  });
 
   readonly remainingParentHours = computed(() => {
     const parentMax = this.parentMaxHoras();
     if (parentMax == null) {
       return null;
     }
-
     return Math.max(parentMax - this.siblingsMaxHoursSum(), 0);
   });
 
@@ -100,21 +169,28 @@ export class ActivityTypeForm implements OnChanges {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      codigo: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
       componente: new FormControl<string | null>(null, {
         validators: [Validators.required],
       }),
+      orden: new FormControl('', {
+        nonNullable: true,
+      }),
+      idDependencia: new FormControl<string | null>(''),
+      docenciaDirecta: new FormControl(false, {
+        nonNullable: true,
+      }),
+      horasPorSemestre: new FormControl(false, {
+        nonNullable: true,
+      }),
       minimoHoras: new FormControl<number | null>(null, {
-        validators: [Validators.required],
+        validators: [Validators.required, Validators.min(0)],
       }),
       maximoHoras: new FormControl<number | null>(null, {
-        validators: [Validators.required, this.parentMaxHoursValidator()],
-      }),
-      ptd: new FormControl(false, {
-        nonNullable: true,
+        validators: [
+          Validators.required,
+          Validators.min(0),
+          this.parentMaxHoursValidator(),
+        ],
       }),
       estado: new FormControl(true, {
         nonNullable: true,
@@ -123,10 +199,6 @@ export class ActivityTypeForm implements OnChanges {
     { validators: [hoursRangeValidator] },
   );
 
-  constructor() {
-    this.form.controls.ptd.valueChanges.subscribe(() => this.updatePtdValidations());
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
     if (
       changes['activityType'] ||
@@ -134,7 +206,6 @@ export class ActivityTypeForm implements OnChanges {
       changes['siblingsMaxHoursSum']
     ) {
       this.patchForm();
-      this.updatePtdValidations();
       this.form.controls.maximoHoras.updateValueAndValidity({
         emitEvent: false,
       });
@@ -165,38 +236,19 @@ export class ActivityTypeForm implements OnChanges {
     }
 
     const raw = this.form.getRawValue();
-    const esPtd = raw.ptd;
 
     this.saveActivityType.emit({
       nombre: raw.nombre.trim(),
       descripcion: raw.descripcion.trim(),
-      codigo: raw.codigo,
-      componente: esPtd ? null : raw.componente,
-      minimoHoras: esPtd ? null : Number(raw.minimoHoras),
-      maximoHoras: esPtd ? null : Number(raw.maximoHoras),
-      ptd: raw.ptd ? '1' : '0',
+      componente: raw.componente,
+      orden: raw.orden.trim() || null,
+      idDependencia: raw.idDependencia ? Number(raw.idDependencia) : null,
+      docenciaDirecta: raw.docenciaDirecta ? '1' : '0',
+      horasPorSemestre: raw.horasPorSemestre ? '1' : '0',
+      minimoHoras: raw.minimoHoras != null ? Number(raw.minimoHoras) : null,
+      maximoHoras: raw.maximoHoras != null ? Number(raw.maximoHoras) : null,
       estado: raw.estado ? '1' : '0',
     });
-  }
-
-  private updatePtdValidations(): void {
-    const { componente, minimoHoras, maximoHoras, ptd } = this.form.controls;
-
-    if (ptd.value) {
-      componente.clearValidators();
-      minimoHoras.clearValidators();
-      maximoHoras.clearValidators();
-    } else {
-      componente.setValidators([Validators.required]);
-      minimoHoras.setValidators([Validators.required]);
-      maximoHoras.setValidators([Validators.required, this.parentMaxHoursValidator()]);
-    }
-
-    componente.updateValueAndValidity({ emitEvent: false });
-    minimoHoras.updateValueAndValidity({ emitEvent: false });
-    maximoHoras.updateValueAndValidity({ emitEvent: false });
-
-    this.form.updateValueAndValidity({ emitEvent: false });
   }
 
   private parentMaxHoursValidator(): ValidatorFn {
@@ -230,41 +282,14 @@ export class ActivityTypeForm implements OnChanges {
     this.form.reset({
       nombre: item?.nombre ?? '',
       descripcion: item?.descripcion ?? '',
-      codigo: item?.codigo ?? '',
       componente: item?.componente ?? '',
+      orden: item?.orden ?? '',
+      idDependencia: item?.idDependencia ? String(item.idDependencia) : '',
+      docenciaDirecta: item?.docenciaDirecta === '1',
+      horasPorSemestre: item?.horasPorSemestre === '1',
       minimoHoras: item?.minimoHoras != null ? Number(item.minimoHoras) : null,
       maximoHoras: item?.maximoHoras != null ? Number(item.maximoHoras) : null,
-      ptd: this.isPtdEnabled(item?.ptd),
-      estado: this.isActive(item?.estado),
+      estado: parseBooleanState(item?.estado),
     });
-  }
-
-  private isActive(value: ActivityTypeItem['estado'] | undefined): boolean {
-    if (value == null || value === '') {
-      return true;
-    }
-
-    const normalized = String(value).trim().toUpperCase();
-
-    return normalized === '1' || normalized === 'ACTIVO' || normalized === 'A';
-  }
-
-  private isPtdEnabled(
-    value: ActivityTypeItem['ptd'] | undefined,
-  ): boolean {
-    if (value == null || value === '') {
-      return false;
-    }
-
-    const normalized =
-      String(value).trim().toUpperCase();
-
-    return (
-      normalized === '1' ||
-      normalized === 'S' ||
-      normalized === 'SI' ||
-      normalized === 'SÍ' ||
-      normalized === 'TRUE'
-    );
   }
 }

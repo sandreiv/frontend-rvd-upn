@@ -1,13 +1,18 @@
-<app-data-table
+<app-tree-table
   [columns]="columns"
   [rows]="projects()"
-  [rowIdentity]="rowIdentity"
+  [parentIdKey]="rowParentIdentity"
   [rowActions]="rowActions()"
   [enableSelection]="true"
+  [enableBulkActions]="true"
+  [showDeleteButton]="true"
   [selectedRowKeys]="selectedProjectIds()"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+  (selectedIdsChange)="selectedProjectIds.set($event)"
   [emptyMessage]="emptyMessage()"
   [searchPlaceholder]="searchPlaceholder()"
-  (toolbarAction)="onToolbarAction($event)"
-  (rowAction)="onRowAction($event)"
-  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+  (add)="addProject.emit()"
+  (refresh)="refreshProjects.emit()"
+  (deleteAll)="deleteAll.emit($event)"
+  (action)="onAction($event)"
 />

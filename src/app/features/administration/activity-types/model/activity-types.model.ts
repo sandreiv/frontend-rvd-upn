@@ -1,67 +1,71 @@
-export type ActivityTypeCode = 'CTEI' | 'AC' | 'FAD' | 'FAI' | 'ISU' | 'PTD';
+export enum TipoActividadComponenteEnum {
+  DOCENCIADIRECTA = 'DOCENCIADIRECTA',
+  ASIGNATURA = 'ASIGNATURA',
+  APOYO = 'APOYO',
+  INVESTIGACION = 'INVESTIGACION',
+  DIRECCIONTDG = 'DIRECCIONTDG',
+  PROYECTOSINVESTIGACION = 'PROYECTOSINVESTIGACION',
+  EXTENSION = 'EXTENSION',
+  GESTIONINSTITUCIONAL = 'GESTIONINSTITUCIONAL',
+  ACTIVIDADESPREDETERMINADAS = 'ACTIVIDADESPREDETERMINADAS',
+  PROYECTOSPLAN = 'PROYECTOSPLAN',
+  SITUACIONESADMINISTRATIVAS = 'SITUACIONESADMINISTRATIVAS',
+}
 
-/**
- * Tipo de tarjeta/formulario asociado al tipo de actividad.
- * Debe coincidir con los formType del modal de precarga docente.
- */
-export type ActivityTypeComponente = 'direct' | 'criteria' | 'project';
+export type ActivityTypeComponente = TipoActividadComponenteEnum | string;
+
+export const TIPO_ACTIVIDAD_COMPONENTE_LABELS: Record<string, string> = {
+  [TipoActividadComponenteEnum.DOCENCIADIRECTA]: 'Docencia directa',
+  [TipoActividadComponenteEnum.ASIGNATURA]: 'Asignatura',
+  [TipoActividadComponenteEnum.APOYO]: 'Apoyo',
+  [TipoActividadComponenteEnum.INVESTIGACION]: 'Investigación',
+  [TipoActividadComponenteEnum.DIRECCIONTDG]: 'Dirección trabajo de grado',
+  [TipoActividadComponenteEnum.PROYECTOSINVESTIGACION]: 'Proyectos de investigación',
+  [TipoActividadComponenteEnum.EXTENSION]: 'Extensión',
+  [TipoActividadComponenteEnum.GESTIONINSTITUCIONAL]: 'Gestión institucional',
+  [TipoActividadComponenteEnum.ACTIVIDADESPREDETERMINADAS]: 'Actividades predeterminadas',
+  [TipoActividadComponenteEnum.PROYECTOSPLAN]: 'Proyectos de plan',
+  [TipoActividadComponenteEnum.SITUACIONESADMINISTRATIVAS]: 'Situaciones administrativas',
+};
+
+export const ACTIVITY_TYPE_COMPONENTE_OPTIONS = Object.entries(
+  TIPO_ACTIVIDAD_COMPONENTE_LABELS,
+).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 export interface ActivityTypeItem {
   id: number;
+  idPadre?: number | null;
+  idDependencia?: number | null;
+  orden: string | null;
   nombre: string;
   descripcion: string;
-  codigo: ActivityTypeCode | string;
+  componente?: ActivityTypeComponente | string | null;
   minimoHoras: string | null;
   maximoHoras: string | null;
-  orden: string | null;
-  ptd: '1' | '0' | string | null;
+  docenciaDirecta?: '1' | '0' | string | null;
+  horasPorSemestre?: '1' | '0' | string | null;
   estado: '1' | '0' | 'ACTIVO' | 'INACTIVO' | string;
-  /** Presente cuando el backend exponga tiac_componente. */
-  componente?: ActivityTypeComponente | string | null;
 }
 
 export interface ActivityTypeFormData {
   nombre: string;
   descripcion: string;
-  codigo: ActivityTypeCode | string;
+  componente: ActivityTypeComponente | string | null;
+  orden?: string | null;
+  idDependencia?: number | null;
+  docenciaDirecta: '1' | '0';
+  horasPorSemestre: '1' | '0';
   minimoHoras: number | null;
   maximoHoras: number | null;
-  ptd: '1' | '0';
   estado: '1' | '0';
-  componente: ActivityTypeComponente | string | null;
 }
 
 export interface DeleteBulkActivityTypesRequest {
   ids: number[];
 }
-
-export const ACTIVITY_TYPE_CODE_OPTIONS = [
-  { value: 'CTEI', label: 'CTEI' },
-  { value: 'AC', label: 'AC' },
-  { value: 'FAD', label: 'FAD' },
-  { value: 'FAI', label: 'FAI' },
-  { value: 'ISU', label: 'ISU' },
-  { value: 'PTD', label: 'PTD' },
-];
-
-export const ACTIVITY_TYPE_COMPONENTE_OPTIONS = [
-  {
-    value: 'direct',
-    label: 'Actividades directas',
-  },
-  {
-    value: 'criteria',
-    label: 'Actividades indirectas',
-  },
-  {
-    value: 'criteria',
-    label: 'Actividades administrativas',
-  },
-  {
-    value: 'project',
-    label: 'Proyectos CTeI - ISU',
-  },
-];
 
 export function parseActivityHours(
   value: string | number | null | undefined,
@@ -83,7 +87,7 @@ export function sumChildrenMaxHours(
       return total;
     }
 
-    const hours = parseActivityHours(child.maximoHoras);
-    return total + (hours ?? 0);
+    const maxHours = parseActivityHours(child.maximoHoras);
+    return total + (maxHours ?? 0);
   }, 0);
 }

@@ -2,6 +2,8 @@
  * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Adaptación para esquema general con Tipo de Actividades y Coordinación
+ * 10/11/2026 - Leonel Antonio Perez Rios - Migración a TreeTable para soportar proyectos y subproyectos jerárquicamente
+ * 10/11/2026 - Leonel Antonio Perez Rios - Limpieza de código, orden de columnas y estandarización a subproyectos
  */
 import {
   ChangeDetectionStrategy,
@@ -12,13 +14,12 @@ import {
   input,
   model,
 } from '@angular/core';
-import { DataTable } from '../../../../../shared/ui/data-table/data-table';
+import { TreeTable } from '../../../../../shared/ui/tree-table/tree-table';
 import {
-  DataTableActionEvent,
-  DataTableColumn,
-  DataTableRowAction,
-  DataTableToolbarActionEvent,
-} from '../../../../../shared/ui/data-table/table.types';
+  TreeTableActionEvent,
+  TreeTableColumn,
+  TreeTableRowAction,
+} from '../../../../../shared/ui/tree-table/tree-table.types';
 import {
   ProjectItem,
   resolveProjectLookupName,
@@ -26,7 +27,7 @@ import {
 
 @Component({
   selector: 'app-project-table',
-  imports: [DataTable],
+  imports: [TreeTable],
   templateUrl: './project-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -35,23 +36,30 @@ export class ProjectTable {
   selectedProjectIds = model<string[]>([]);
   emptyMessage = input('No hay proyectos registrados.');
   searchPlaceholder = input('Buscar proyecto...');
-  showNestedActions = input(true);
 
   @Output() refreshProjects = new EventEmitter<void>();
   @Output() addProject = new EventEmitter<void>();
+  @Output() addSubproject = new EventEmitter<ProjectItem>();
   @Output() editProject = new EventEmitter<ProjectItem>();
   @Output() deleteProject = new EventEmitter<ProjectItem>();
   @Output() deleteAll = new EventEmitter<number[]>();
   @Output() viewPersons = new EventEmitter<ProjectItem>();
-  @Output() viewProducts = new EventEmitter<ProjectItem>();
 
-  readonly rowIdentity = (row: ProjectItem): string => String(row.id);
+  readonly rowIdentity = (row: ProjectItem): string | number => row.id;
+  readonly rowParentIdentity = (row: ProjectItem): string | number | null =>
+    row.idProyectoPadre ?? null;
 
-  readonly columns: DataTableColumn<ProjectItem>[] = [
+  readonly columns: TreeTableColumn<ProjectItem>[] = [
     {
       id: 'nombre',
       header: 'Nombre',
       cell: (row) => row.nombre || '-',
+      formatAsSentence: true,
+    },
+    {
+      id: 'descripcion',
+      header: 'Descripción',
+      cell: (row) => row.descripcion || '-',
       formatAsSentence: true,
     },
     {
@@ -76,81 +84,46 @@ export class ProjectTable {
       header: 'Docentes',
       cell: (row) => String(row.totalDocentes ?? 0),
     },
-    {
-      id: 'descripcion',
-      header: 'Descripción',
-      cell: (row) => row.descripcion || '-',
-      formatAsSentence: true,
-    },
   ];
 
-  readonly rowActions = computed<DataTableRowAction<ProjectItem>[]>(() => {
-    const actions: DataTableRowAction<ProjectItem>[] = [
-      { id: 'edit', label: 'Editar', icon: 'pencil' },
-      {
-        id: 'delete',
-        label: 'Eliminar',
-        icon: 'delete',
-        className: 'text-red-500',
-      },
-    ];
+  readonly rowActions = computed<TreeTableRowAction<ProjectItem>[]>(() => [
+    {
+      id: 'add-subproject',
+      label: 'Agregar subproyecto',
+      icon: 'plus',
+      visible: (row: ProjectItem) => !row.idProyectoPadre,
+    },
+    {
+      id: 'persons',
+      label: 'Participantes',
+      icon: 'user',
+    },
+    {
+      id: 'edit',
+      label: 'Editar',
+      icon: 'pencil',
+    },
+    {
+      id: 'delete',
+      label: 'Eliminar',
+      icon: 'delete',
+      className: 'text-red-500',
+    },
+  ]);
 
-    if (this.showNestedActions()) {
-      actions.push(
-        { id: 'persons', label: 'Agregar persona', icon: 'user' },
-        {
-          id: 'products',
-          label: 'Ver productos',
-          icon: 'documentPlus',
-        },
-      );
-    }
-
-    return actions;
-  });
-
-  onToolbarAction(event: DataTableToolbarActionEvent<ProjectItem>): void {
-    if (event.actionId === 'refresh') {
-      this.refreshProjects.emit();
-      return;
-    }
-
-    if (event.actionId === 'add') {
-      this.addProject.emit();
-      return;
-    }
-
-    if (event.actionId === 'deleteAll') {
-      this.deleteAll.emit(
-        event.selectedIds
-          .map((id) => Number(id))
-          .filter((id) => Number.isFinite(id)),
-      );
-    }
-  }
-
-  onRowAction(event: DataTableActionEvent<ProjectItem>): void {
-    if (event.actionId === 'edit') {
-      this.editProject.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'delete') {
-      this.deleteProject.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'persons') {
+  onAction(event: TreeTableActionEvent<ProjectItem>): void {
+    if (event.actionId === 'add-subproject') {
+      this.addSubproject.emit(event.row);
+    } else if (event.actionId === 'persons') {
       this.viewPersons.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'products') {
-      this.viewProducts.emit(event.row);
+    } else if (event.actionId === 'edit') {
+      this.editProject.emit(event.row);
+    } else if (event.actionId === 'delete') {
+      this.deleteProject.emit(event.row);
     }
   }
 
   onSelectedIdsChange(keys: Array<string | number>): void {
-    this.selectedProjectIds.set(keys.map((key) => String(key)));
+    this.selectedProjectIds.set(keys.map((k) => String(k)));
   }
 }

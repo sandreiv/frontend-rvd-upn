@@ -5,21 +5,12 @@
 >
   <div class="mb-4 flex flex-col gap-1">
     <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-      {{ person() ? 'Editar persona del proyecto' : 'Agregar persona' }}
+      {{ isCreateMode() ? 'Agregar participante' : 'Editar participante' }}
     </h4>
     <p class="text-xs text-gray-500 dark:text-gray-400">
       Asocia un docente y sus horas de dedicación al proyecto seleccionado.
     </p>
   </div>
-
-  @if (isCreateBlocked()) {
-    <div
-      class="mb-4 rounded-lg border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300"
-    >
-      Se alcanzó el máximo de participantes permitido para este tipo de
-      proyecto ({{ maxParticipantes() }}).
-    </div>
-  }
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
@@ -40,21 +31,18 @@
         type="number"
         formControlName="horas"
         placeholder="Horas"
-        min="0"
+        min="1"
+        max="40"
       />
 
       @if (horasValidation().bajoMinimo) {
-        <div
-          class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
-        >
+        <div class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
           El mínimo de horas es {{ horasValidation().minimo }}.
         </div>
       }
 
       @if (horasValidation().sobreMaximo) {
-        <div
-          class="mt-1 text-xs font-medium text-red-600 dark:text-red-400"
-        >
+        <div class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
           El máximo de horas es {{ horasValidation().maximo }}.
         </div>
       }
@@ -75,7 +63,7 @@
         Activo
       </h5>
       <p class="text-xs text-gray-500 dark:text-gray-400">
-        Define si el proyecto esta activo para el docente.
+        Define si el proyecto está activo para el docente.
       </p>
     </div>
 
@@ -98,7 +86,7 @@
     <app-button
       type="submit"
       size="sm"
-      [disabled]="form.invalid || isSaving() || isCreateBlocked() || !horasValidation().valid"
+      [disabled]="form.invalid || isSaving()"
     >
       {{ isSaving() ? 'Guardando...' : 'Guardar' }}
     </app-button>
