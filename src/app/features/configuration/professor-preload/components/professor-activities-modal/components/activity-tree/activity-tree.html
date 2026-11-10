@@ -1,0 +1,39 @@
+<div [class]="listClass()">
+  @for (node of nodes(); track node.id) {
+    @if (depth() === 0) {
+      <section class="flex flex-col gap-3">
+        @let icon = sectionIcon(node);
+        <div class="flex items-center gap-3">
+          <span
+            class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl {{
+              icon.badgeClass
+            }}"
+          >
+            <app-icon [name]="icon.name" size="sm" [classes]="icon.iconClass" />
+          </span>
+          <h4
+            class="min-w-0 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
+          >
+            {{ node.nombre }}
+          </h4>
+        </div>
+        <div class="flex flex-col gap-3 border-l border-gray-200 pl-4 dark:border-white/10">
+          @if (hasChildren(node)) {
+            <app-activity-tree class="block" [nodes]="node.hijos" [depth]="depth() + 1" />
+          } @else {
+            <app-activity-card class="block" [activity]="node" />
+          }
+        </div>
+      </section>
+    } @else if (hasChildren(node)) {
+      <section class="flex flex-col gap-3">
+        <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+          {{ node.nombre }}
+        </h5>
+        <app-activity-tree class="block" [nodes]="node.hijos" [depth]="depth() + 1" />
+      </section>
+    } @else {
+      <app-activity-card class="block" [activity]="node" />
+    }
+  }
+</div>

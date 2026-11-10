@@ -2,30 +2,24 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   input,
   output,
-  signal,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { Modal } from '../../../../../shared/ui/modal/modal';
 import { Button } from '../../../../../shared/ui/button/button';
 import { Icon } from '../../../../../shared/ui/icon/icon';
-import { CollapsibleSection } from '../../../../../shared/components/form/collapsible-section/collapsible-section';
 import { CoordinationService } from '../../data/coordination.service';
 import { LinkageTypeItem } from '../../model/linkage-type.model';
 import { ProfessorLoadItem, professorLoadDisplayName } from '../../model/professor-load.model';
 import {
   ActivityRestrictionItem,
   ActivityTypeNode,
-  visibleActivityParents,
+  visibleActivityTree,
 } from '../../model/professor-activities.model';
-import { Direct } from './components/direct/direct';
-import { Extension } from './components/extension/extension';
-import { Management } from './components/management/management';
-import { Research } from './components/research/research';
+import { ActivityTree } from './components/activity-tree/activity-tree';
 
 interface ActivityCatalog {
   activities: ActivityTypeNode[];
@@ -39,7 +33,7 @@ const EMPTY_CATALOG: ActivityCatalog = {
 
 @Component({
   selector: 'app-professor-activities-modal',
-  imports: [Modal, Button, Icon, CollapsibleSection, Direct, Research, Extension, Management],
+  imports: [Modal, Button, Icon, ActivityTree],
   templateUrl: './professor-activities-modal.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -53,16 +47,6 @@ export class ProfessorActivitiesModal {
   readonly coordinationLabel = input('');
   readonly periodLabel = input('');
   readonly close = output<void>();
-
-  private readonly expandedActivityIds = signal<ReadonlySet<number>>(new Set());
-
-  constructor() {
-    effect(() => {
-      if (!this.isOpen()) {
-        this.expandedActivityIds.set(new Set());
-      }
-    });
-  }
 
   readonly activitiesResource = rxResource({
     params: () => {
@@ -100,22 +84,6 @@ export class ProfessorActivitiesModal {
 
   readonly visibleActivities = computed(() => {
     const catalog = this.activitiesResource.value();
-    return visibleActivityParents(catalog.activities, catalog.restrictions);
+    return visibleActivityTree(catalog.activities, catalog.restrictions);
   });
-
-  isActivityExpanded(id: number): boolean {
-    return this.expandedActivityIds().has(id);
-  }
-
-  onActivityExpandedChange(id: number, expanded: boolean): void {
-    this.expandedActivityIds.update((current) => {
-      const next = new Set(current);
-      if (expanded) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  }
 }

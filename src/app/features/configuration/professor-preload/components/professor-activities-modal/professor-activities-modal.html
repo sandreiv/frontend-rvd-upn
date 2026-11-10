@@ -57,44 +57,7 @@
           No fue posible cargar las actividades.
         </p>
       } @else if (visibleActivities().length) {
-        <div class="flex flex-col gap-3">
-          @for (item of visibleActivities(); track item.activity.id) {
-            <app-collapsible-section
-              class="block"
-              contentClassName="flex flex-col gap-4"
-              [expanded]="isActivityExpanded(item.activity.id)"
-              (expandedChange)="onActivityExpandedChange(item.activity.id, $event)"
-            >
-              <div collapsibleSectionHeader class="flex min-w-0 flex-1 items-center gap-3">
-                <span
-                  class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl {{
-                    item.iconBgClass
-                  }}"
-                >
-                  <app-icon [name]="item.icon" size="sm" [classes]="item.iconColorClass" />
-                </span>
-                <h4 class="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white/90">
-                  {{ item.activity.nombre }}
-                </h4>
-              </div>
-
-              @switch (item.view) {
-                @case ('direct') {
-                  <app-direct [activity]="item.activity" />
-                }
-                @case ('research') {
-                  <app-research [activity]="item.activity" />
-                }
-                @case ('extension') {
-                  <app-extension [activity]="item.activity" />
-                }
-                @case ('management') {
-                  <app-management [activity]="item.activity" />
-                }
-              }
-            </app-collapsible-section>
-          }
-        </div>
+        <app-activity-tree class="block" [nodes]="visibleActivities()" />
       } @else {
         <p
           class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"

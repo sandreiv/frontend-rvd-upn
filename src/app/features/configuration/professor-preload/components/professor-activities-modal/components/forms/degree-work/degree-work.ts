@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { ActivityTypeNode } from '../../../../../../model/professor-activities.model';
+import { ActivityTypeNode } from '../../../../../model/professor-activities.model';
 
 @Component({
-  selector: 'app-support',
-  imports: [Support],
-  templateUrl: './support.html',
+  selector: 'app-degree-work',
+  templateUrl: './degree-work.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Support {
+export class DegreeWork {
   readonly activity = input.required<ActivityTypeNode>();
 }

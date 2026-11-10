@@ -1,0 +1,45 @@
+<app-collapsible-section
+  class="block"
+  contentClassName="flex flex-col gap-4"
+  [expanded]="expanded()"
+  (expandedChange)="expanded.set($event)"
+>
+  <span
+    collapsibleSectionHeader
+    class="min-w-0 flex-1 text-sm font-medium uppercase tracking-wide text-gray-800 dark:text-white/90"
+  >
+    {{ activity().nombre }}
+  </span>
+
+  @switch (componentKey()) {
+    @case ('ASIGNATURA') {
+      <app-subject [activity]="activity()" />
+    }
+    @case ('APOYO') {
+      <app-support [activity]="activity()" />
+    }
+    @case ('DIRECCIONTDG') {
+      <app-degree-work [activity]="activity()" />
+    }
+    @case ('PROYECTOSINVESTIGACION') {
+      <app-research-project [activity]="activity()" />
+    }
+    @case ('EXTENSION') {
+      <app-extension-activity [activity]="activity()" />
+    }
+    @case ('ACTIVIDADESPREDETERMINADAS') {
+      <app-preset-activity [activity]="activity()" />
+    }
+    @case ('PROYECTOSPLAN') {
+      <app-institutional-project [activity]="activity()" />
+    }
+    @case ('SITUACIONESADMINISTRATIVAS') {
+      <app-administrative-situation [activity]="activity()" />
+    }
+    @default {
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Esta actividad no tiene un formulario asociado.
+      </p>
+    }
+  }
+</app-collapsible-section>
