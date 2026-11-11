@@ -57,7 +57,42 @@
           No fue posible cargar las actividades.
         </p>
       } @else if (visibleActivities().length) {
-        <app-activity-tree class="block" [nodes]="visibleActivities()" />
+        <div class="flex flex-col gap-6">
+          @for (version of [selectorVersion()]; track version) {
+            <app-select
+              [options]="activityOptions()"
+              [disabled]="!activityOptions().length"
+              [placeholder]="activityPlaceholder()"
+              searchPlaceholder="Buscar actividad..."
+              emptyText="No hay actividades disponibles"
+              labelFormat="none"
+              (valueChange)="onActivitySelected($event)"
+            />
+          }
+
+          @if (addedActivities().length) {
+            <div class="flex flex-col gap-8">
+              @for (activity of addedActivities(); track activity.id) {
+                <app-activity-tree class="block" [nodes]="[activity]">
+                  <button
+                    activityTreeActions
+                    type="button"
+                    class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    (click)="removeActivity(activity.id)"
+                  >
+                    Quitar
+                  </button>
+                </app-activity-tree>
+              }
+            </div>
+          } @else {
+            <p
+              class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+            >
+              Selecciona un tipo de actividad para agregarlo. Después puedes agregar otro.
+            </p>
+          }
+        </div>
       } @else {
         <p
           class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"

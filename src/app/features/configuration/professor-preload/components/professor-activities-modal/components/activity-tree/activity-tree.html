@@ -12,12 +12,15 @@
             <app-icon [name]="icon.name" size="sm" [classes]="icon.iconClass" />
           </span>
           <h4
-            class="min-w-0 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
+            class="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
           >
             {{ node.nombre }}
           </h4>
+          <div class="ml-auto shrink-0">
+            <ng-content select="[activityTreeActions]" />
+          </div>
         </div>
-        <div class="flex flex-col gap-3 border-l border-gray-200 pl-4 dark:border-white/10">
+        <div class="flex flex-col gap-3">
           @if (hasChildren(node)) {
             <app-activity-tree class="block" [nodes]="node.hijos" [depth]="depth() + 1" />
           } @else {

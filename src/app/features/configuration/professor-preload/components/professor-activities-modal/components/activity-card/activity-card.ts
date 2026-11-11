@@ -10,14 +10,15 @@ import {
   ActivityTypeNode,
   activityComponentKey,
 } from '../../../../model/professor-activities.model';
-import { AdministrativeSituation } from '../forms/administrative-situation/administrative-situation';
-import { DegreeWork } from '../forms/degree-work/degree-work';
-import { ExtensionActivity } from '../forms/extension-activity/extension-activity';
-import { InstitutionalProject } from '../forms/institutional-project/institutional-project';
-import { PresetActivity } from '../forms/preset-activity/preset-activity';
-import { ResearchProject } from '../forms/research-project/research-project';
-import { Subject } from '../forms/subject/subject';
-import { Support } from '../forms/support/support';
+import { Subject } from '../direct/components/subject/subject';
+import { Support } from '../direct/components/support/support';
+import { ExtensionActivity } from '../extension-activity/extension-activity';
+import { AdministrativeSituation } from '../management/components/administrative-situation/administrative-situation';
+import { InstitutionalProject } from '../management/components/institutional-project/institutional-project';
+import { PresetActivity } from '../management/components/preset-activity/preset-activity';
+import { DegreeWork } from '../research/components/degree-work/degree-work';
+import { ResearchProject } from '../research/components/research-project/research-project';
+
 
 @Component({
   selector: 'app-activity-card',
