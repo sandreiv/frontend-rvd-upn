@@ -16,6 +16,15 @@ import {
 import { AddProfessorPayload } from '../model/add-professor.model';
 import { ProfessorLoadItem } from '../model/professor-load.model';
 import { ActivityRestrictionItem, ActivityTypeNode } from '../model/professor-activities.model';
+import {
+  PensumItem,
+  ProgramItem,
+  SubjectComponentItem,
+  SubjectGroupItem,
+  SubjectItem,
+} from '../model/subject-catalog.model';
+import { SaveDetailProfessorPreloadRequest } from '../model/professor-activity-save.model';
+import { ProfessorLoadDetailItem } from '../model/professor-load-detail.model';
 import { LinkageTypeItem, LinkageTypeListResponse } from '../model/linkage-type.model';
 import { ContractHours, ContractValue, ContractValueQuery } from '../model/professor-form.config';
 
@@ -123,6 +132,100 @@ export class CoordinationService {
       { idTipoVinculacion },
     );
   }
+
+  /**
+   * Lista los programas de la coordinación en una unidad regional y un periodo.
+   * Solo incluye los que la persona del JWT puede ver.
+   *
+   * @param idCoordinacion Identificador de la coordinación.
+   * @param idUnidadRegional Identificador de la unidad regional.
+   * @param idPeriodoUniversidad Identificador del periodo universitario.
+   * @returns Observable con los programas. Vacío si no hay ninguno.
+   */
+  listPrograms(
+    idCoordinacion: number,
+    idUnidadRegional: number,
+    idPeriodoUniversidad: number,
+  ): Observable<ProgramItem[]> {
+    return this.webRequestService.get<ProgramItem[]>(`${this.endpoint}/list-program`, {
+      idCoordinacion,
+      idUnidadRegional,
+      idPeriodoUniversidad,
+    });
+  }
+
+  /**
+   * Lista los pensum de un programa.
+   *
+   * @param idPrograma Identificador del programa.
+   * @returns Observable con los pensum. Vacío si el programa no tiene.
+   */
+  listPensums(idPrograma: number): Observable<PensumItem[]> {
+    return this.webRequestService.get<PensumItem[]>(`${this.endpoint}/list-pensum`, {
+      idPrograma,
+    });
+  }
+
+  /**
+   * Lista las materias de un pensum.
+   * Omite las marcadas como materia particular del programa.
+   *
+   * @param idPensum Identificador del pensum.
+   * @returns Observable con las materias. Vacío si no queda ninguna.
+   */
+  listSubjects(idPensum: number): Observable<SubjectItem[]> {
+    return this.webRequestService.get<SubjectItem[]>(`${this.endpoint}/list-subject`, {
+      idPensum,
+    });
+  }
+
+  /**
+   * Lista las materias de práctica educativa de un pensum.
+   * Solo incluye las marcadas como materia particular de ese tipo.
+   *
+   * @param idPensum Identificador del pensum.
+   * @returns Observable con las materias. Vacío si no hay de ese tipo.
+   */
+  listEducationalPracticeSubject(idPensum: number): Observable<SubjectItem[]> {
+    return this.webRequestService.get<SubjectItem[]>(
+      `${this.endpoint}/list-educational-practice-subject`,
+      { idPensum },
+    );
+  }
+
+  /**
+   * Lista los grupos de una materia en la convocatoria.
+   * Incluye el periodo de la convocatoria y sus periodos de extensión.
+   *
+   * @param idConvocatoria Identificador de la convocatoria.
+   * @param codigoMateria Código de la materia.
+   * @returns Observable con los grupos. Vacío si no hay ninguno.
+   */
+  listSubjectGroups(
+    idConvocatoria: number,
+    codigoMateria: string,
+  ): Observable<SubjectGroupItem[]> {
+    return this.webRequestService.get<SubjectGroupItem[]>(`${this.endpoint}/list-subject-group`, {
+      idConvocatoria,
+      codigoMateria,
+    });
+  }
+
+  /**
+   * Lista los componentes de una materia electiva.
+   * El código debe existir en el banco de materias.
+   *
+   * @param codigoMateria Código de la materia electiva.
+   * @returns Observable con los componentes. Vacío si el banco no tiene.
+   */
+  listSubjectComponents(codigoMateria: string): Observable<SubjectComponentItem[]> {
+    return this.webRequestService.get<SubjectComponentItem[]>(
+      `${this.endpoint}/list-subject-components`,
+      { codigoMateria },
+    );
+  }
+
+  
 
   /**
    * Busca docentes por documento o nombre en un año de vigencia.
@@ -239,5 +342,32 @@ export class CoordinationService {
     }
 
     params[key] = value;
+  }
+
+  /**
+   * Lista los detalles de carga ya guardados de un docente.
+   * Si la carga no tiene detalles, la lista llega vacía.
+   *
+   * @param idCargaDocente Identificador de la carga docente.
+   * @returns Observable con los detalles de esa carga.
+   */
+  listDetailProfessorLoad(idCargaDocente: number): Observable<ProfessorLoadDetailItem[]> {
+    return this.webRequestService.get<ProfessorLoadDetailItem[]>(
+      `${this.endpoint}/list-detail-professor-load`,
+      { idCargaDocente },
+    );
+  }
+
+  /**
+   * Guarda la distribución de actividades de un docente.
+   *
+   * @param request Distribución de actividades de la precarga docente.
+   * @returns Observable sin contenido cuando el guardado finaliza correctamente.
+   */
+  saveActivityDistribution(request: SaveDetailProfessorPreloadRequest): Observable<void> {
+    return this.webRequestService.post<void>(
+      `${this.endpoint}/save-detail-professor-load`,
+      request,
+    );
   }
 }

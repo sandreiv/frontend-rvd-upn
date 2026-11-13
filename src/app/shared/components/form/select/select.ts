@@ -147,9 +147,13 @@ export class Select implements ControlValueAccessor {
   });
 
   private formatOptionLabel(label: string): string {
-    if (this.labelFormat() === 'uppercase') {
-      const normalized = label?.trim();
+    const normalized = label?.trim() ?? '';
 
+    if (this.labelFormat() === 'none') {
+      return normalized;
+    }
+
+    if (this.labelFormat() === 'uppercase') {
       if (!normalized || normalized === '-') {
         return '-';
       }

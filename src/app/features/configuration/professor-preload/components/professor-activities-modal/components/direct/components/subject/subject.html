@@ -1,1 +1,197 @@
-<ng-container />
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      {{ activity().descripcion ?? '' }}
+    </p>
+    <app-button
+      type="button"
+      size="sm"
+      className="h-10 shrink-0 whitespace-nowrap"
+      (btnClick)="toggleAddForm()"
+    >
+      <app-icon name="plus" size="sm" />
+      Agregar materia
+    </app-button>
+  </div>
+
+  @if (addFormOpen()) {
+    <section
+      class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5"
+      [formGroup]="form"
+    >
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <app-label>Programa</app-label>
+          <app-select
+            formControlName="idPrograma"
+            [options]="programOptions()"
+            placeholder="Seleccione el programa"
+            [disabled]="isProgramDisabled()"
+          />
+        </div>
+        <div>
+          <app-label>Pensum</app-label>
+          <app-select
+            formControlName="idPensum"
+            [options]="pensumOptions()"
+            placeholder="Seleccione el pensum"
+            [disabled]="isPensumDisabled()"
+          />
+        </div>
+        <div>
+          <app-label>Materia</app-label>
+          <app-select
+            formControlName="codigoMateria"
+            [options]="subjectOptions()"
+            placeholder="Seleccione la materia"
+            [disabled]="isSubjectDisabled()"
+          />
+        </div>
+        @if (showComponents()) {
+          <div>
+            <app-label>Componentes</app-label>
+            <app-select
+              formControlName="codigoComponente"
+              [options]="componentOptions()"
+              placeholder="Seleccione el componente"
+            />
+          </div>
+        }
+        <div>
+          <app-label>Grupo</app-label>
+          <app-select
+            formControlName="idGrupo"
+            [options]="groupOptions()"
+            placeholder="Seleccione el grupo"
+            labelFormat="none"
+            [disabled]="isGroupDisabled()"
+          />
+        </div>
+        <div>
+          <app-label>Créditos</app-label>
+          <app-input-field type="number" formControlName="creditos" [disabled]="true" />
+        </div>
+        <div>
+          <app-label>Cupo máximo</app-label>
+          <app-input-field type="number" formControlName="cupoMaximo" [disabled]="true" />
+        </div>
+        <div>
+          <app-label>Horas totales</app-label>
+          <app-input-field type="number" formControlName="horasTotales" [disabled]="true" />
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <app-checkbox
+          label="Horas extras"
+          [checked]="form.controls.horasExtras.value"
+          (checkedChange)="form.controls.horasExtras.setValue($event)"
+        />
+        <div class="flex justify-end gap-2">
+          <app-button type="button" variant="outline" size="sm" (btnClick)="cancelAddForm()">
+            Cancelar
+          </app-button>
+          <app-button type="button" size="sm" [disabled]="isSaving()" (btnClick)="onAddActivity()">
+            Agregar
+          </app-button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (activities().length) {
+    <div class="rounded-xl border border-gray-200 dark:border-white/10">
+      <table class="w-full table-fixed text-left text-[14px] leading-4">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            @for (
+              header of [
+                'Programa',
+                'Pensum',
+                'Materia',
+                'Grupo',
+                'Créditos',
+                'Cupo máximo',
+                'Horas totales',
+                '',
+              ];
+              track header
+            ) {
+              <th
+                class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+                [class.w-8]="!header"
+              >
+                {{ header }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of activities(); track row.id) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ sentence(row.programa) }}
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ sentence(row.pensum) }}
+              </td>
+              <td class="break-words px-1.5 py-2">
+                <p class="font-semibold text-gray-900 dark:text-white/90">
+                  {{ sentence(row.materia) }}
+                </p>
+                @if (row.componente) {
+                  <p class="mt-0.5 text-[11px] leading-4 text-gray-500 dark:text-gray-400">
+                    {{ sentence(row.componente) }}
+                  </p>
+                }
+              </td>
+              <td class="px-1.5 py-2">
+                <span
+                  class="inline-flex max-w-full whitespace-normal break-words rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-4 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                >
+                  {{ sentence(row.grupo) }}
+                </span>
+              </td>
+              <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ row.creditos ?? '-' }}
+              </td>
+              <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ row.cupoMaximo ?? '-' }}
+              </td>
+              <td class="px-1.5 py-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <span class="text-gray-600 dark:text-gray-300">
+                    {{ row.horasTotales ?? '-' }}
+                  </span>
+                  @if (row.horasExtras) {
+                    <span
+                      class="inline-flex max-w-full whitespace-normal break-words rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-4 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      H. extras
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="w-8 px-1 py-2 text-right">
+                <button
+                  type="button"
+                  class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 dark:hover:bg-white/5"
+                  aria-label="Eliminar materia"
+                  (click)="removeActivity(row.id)"
+                >
+                  <app-icon name="delete" size="xs" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p
+      class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+    >
+      No hay materias registradas.
+    </p>
+  }
+</div>

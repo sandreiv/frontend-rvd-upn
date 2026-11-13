@@ -22,9 +22,30 @@
         </div>
         <div class="flex flex-col gap-3">
           @if (hasChildren(node)) {
-            <app-activity-tree class="block" [nodes]="node.hijos" [depth]="depth() + 1" />
+            <app-activity-tree
+              class="block"
+              [nodes]="node.hijos"
+              [depth]="depth() + 1"
+              [idCoordinacion]="idCoordinacion()"
+              [idUnidadRegional]="idUnidadRegional()"
+              [idPeriodoUniversidad]="idPeriodoUniversidad()"
+              [idConvocatoria]="idConvocatoria()"
+              [idCargaDocente]="idCargaDocente()"
+              [savedDetails]="savedDetails()"
+              (detailSaved)="detailSaved.emit()"
+            />
           } @else {
-            <app-activity-card class="block" [activity]="node" />
+            <app-activity-card
+              class="block"
+              [activity]="node"
+              [idCoordinacion]="idCoordinacion()"
+              [idUnidadRegional]="idUnidadRegional()"
+              [idPeriodoUniversidad]="idPeriodoUniversidad()"
+              [idConvocatoria]="idConvocatoria()"
+              [idCargaDocente]="idCargaDocente()"
+              [savedDetails]="savedDetails()"
+              (detailSaved)="detailSaved.emit()"
+            />
           }
         </div>
       </section>
@@ -33,10 +54,31 @@
         <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
           {{ node.nombre }}
         </h5>
-        <app-activity-tree class="block" [nodes]="node.hijos" [depth]="depth() + 1" />
+        <app-activity-tree
+          class="block"
+          [nodes]="node.hijos"
+          [depth]="depth() + 1"
+          [idCoordinacion]="idCoordinacion()"
+          [idUnidadRegional]="idUnidadRegional()"
+          [idPeriodoUniversidad]="idPeriodoUniversidad()"
+          [idConvocatoria]="idConvocatoria()"
+          [idCargaDocente]="idCargaDocente()"
+          [savedDetails]="savedDetails()"
+          (detailSaved)="detailSaved.emit()"
+        />
       </section>
     } @else {
-      <app-activity-card class="block" [activity]="node" />
+      <app-activity-card
+        class="block"
+        [activity]="node"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idPeriodoUniversidad]="idPeriodoUniversidad()"
+        [idConvocatoria]="idConvocatoria()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
   }
 </div>

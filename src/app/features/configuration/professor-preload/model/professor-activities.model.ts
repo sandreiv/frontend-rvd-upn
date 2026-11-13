@@ -55,6 +55,41 @@ export function activityComponentKey(componente: string | null | undefined): str
   return (componente ?? '').trim().toUpperCase();
 }
 
+/**
+ * Raíces del árbol que contienen alguna de las actividades indicadas.
+ * El orden es el del árbol visible.
+ */
+export function activityRootIds(
+  roots: ActivityTypeNode[] | null | undefined,
+  activityIds: number[],
+): number[] {
+  const wanted = new Set(activityIds);
+  const rootIds: number[] = [];
+
+  forNext(roots, (root) => {
+    if (nodeContainsActivity(root, wanted)) {
+      rootIds.push(root.id);
+    }
+  });
+
+  return rootIds;
+}
+
+function nodeContainsActivity(node: ActivityTypeNode, activityIds: Set<number>): boolean {
+  if (activityIds.has(node.id)) {
+    return true;
+  }
+
+  let found = false;
+  forNext(node.hijos, (child) => {
+    if (!found && nodeContainsActivity(child, activityIds)) {
+      found = true;
+    }
+  });
+
+  return found;
+}
+
 function restrictionIds(restrictions: ActivityRestrictionItem[] | null | undefined): Set<number> {
   const ids = new Set<number>();
 

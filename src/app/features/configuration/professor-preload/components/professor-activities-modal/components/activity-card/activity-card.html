@@ -13,7 +13,28 @@
 
   @switch (componentKey()) {
     @case ('ASIGNATURA') {
-      <app-subject [activity]="activity()" />
+      <app-subject
+        [activity]="activity()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idPeriodoUniversidad]="idPeriodoUniversidad()"
+        [idConvocatoria]="idConvocatoria()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
+    }
+    @case ('PRACTICAEDUCATIVA') {
+      <app-subject
+        [activity]="activity()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idPeriodoUniversidad]="idPeriodoUniversidad()"
+        [idConvocatoria]="idConvocatoria()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('APOYO') {
       <app-support [activity]="activity()" />

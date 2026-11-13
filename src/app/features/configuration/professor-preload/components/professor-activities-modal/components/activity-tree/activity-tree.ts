@@ -1,5 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { ActivityTypeNode, activityComponentKey } from '../../../../model/professor-activities.model';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ActivityTypeNode,
+  activityComponentKey,
+} from '../../../../model/professor-activities.model';
+import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
 import { Icon } from '../../../../../../../shared/ui/icon/icon';
 import { AppIconName } from '../../../../../../../shared/ui/icon/icons';
 import { ActivityCard } from '../activity-card/activity-card';
@@ -48,6 +52,13 @@ const DEFAULT_SECTION_ICON: ActivitySectionIcon = {
 export class ActivityTree {
   readonly nodes = input<ActivityTypeNode[]>([]);
   readonly depth = input(0);
+  readonly idCoordinacion = input<number | null>(null);
+  readonly idUnidadRegional = input<number | null>(null);
+  readonly idPeriodoUniversidad = input<number | null>(null);
+  readonly idConvocatoria = input<number | null>(null);
+  readonly idCargaDocente = input<number | null>(null);
+  readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly detailSaved = output<void>();
 
   readonly listClass = computed(() => {
     if (this.depth() === 0) {
