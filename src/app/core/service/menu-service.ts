@@ -20,6 +20,15 @@ export type MenuNavItem = {
   subItems?: { name: string; path: string; new?: boolean }[];
 };
 
+const PROJECTS_FUNC_CODE = '07';
+
+const TEMPORARY_PROJECTS_NAV_ITEM: MenuNavItem = {
+  name: 'Proyectos',
+  icon: FUNC_ROUTE_MAP[PROJECTS_FUNC_CODE].icon,
+  path: FUNC_ROUTE_MAP[PROJECTS_FUNC_CODE].path,
+  codigo: PROJECTS_FUNC_CODE,
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -103,8 +112,22 @@ export class MenuService {
 
   private markLoaded(nodos: FuncionalidadNodo[]): void {
     this.tree.set(nodos);
-    this.navItems.set(toNavItems(nodos));
+    this.navItems.set(this.buildNavItems(nodos));
     this.loaded.set(true);
+  }
+
+  private buildNavItems(nodos: FuncionalidadNodo[]): MenuNavItem[] {
+    const items = toNavItems(nodos);
+
+    // Temporal mientras se habilitan restricciones y permiso '07' desde seguridad
+    if (
+      this.authService.isAuthenticated() &&
+      !items.some((item) => item.codigo === TEMPORARY_PROJECTS_NAV_ITEM.codigo)
+    ) {
+      items.push(TEMPORARY_PROJECTS_NAV_ITEM);
+    }
+
+    return items;
   }
 
   private resolveArbolUrl(): string | null {

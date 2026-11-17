@@ -4,12 +4,19 @@
  * 09/11/2026 - Leonel Antonio Perez Rios - Servicio para administración de proyectos y participantes en esquema general
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de listado de tipos de actividad y búsqueda de personas desde el mismo endpoint
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de método para listar todos los proyectos y productos jerárquicamente
+ * 13/11/2026 - Inclusión de centros de costo para participantes
+ * 17/11/2026 - Inclusión de listado de funciones de participantes desde backend
  */
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-call/model/preload-call.model';
 import {
+  CostCenterOption,
+  DayOfWeekOption,
+  ParticipantFunctionOption,
+  ParticipantLevelOption,
+  ProjectGroupOption,
   DeleteBulkProjectsRequest,
   ProjectFormData,
   ProjectItem,
@@ -24,6 +31,9 @@ import {
 export class ProjectsService {
   private readonly webRequestService = inject(WebRequestService);
   private readonly endpoint = '/configuration/administration/projects';
+  private participantFunctions$: Observable<ParticipantFunctionOption[]> | null = null;
+  private participantLevels$: Observable<ParticipantLevelOption[]> | null = null;
+  private daysOfWeek$: Observable<DayOfWeekOption[]> | null = null;
 
   /**
    * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
@@ -158,6 +168,80 @@ export class ProjectsService {
    */
   deleteBulkProjectPersons(payload: DeleteBulkProjectsRequest): Observable<void> {
     return this.webRequestService.post<void>(`${this.endpoint}/participants/delete-bulk`, payload);
+  }
+
+  /**
+   * Lista los centros de costo para participantes de proyectos, filtrando por proyecto o coordinación.
+   *
+   * @param idProyecto Identificador opcional del proyecto.
+   * @param idCoordinacion Identificador opcional de la coordinación.
+   * @returns Observable con los centros de costo disponibles.
+   */
+  listCostCenters(idProyecto?: number, idCoordinacion?: number): Observable<CostCenterOption[]> {
+    const params: Record<string, string> = {};
+    if (idProyecto != null && idProyecto > 0) {
+      params['idProyecto'] = String(idProyecto);
+    }
+    if (idCoordinacion != null && idCoordinacion > 0) {
+      params['idCoordinacion'] = String(idCoordinacion);
+    }
+    return this.webRequestService.get<CostCenterOption[]>(
+      `${this.endpoint}/cost-centers`,
+      params,
+    );
+  }
+
+  /**
+   * Lista los grupos de proyectos disponibles.
+   *
+   * @returns Observable con los grupos de proyectos activos.
+   */
+  listProjectGroups(): Observable<ProjectGroupOption[]> {
+    return this.webRequestService.get<ProjectGroupOption[]>(
+      `${this.endpoint}/groups`,
+    );
+  }
+
+  /**
+   * Lista las funciones disponibles para participantes de proyectos desde el enum de backend.
+   *
+   * @returns Observable con las opciones de funciones.
+   */
+  listParticipantFunctions(): Observable<ParticipantFunctionOption[]> {
+    if (!this.participantFunctions$) {
+      this.participantFunctions$ = this.webRequestService
+        .get<ParticipantFunctionOption[]>(`${this.endpoint}/participant-functions`)
+        .pipe(shareReplay(1));
+    }
+    return this.participantFunctions$;
+  }
+
+  /**
+   * Lista los niveles disponibles para participantes y proyectos desde el enum de backend.
+   *
+   * @returns Observable con las opciones de niveles.
+   */
+  listParticipantLevels(): Observable<ParticipantLevelOption[]> {
+    if (!this.participantLevels$) {
+      this.participantLevels$ = this.webRequestService
+        .get<ParticipantLevelOption[]>(`${this.endpoint}/participant-levels`)
+        .pipe(shareReplay(1));
+    }
+    return this.participantLevels$;
+  }
+
+  /**
+   * Lista los días estándar de la semana desde el enum de backend.
+   *
+   * @returns Observable con las opciones de días de la semana.
+   */
+  listDaysOfWeek(): Observable<DayOfWeekOption[]> {
+    if (!this.daysOfWeek$) {
+      this.daysOfWeek$ = this.webRequestService
+        .get<DayOfWeekOption[]>(`${this.endpoint}/days-of-week`)
+        .pipe(shareReplay(1));
+    }
+    return this.daysOfWeek$;
   }
 
   /**

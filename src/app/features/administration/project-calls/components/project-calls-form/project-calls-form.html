@@ -7,27 +7,26 @@
     <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
       {{
         projectCall()
-          ? 'Editar convocatoria de proyecto'
-          : 'Nueva convocatoria de proyecto'
+          ? 'Editar grupo de proyectos'
+          : 'Nuevo grupo de proyectos'
       }}
     </h4>
     <p class="text-xs text-gray-500 dark:text-gray-400">
-      Relaciona la convocatoria de proyecto con una convocatoria de precarga
-      activa.
+      Agrupa proyectos para mantener su vigencia a lo largo de varias convocatorias semestrales sin duplicar registros.
     </p>
   </div>
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Nombre</app-label>
+      <app-label>Nombre del Grupo *</app-label>
       <app-input-field
         formControlName="nombre"
-        placeholder="Ingrese el nombre"
+        placeholder="Ej: Grupo Proyectos de Investigación 2024-2026"
       />
 
       @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
         <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El nombre es obligatorio.
+          El nombre del grupo es obligatorio.
         </p>
       }
     </div>
@@ -36,53 +35,72 @@
       <app-label>Descripción</app-label>
       <app-input-field
         formControlName="descripcion"
-        placeholder="Ingrese la descripción"
+        placeholder="Descripción u observaciones del grupo"
       />
+    </div>
+  </div>
 
-      @if (
-        form.controls.descripcion.touched && form.controls.descripcion.invalid
-      ) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La descripción es obligatoria.
-        </p>
+  <div class="mt-4">
+    <app-label>Convocatorias asociadas</app-label>
+    <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+      Busca y selecciona las convocatorias semestrales en las que este grupo y sus proyectos estarán vigentes:
+    </p>
+
+    <div class="w-full">
+      <app-select
+        [value]="tempConvocatoriaSelect()"
+        (valueChange)="onConvocatoriaSelected($event)"
+        [options]="convocatoriaSelectOptions()"
+        placeholder="Seleccione o busque una convocatoria para asociar..."
+        [enableSearch]="true"
+        searchPlaceholder="Buscar por nombre o periodo..."
+        emptyText="No hay más convocatorias disponibles"
+      />
+    </div>
+
+    <!-- Lista de Convocatorias Seleccionadas en formato Badges -->
+    <div class="mt-3">
+      @if (selectedConvocatorias().length > 0) {
+        <div class="flex flex-wrap items-center gap-2">
+          @for (conv of selectedConvocatorias(); track conv.id) {
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 py-1 pl-3 pr-1.5 text-xs font-medium text-brand-700 transition-all dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
+            >
+              <span>{{ conv.nombre }}</span>
+
+              @if (conv.periodo) {
+                <app-badge variant="brand" size="xs">
+                  {{ conv.periodo }}
+                </app-badge>
+              }
+
+              <button
+                type="button"
+                class="inline-flex h-5 w-5 items-center justify-center rounded-full text-brand-500 transition-colors hover:bg-brand-200 hover:text-brand-900 dark:hover:bg-brand-900/50 dark:hover:text-brand-100"
+                (click)="removeConvocatoria(conv.id)"
+                title="Quitar convocatoria"
+              >
+                <app-icon name="close" size="xs" />
+              </button>
+            </span>
+          }
+        </div>
+      } @else {
+        <div class="rounded-lg border border-dashed border-gray-200 p-3 text-center dark:border-white/10">
+          <p class="text-xs text-gray-400 dark:text-gray-500">
+            No has asociado ninguna convocatoria aún. Selecciona una en el desplegable de arriba.
+          </p>
+        </div>
       }
     </div>
   </div>
 
-  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-    <div>
-      <app-label>Código</app-label>
-      <app-select
-        formControlName="codigo"
-        [options]="codigoOptions"
-        placeholder="Seleccione el código"
-        labelFormat="uppercase"
-      />
-
-      @if (form.controls.codigo.touched && form.controls.codigo.invalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El código es obligatorio.
-        </p>
-      }
-    </div>
-
-    <div>
-      <app-label>Convocatoria</app-label>
-      <app-select
-        formControlName="convocatoria"
-        [options]="convocatoriaOptions()"
-        placeholder="Seleccione una convocatoria"
-      />
-
-      @if (
-        form.controls.convocatoria.touched &&
-        form.controls.convocatoria.invalid
-      ) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La convocatoria es obligatoria.
-        </p>
-      }
-    </div>
+  <div class="mt-4 flex items-center">
+    <app-checkbox
+      [checked]="form.controls.esActivo.value"
+      (checkedChange)="form.controls.esActivo.setValue($event)"
+      label="Grupo Activo"
+    />
   </div>
 
   <div class="mt-5 flex justify-end gap-3">

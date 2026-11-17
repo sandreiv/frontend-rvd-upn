@@ -12,17 +12,20 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
     <div>
-      <app-label>Nombre del proyecto</app-label>
-      <app-input-field formControlName="nombre" placeholder="Ingrese el nombre del proyecto" />
+      <app-label>Código del proyecto</app-label>
+      <app-input-field
+        formControlName="codigo"
+        placeholder="Ej: FBA-14096-26, 2024.01.1"
+      />
     </div>
 
-    <div>
-      <app-label>Acta de consejo</app-label>
+    <div class="lg:col-span-2">
+      <app-label>Nombre del proyecto</app-label>
       <app-input-field
-        formControlName="actaConsejo"
-        placeholder="Acta de consejo del proyecto"
+        formControlName="nombre"
+        placeholder="Ingrese el nombre del proyecto"
       />
     </div>
   </div>
@@ -61,11 +64,42 @@
     </div>
   </div>
 
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div>
+      <app-label>Número de acta de consejo</app-label>
+      <app-input-field
+        formControlName="numeroActa"
+        placeholder="Ej: Acta 018-2026 Consejo de Facultad"
+      />
+    </div>
+
+    <div>
+      <app-label>Fecha de acta</app-label>
+      <app-date-picker
+        id="project-fecha-acta"
+        formControlName="fechaActa"
+        placeholder="Seleccione la fecha"
+      />
+    </div>
+  </div>
+
+
+
   <div class="mt-4">
-    <app-label>Descripción</app-label>
-    <app-input-field
-      formControlName="descripcion"
-      placeholder="Ingrese la descripción del proyecto"
+    <app-label>Grupo de Convocatoria</app-label>
+    <app-select
+      formControlName="idProyectoGrupo"
+      [options]="projectGroupOptions()"
+      placeholder="Seleccione el grupo al que pertenece el proyecto"
+    />
+  </div>
+
+  <div class="mt-4 flex items-center">
+    <app-checkbox
+      id="project-activo-check"
+      label="Proyecto activo"
+      [checked]="form.controls.activo.value"
+      (checkedChange)="form.controls.activo.setValue($event)"
     />
   </div>
 
@@ -78,7 +112,12 @@
     >
       Cancelar
     </app-button>
-    <app-button type="submit" size="sm" [disabled]="form.invalid || isSaving()">
+    <app-button
+      type="submit"
+      variant="primary"
+      size="sm"
+      [disabled]="isSaving()"
+    >
       {{ isSaving() ? 'Guardando...' : 'Guardar' }}
     </app-button>
   </div>

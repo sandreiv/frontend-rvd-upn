@@ -26,14 +26,18 @@ export const FUNC_ROUTE_MAP: Record<string, FuncRouteItem> = {
     path: '/rvd/solicitudes-cdp',
     icon: 'documentPlus',
   },
-  '05':{
+  '05': {
     path: '/rvd/verificar-docentes',
-    icon: 'check'
+    icon: 'check',
   },
-  '06':{
+  '06': {
     path: '/rvd/convocatoria-contratacion',
-    icon: 'hiringCall'
-  }
+    icon: 'hiringCall',
+  },
+  '07': {
+    path: '/rvd/proyectos',
+    icon: 'briefcase',
+  },
 };
 
 export const PRELOAD_FUNC = {

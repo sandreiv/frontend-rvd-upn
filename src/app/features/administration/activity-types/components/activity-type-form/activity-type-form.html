@@ -171,7 +171,7 @@
     </p>
   }
 
-  <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+  <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
       <div class="mb-2">
         <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
@@ -203,6 +203,23 @@
         label="Cómputo semestral"
         [checked]="form.controls.horasPorSemestre.value"
         (checkedChange)="form.controls.horasPorSemestre.setValue($event)"
+      />
+    </div>
+
+    <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
+      <div class="mb-2">
+        <h5 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Aplica a proyectos
+        </h5>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Disponible para gestionarse en el módulo de proyectos.
+        </p>
+      </div>
+
+      <app-checkbox
+        label="Aplica a proyectos"
+        [checked]="form.controls.aplicaProyectos.value"
+        (checkedChange)="form.controls.aplicaProyectos.setValue($event)"
       />
     </div>
 

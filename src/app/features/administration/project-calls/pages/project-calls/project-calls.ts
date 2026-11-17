@@ -44,18 +44,18 @@ export class ProjectCalls implements OnInit, OnDestroy {
 
   readonly deleteModalTitle = computed(() =>
     this.idsToDelete().length > 1
-      ? 'Eliminar convocatorias de proyecto'
-      : 'Eliminar convocatoria de proyecto',
+      ? 'Eliminar grupos de proyectos'
+      : 'Eliminar grupo de proyectos',
   );
 
   readonly deleteModalMessage = computed(() => {
     const count = this.idsToDelete().length;
 
     if (count > 1) {
-      return `¿Seguro que deseas eliminar las ${count} convocatorias de proyecto seleccionadas?`;
+      return `¿Seguro que deseas eliminar los ${count} grupos de proyectos seleccionados?`;
     }
 
-    return `¿Seguro que deseas eliminar la convocatoria de proyecto "${this.selectedProjectCall()?.nombre ?? ''}"?`;
+    return `¿Seguro que deseas eliminar el grupo de proyectos "${this.selectedProjectCall()?.nombre ?? ''}"?`;
   });
 
   readonly deleteModalButtonText = computed(() =>
@@ -63,9 +63,7 @@ export class ProjectCalls implements OnInit, OnDestroy {
   );
 
   async ngOnInit(): Promise<void> {
-    this.breadcrumbTitle.setPageTitle(
-      'Convocatorias de proyecto',
-    );
+    this.breadcrumbTitle.setPageTitle('Grupos de Convocatoria');
     await this.refreshProjectCalls();
   }
 
@@ -147,14 +145,8 @@ export class ProjectCalls implements OnInit, OnDestroy {
     this.isDeleting.set(true);
 
     try {
-      if (ids.length === 1) {
-        await firstValueFrom(
-          this.projectCallsService.deleteProjectCall(ids[0]),
-        );
-      } else {
-        await firstValueFrom(
-          this.projectCallsService.deleteBulkProjectCalls({ ids }),
-        );
+      for (const id of ids) {
+        await firstValueFrom(this.projectCallsService.deleteProjectCall(id));
       }
 
       this.selectedProjectCallIds.set([]);

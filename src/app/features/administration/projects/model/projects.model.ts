@@ -3,12 +3,69 @@
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Modelo general de proyectos, participantes y actividades
  * 10/11/2026 - Leonel Antonio Perez Rios - Limpieza y refactorización del modelo, remoción de funciones y tipos en desuso
+ * 13/11/2026 - Inclusión de CostCenterOption, funciones de participantes, centro de costo y programa
  */
 
 export interface ProjectLookup {
   id: number;
   nombre: string;
   codigo?: string;
+}
+
+export interface CostCenterOption {
+  id: number;
+  codigo: string;
+  nombre: string;
+}
+
+export interface ParticipantFunctionOption {
+  codigo: string;
+  nombre: string;
+}
+
+export interface ParticipantLevelOption {
+  codigo: string;
+  nombre: string;
+}
+
+export interface DayOfWeekOption {
+  codigo: string;
+  nombre: string;
+  abreviacion: string;
+}
+
+export interface DayScheduleState {
+  dia: string;
+  nombre: string;
+  abreviacion: string;
+  activo: boolean;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantScheduleSlot {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantSchedule {
+  dias: string[];
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantDataPayload {
+  funcion?: string;
+  nivel?: string;
+  horario?: ParticipantScheduleSlot[] | ParticipantSchedule;
+  [key: string]: unknown;
+}
+
+export interface ProjectGroupOption {
+  id: number;
+  nombre: string;
+  descripcion?: string | null;
 }
 
 export interface TipoActividadProyectoItem {
@@ -24,13 +81,19 @@ export interface TipoActividadProyectoItem {
 
 export interface ProjectItem {
   id: number;
+  codigo?: string | null;
   idTipoActividad: number;
   idCoordinacion: number;
   idProyectoPadre?: number | null;
   idMateriaTdg?: number | null;
+  idProyectoGrupo?: number | null;
+  proyectoGrupoNombre?: string | null;
   nombre: string;
   descripcion?: string | null;
   actaConsejo?: string | null;
+  numeroActa?: string | null;
+  fechaActa?: string | null;
+  activo?: string | null;
   estado?: string | null;
   tipoActividad?: ProjectLookup | null;
   coordinacion?: ProjectLookup | null;
@@ -45,13 +108,18 @@ export interface ProjectItem {
 }
 
 export interface ProjectFormData {
+  codigo?: string | null;
   nombre: string;
   descripcion?: string | null;
   actaConsejo?: string | null;
+  numeroActa?: string | null;
+  fechaActa?: string | null;
+  activo?: string | null;
   idTipoActividad: number;
   idCoordinacion: number;
   idProyectoPadre?: number | null;
   idMateriaTdg?: number | null;
+  idProyectoGrupo?: number | null;
   estado?: string;
   monto?: string;
   fechaInicio?: string;
@@ -70,6 +138,14 @@ export interface ProjectPersonItem {
   tipoActividad?: ProjectLookup | null;
   horas: string;
   observacion: string | null;
+  idCentroCosto?: number | null;
+  centroCostoNombre?: string | null;
+  centroCostoCodigo?: string | null;
+  idPrograma?: number | null;
+  funcion?: string | null;
+  nivel?: string | null;
+  horario?: ParticipantSchedule | ParticipantScheduleSlot[] | null;
+  data?: string | null;
   estado?: string;
   esActivo?: '1' | '0' | 'S' | 'N' | string;
 }
@@ -81,6 +157,12 @@ export interface ProjectPersonFormData {
   tipoActividad?: ProjectLookup | null;
   horas: string;
   observacion?: string | null;
+  idCentroCosto?: number | null;
+  idPrograma?: number | null;
+  funcion?: string | null;
+  nivel?: string | null;
+  horario?: ParticipantSchedule | ParticipantScheduleSlot[] | null;
+  data?: string | null;
   estado?: '1' | '0' | string;
   esActivo?: '1' | '0' | string;
 }

@@ -51,15 +51,14 @@ export class ProjectTable {
 
   readonly columns: TreeTableColumn<ProjectItem>[] = [
     {
+      id: 'codigo',
+      header: 'Código',
+      cell: (row) => row.codigo || '-',
+    },
+    {
       id: 'nombre',
       header: 'Nombre',
       cell: (row) => row.nombre || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'descripcion',
-      header: 'Descripción',
-      cell: (row) => row.descripcion || '-',
       formatAsSentence: true,
     },
     {
@@ -75,24 +74,39 @@ export class ProjectTable {
       formatAsSentence: true,
     },
     {
+      id: 'proyectoGrupo',
+      header: 'Grupo Convocatoria',
+      cell: (row) => row.proyectoGrupoNombre || '-',
+      formatAsSentence: true,
+    },
+    {
       id: 'actaConsejo',
       header: 'Acta de Consejo',
-      cell: (row) => row.actaConsejo || '-',
+      cell: (row) => {
+        const num = row.numeroActa || row.actaConsejo || '';
+        const fecha = row.fechaActa ? ` (${row.fechaActa.substring(0, 10)})` : '';
+        return (num + fecha) || '-';
+      },
     },
     {
       id: 'totalDocentes',
       header: 'Docentes',
       cell: (row) => String(row.totalDocentes ?? 0),
     },
+    {
+      id: 'activo',
+      header: 'Activo',
+      cell: (row) => (row.activo === '0' ? 'Inactivo' : 'Activo'),
+    },
   ];
 
   readonly rowActions = computed<TreeTableRowAction<ProjectItem>[]>(() => [
-    {
-      id: 'add-subproject',
-      label: 'Agregar subproyecto',
-      icon: 'plus',
-      visible: (row: ProjectItem) => !row.idProyectoPadre,
-    },
+    // {
+    //   id: 'add-subproject',
+    //   label: 'Agregar subproyecto',
+    //   icon: 'plus',
+    //   visible: (row: ProjectItem) => !row.idProyectoPadre,
+    // },
     {
       id: 'persons',
       label: 'Participantes',

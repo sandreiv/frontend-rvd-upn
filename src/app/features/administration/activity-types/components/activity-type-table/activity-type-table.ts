@@ -69,6 +69,11 @@ export class ActivityTypeTable {
       cell: (row) => row.maximoHoras ?? '-',
     },
     {
+      id: 'aplicaProyectos',
+      header: 'Aplica proyectos',
+      cell: (row) => (row.aplicaProyectos === '1' ? 'Sí' : 'No'),
+    },
+    {
       id: 'estado',
       header: 'Estado',
       allowHtml: true,

@@ -2,7 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  OnInit,
   Output,
+  TemplateRef,
+  ViewChild,
   input,
   model,
 } from '@angular/core';
@@ -13,18 +16,23 @@ import {
   DataTableRowAction,
   DataTableToolbarActionEvent,
 } from '../../../../../shared/ui/data-table/table.types';
-import {
-  ProjectCallItem,
-  resolveProjectCallConvocatoriaLabel,
-} from '../../model/project-calls.model';
+import { Badge } from '../../../../../shared/ui/badge/badge';
+import { TooltipDirective } from '../../../../../shared/ui/tooltip/tooltip.directive';
+import { ProjectCallItem } from '../../model/project-calls.model';
 
 @Component({
   selector: 'app-project-calls-table',
-  imports: [DataTable],
+  imports: [DataTable, Badge, TooltipDirective],
   templateUrl: './project-calls-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectCallsTable {
+export class ProjectCallsTable implements OnInit {
+  @ViewChild('convocatoriasTpl', { static: true })
+  convocatoriasTpl!: TemplateRef<unknown>;
+
+  @ViewChild('estadoTpl', { static: true })
+  estadoTpl!: TemplateRef<unknown>;
+
   projectCalls = input<ProjectCallItem[]>([]);
   selectedProjectCallIds = model<string[]>([]);
 
@@ -34,33 +42,38 @@ export class ProjectCallsTable {
   @Output() deleteProjectCall = new EventEmitter<ProjectCallItem>();
   @Output() deleteAll = new EventEmitter<number[]>();
 
+  columns: DataTableColumn<ProjectCallItem>[] = [];
+
   readonly rowIdentity = (row: ProjectCallItem): string => String(row.id);
 
-  readonly columns: DataTableColumn<ProjectCallItem>[] = [
-    {
-      id: 'nombre',
-      header: 'Nombre',
-      cell: (row) => row.nombre || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'descripcion',
-      header: 'Descripción',
-      cell: (row) => row.descripcion || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'codigo',
-      header: 'Código',
-      cell: (row) => row.codigo || '-',
-    },
-    {
-      id: 'convocatoria',
-      header: 'Convocatoria',
-      cell: (row) => resolveProjectCallConvocatoriaLabel(row),
-      formatAsSentence: true,
-    },
-  ];
+  ngOnInit(): void {
+    this.columns = [
+      {
+        id: 'nombre',
+        header: 'Nombre del Grupo',
+        cell: (row) => row.nombre || '-',
+        formatAsSentence: true,
+      },
+      {
+        id: 'descripcion',
+        header: 'Descripción',
+        cell: (row) => row.descripcion || '-',
+        formatAsSentence: true,
+      },
+      {
+        id: 'convocatorias',
+        header: 'Convocatorias vinculadas',
+        cell: (row) => String(row.convocatorias?.length ?? 0),
+        cellTemplate: this.convocatoriasTpl,
+      },
+      {
+        id: 'estado',
+        header: 'Estado',
+        cell: (row) => (row.estado === '1' ? 'Activo' : 'Inactivo'),
+        cellTemplate: this.estadoTpl,
+      },
+    ];
+  }
 
   readonly rowActions: DataTableRowAction<ProjectCallItem>[] = [
     {

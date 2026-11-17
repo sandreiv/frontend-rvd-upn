@@ -161,7 +161,11 @@
                   [class.break-words]="wrapCellText"
                   [class]="column.cellClassName"
                 >
-                  @if (column.cellKind === 'fileTypeIcon') {
+                  @if (column.cellTemplate) {
+                    <ng-container
+                      *ngTemplateOutlet="column.cellTemplate; context: { $implicit: row, row: row, column: column, index: rowIndex }"
+                    />
+                  } @else if (column.cellKind === 'fileTypeIcon') {
                     <div class="flex min-w-0 items-center">
                       <button
                         type="button"

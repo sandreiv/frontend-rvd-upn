@@ -1,3 +1,4 @@
+import { TemplateRef } from '@angular/core';
 import { AppIconName } from '../icon/icons';
 
 export type DataTableColumnCellKind = 'text' | 'fileTypeIcon';
@@ -19,6 +20,7 @@ export interface DataTableColumn<T> {
   header: string;
   cell: (row: T) => string;
   cellKind?: DataTableColumnCellKind;
+  cellTemplate?: TemplateRef<any>;
   formatAsDate?: boolean;
   formatAsSentence?: boolean;
   formatAsCurrency?: boolean;
