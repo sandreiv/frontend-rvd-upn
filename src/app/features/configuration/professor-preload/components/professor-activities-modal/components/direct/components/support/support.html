@@ -1,1 +1,143 @@
-<ng-container />
+<div class="flex flex-col gap-4" [formGroup]="form">
+  <p class="text-sm text-gray-500 dark:text-gray-400">
+    {{ activity().descripcion ?? '' }}
+  </p>
+
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <div class="min-w-0 w-full max-w-xl">
+      <app-label>Materias</app-label>
+      <app-select
+        formControlName="materias"
+        [options]="subjectOptions()"
+        [multiple]="true"
+        placeholder="Seleccione las materias"
+        labelFormat="none"
+        [disabled]="isSubjectDisabled()"
+      />
+    </div>
+    <app-button
+      type="button"
+      size="sm"
+      className="h-11 shrink-0"
+      [disabled]="isAddDisabled()"
+      (btnClick)="onAdd()"
+    >
+      Agregar
+    </app-button>
+  </div>
+
+  @if (chips().length) {
+    <div class="max-w-xl divide-y divide-gray-100 dark:divide-white/10">
+      @for (chip of chips(); track chip.key) {
+        <div class="flex items-center gap-3 py-2">
+          <p class="min-w-0 flex-1 break-words text-sm text-gray-800 dark:text-white/90">
+            {{ sentence(chip.nombre) }}
+          </p>
+          <div class="w-28 shrink-0">
+            <app-input-field
+              type="number"
+              min="0"
+              [step]="0.5"
+              placeholder="Horas"
+              [value]="chip.horas ?? ''"
+              (valueChange)="setHours(chip.key, $event)"
+            />
+          </div>
+          <button
+            type="button"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-gray-200"
+            aria-label="Quitar materia"
+            (click)="removeChip(chip.key)"
+          >
+            <app-icon name="close" size="xs" />
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (rows().length) {
+    <div class="rounded-xl border border-gray-200 dark:border-white/10">
+      <table class="w-full table-fixed text-left text-[14px] leading-4">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th class="w-2/5 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Programa
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Materia
+            </th>
+            <th class="w-28 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Grupo
+            </th>
+            <th
+              class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Horas
+            </th>
+            <th class="w-8 px-1 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.idPrograma) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ sentence(row.programa) }}
+              </td>
+              <td class="px-1.5 py-2">
+                <div class="flex flex-col gap-1">
+                  @for (materia of row.materias; track $index) {
+                    <p class="flex min-h-6 items-center break-words text-gray-800 dark:text-white/90">
+                      {{ sentence(materia.nombre) }}
+                    </p>
+                  }
+                </div>
+              </td>
+              <td class="w-28 px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                <div class="flex flex-col gap-1">
+                  @for (materia of row.materias; track $index) {
+                    <p class="flex min-h-6 items-center break-words">
+                      {{ materia.grupo ? sentence(materia.grupo) : '-' }}
+                    </p>
+                  }
+                </div>
+              </td>
+              <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
+                <div class="flex flex-col gap-1">
+                  @for (materia of row.materias; track $index) {
+                    <p class="flex min-h-6 items-center justify-center">{{ materia.horas ?? '-' }}</p>
+                  }
+                </div>
+              </td>
+              <td class="w-8 px-1 py-2 text-right">
+                <div class="flex flex-col gap-1">
+                  @for (materia of row.materias; track $index) {
+                    <div class="flex min-h-6 items-center justify-end">
+                      @if (isFirstSubject(row.materias, $index)) {
+                        <button
+                          type="button"
+                          class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/5"
+                          aria-label="Eliminar materia"
+                          [disabled]="materia.idDetalleCargaDocente == null || isDeleting()"
+                          (click)="removeSubject(materia.idDetalleCargaDocente)"
+                        >
+                          <app-icon name="delete" size="xs" />
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!isSubjectDisabled() && subjectOptions().length === 0) {
+    <p
+      class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
+    >
+      No hay materias registradas en la carga.
+    </p>
+  }
+</div>

@@ -18,6 +18,7 @@ import { ProfessorLoadItem } from '../model/professor-load.model';
 import { ActivityRestrictionItem, ActivityTypeNode } from '../model/professor-activities.model';
 import {
   PensumItem,
+  ProfessorSubjectLoadItem,
   ProgramItem,
   SubjectComponentItem,
   SubjectGroupItem,
@@ -370,6 +371,35 @@ export class CoordinationService {
     return this.webRequestService.get<ProfessorLoadDetailItem[]>(
       `${this.endpoint}/list-detail-professor-load`,
       { idCargaDocente },
+    );
+  }
+
+  /**
+   * Lista las materias ya guardadas en la carga, con su programa y su grupo.
+   * Si la materia está en varios grupos, llega una fila por grupo.
+   * Si el detalle no tiene grupo, grupo viene nulo.
+   *
+   * @param idCargaDocente Identificador de la carga docente.
+   * @returns Observable con las materias. Vacío si no hay ninguna con programa.
+   */
+  listProfessorSubjects(idCargaDocente: number): Observable<ProfessorSubjectLoadItem[]> {
+    return this.webRequestService.get<ProfessorSubjectLoadItem[]>(
+      `${this.endpoint}/list-professor-subjects`,
+      { idCargaDocente },
+    );
+  }
+
+  /**
+   * Elimina un detalle de carga docente.
+   * Los demás detalles de la carga permanecen.
+   *
+   * @param idDetalleCargaDocente Identificador del detalle.
+   * @returns Observable sin contenido cuando la eliminación finaliza.
+   */
+  deleteDetailProfessorLoad(idDetalleCargaDocente: number): Observable<void> {
+    return this.webRequestService.delete<void>(
+      `${this.endpoint}/delete-detail-professor-load`,
+      { idDetalleCargaDocente },
     );
   }
 

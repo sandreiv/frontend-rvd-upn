@@ -206,9 +206,10 @@
               <td class="w-8 px-1 py-2 text-right">
                 <button
                   type="button"
-                  class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 dark:hover:bg-white/5"
+                  class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/5"
                   aria-label="Eliminar materia"
-                  (click)="removeActivity(row.id)"
+                  [disabled]="row.idDetalleCargaDocente == null || isDeleting()"
+                  (click)="removeActivity(row.idDetalleCargaDocente)"
                 >
                   <app-icon name="delete" size="xs" />
                 </button>

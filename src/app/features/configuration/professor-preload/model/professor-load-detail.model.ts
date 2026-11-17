@@ -88,6 +88,7 @@ export interface ProfessorLoadDetailItem {
 /** Fila de la tabla de asignaturas, venga del formulario o del detalle guardado. */
 export interface SubjectActivityRow {
   id: string;
+  idDetalleCargaDocente: number | null;
   programa: string;
   pensum: string;
   materia: string;
@@ -128,6 +129,7 @@ function toSubjectRow(
 ): SubjectActivityRow {
   return {
     id: `${idDetalleCargaDocente}-${index}`,
+    idDetalleCargaDocente,
     programa: item.programa?.nombre?.trim() ?? '',
     pensum: item.pensum?.descripcion?.trim() ?? '',
     materia: subjectName(item),

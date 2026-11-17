@@ -37,7 +37,14 @@
       />
     }
     @case ('APOYO') {
-      <app-support [activity]="activity()" />
+      <app-support
+        [activity]="activity()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('DIRECCIONTDG') {
       <app-degree-work [activity]="activity()" />

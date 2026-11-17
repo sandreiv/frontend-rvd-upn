@@ -100,9 +100,10 @@ export class Subject {
 
   readonly addFormOpen = signal(false);
   readonly isSaving = signal(false);
+  readonly isDeleting = signal(false);
   readonly activities = signal<SubjectActivityRow[]>([]);
 
-  private readonly hiddenRowIds = signal<string[]>([]);
+  private readonly hiddenDetailIds = signal<number[]>([]);
 
   private readonly selectedProgramId = signal<number | null>(null);
   private readonly selectedPensumId = signal<number | null>(null);
@@ -275,8 +276,13 @@ export class Subject {
     effect(() => {
       const rows = subjectRowsFromLoadDetails(this.savedDetails(), this.activity().id);
       untracked(() => {
-        const hidden = new Set(this.hiddenRowIds());
-        this.activities.set(rows.filter((row) => !hidden.has(row.id)));
+        const hidden = new Set(this.hiddenDetailIds());
+        this.activities.set(
+          rows.filter(
+            (row) =>
+              row.idDetalleCargaDocente == null || !hidden.has(row.idDetalleCargaDocente),
+          ),
+        );
       });
     });
     this.setupCascadeListeners();
@@ -328,9 +334,26 @@ export class Subject {
       .finally(() => this.isSaving.set(false));
   }
 
-  removeActivity(activityId: string): void {
-    this.hiddenRowIds.update((ids) => (ids.includes(activityId) ? ids : [...ids, activityId]));
-    this.activities.update((items) => items.filter((item) => item.id !== activityId));
+  removeActivity(idDetalleCargaDocente: number | null): void {
+    if (idDetalleCargaDocente == null || this.isDeleting()) {
+      return;
+    }
+
+    this.isDeleting.set(true);
+    firstValueFrom(this.coordinationService.deleteDetailProfessorLoad(idDetalleCargaDocente))
+      .then(() => {
+        this.hiddenDetailIds.update((ids) =>
+          ids.includes(idDetalleCargaDocente) ? ids : [...ids, idDetalleCargaDocente],
+        );
+        this.activities.update((items) =>
+          items.filter((item) => item.idDetalleCargaDocente !== idDetalleCargaDocente),
+        );
+        this.detailSaved.emit();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+      })
+      .finally(() => this.isDeleting.set(false));
   }
 
   sentence(value: string | null | undefined): string {
@@ -628,6 +651,7 @@ export class Subject {
 
     return {
       id: `subject-${Date.now()}`,
+      idDetalleCargaDocente: null,
       programa: this.optionLabel(this.programOptions(), value.idPrograma),
       pensum: this.optionLabel(this.pensumOptions(), value.idPensum),
       materia: this.optionLabel(this.subjectOptions(), value.codigoMateria),
