@@ -74,6 +74,12 @@ export class ProjectTable {
       formatAsSentence: true,
     },
     {
+      id: 'proyectoGrupo',
+      header: 'Grupo Convocatoria',
+      cell: (row) => row.proyectoGrupoNombre || '-',
+      formatAsSentence: true,
+    },
+    {
       id: 'actaConsejo',
       header: 'Acta de Consejo',
       cell: (row) => {

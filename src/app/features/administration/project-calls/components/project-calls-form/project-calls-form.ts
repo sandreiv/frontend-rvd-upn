@@ -6,6 +6,7 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  computed,
   inject,
   input,
   signal,
@@ -16,42 +17,33 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 import { Button } from '../../../../../shared/ui/button/button';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
+import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
+import { Option, Select } from '../../../../../shared/components/form/select/select';
+import { Icon } from '../../../../../shared/ui/icon/icon';
+import { ProjectCallsService } from '../../data/project-calls.service';
 import {
-  Option,
-  Select,
-} from '../../../../../shared/components/form/select/select';
-import { CoordinationService } from '../../../../configuration/professor-preload/data/coordination.service';
-import { PreloadCallService } from '../../../../configuration/preload-call/data/preload-call.service';
-import {
-  CoordinationPreloadCallApi,
-} from '../../../../configuration/professor-preload/model/coordination.model';
-import {
-  PROJECT_CALL_CODIGO_OPTIONS,
+  ConvocatoriaOpcion,
   ProjectCallFormData,
   ProjectCallItem,
-  resolveProjectCallConvocatoriaId,
 } from '../../model/project-calls.model';
 
 type ProjectCallFormGroup = FormGroup<{
   nombre: FormControl<string>;
   descripcion: FormControl<string>;
-  codigo: FormControl<string>;
-  convocatoria: FormControl<string>;
+  esActivo: FormControl<boolean>;
 }>;
 
 @Component({
   selector: 'app-project-calls-form',
-  imports: [ReactiveFormsModule, Label, InputField, Select, Button],
+  imports: [ReactiveFormsModule, Label, InputField, Checkbox, Select, Icon, Button],
   templateUrl: './project-calls-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectCallsForm implements OnInit, OnChanges {
-  private readonly coordinationService = inject(CoordinationService);
-  private readonly preloadCallService = inject(PreloadCallService);
+  private readonly projectCallsService = inject(ProjectCallsService);
 
   projectCall = input<ProjectCallItem | null>(null);
   isSaving = input(false);
@@ -59,131 +51,114 @@ export class ProjectCallsForm implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
   @Output() saveProjectCall = new EventEmitter<ProjectCallFormData>();
 
-  readonly codigoOptions: Option[] = PROJECT_CALL_CODIGO_OPTIONS;
-  readonly convocatoriaOptions = signal<Option[]>([]);
+  readonly availableConvocatorias = signal<ConvocatoriaOpcion[]>([]);
+  readonly selectedConvocatoriaIds = signal<number[]>([]);
+  readonly tempConvocatoriaSelect = signal<string>('');
+
+  readonly selectedConvocatorias = computed<ConvocatoriaOpcion[]>(() => {
+    const selectedIds = new Set(this.selectedConvocatoriaIds());
+    return this.availableConvocatorias().filter((c) => selectedIds.has(c.id));
+  });
+
+  readonly convocatoriaSelectOptions = computed<Option[]>(() => {
+    const selectedIds = new Set(this.selectedConvocatoriaIds());
+    return this.availableConvocatorias()
+      .filter((c) => !selectedIds.has(c.id))
+      .map((c) => ({
+        value: String(c.id),
+        label: c.periodo ? `${c.nombre} (${c.periodo})` : c.nombre,
+      }));
+  });
 
   readonly form: ProjectCallFormGroup = new FormGroup({
     nombre: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
+      validators: [Validators.required, Validators.maxLength(250)],
     }),
     descripcion: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(255)],
+      validators: [Validators.maxLength(1000)],
     }),
-    codigo: new FormControl('', {
+    esActivo: new FormControl(true, {
       nonNullable: true,
-      validators: [Validators.required],
-    }),
-    convocatoria: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
     }),
   });
 
-  async ngOnInit(): Promise<void> {
-    await this.loadActivePreloadCalls();
+  ngOnInit(): void {
+    this.loadConvocatorias();
+    this.patchForm();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['projectCall']) {
-      this.ensureSelectedConvocatoriaOption();
       this.patchForm();
     }
   }
 
-  onSubmit(): void {
-    this.form.markAllAsTouched();
-
-    if (this.form.invalid || this.isSaving()) {
-      return;
-    }
-
-    const raw = this.form.getRawValue();
-
-    this.saveProjectCall.emit({
-      nombre: raw.nombre.trim(),
-      descripcion: raw.descripcion.trim(),
-      codigo: raw.codigo,
-      idConvocatoria: Number(raw.convocatoria),
+  private loadConvocatorias(): void {
+    this.projectCallsService.listAvailableConvocatorias().subscribe({
+      next: (list) => {
+        this.availableConvocatorias.set(list ?? []);
+      },
+      error: (e) => console.error(e),
     });
-  }
-
-  private async loadActivePreloadCalls(): Promise<void> {
-    try {
-      const calls = await this.loadActivePreloadCallsCatalog();
-
-      this.convocatoriaOptions.set(
-        (calls ?? []).map((call) => ({
-          value: String(call.id),
-          label:
-            call.nombre?.trim() ||
-            call.descripcion?.trim() ||
-            String(call.id),
-        })),
-      );
-    } catch (error) {
-      console.error(error);
-      this.convocatoriaOptions.set([]);
-    } finally {
-      this.ensureSelectedConvocatoriaOption();
-      this.patchForm();
-    }
-  }
-
-  private async loadActivePreloadCallsCatalog(): Promise<
-    CoordinationPreloadCallApi[]
-  > {
-    const periods = await firstValueFrom(
-      this.preloadCallService.getUniversityPeriod(),
-    );
-
-    if (!periods?.length) {
-      return [];
-    }
-
-    const lists = await Promise.all(
-      periods.map((period) =>
-        firstValueFrom(
-          this.coordinationService.getActivePreloadCall(period.id),
-        ),
-      ),
-    );
-
-    const byId = new Map<number, CoordinationPreloadCallApi>();
-
-    lists.flat().forEach((item) => {
-      byId.set(item.id, item);
-    });
-
-    return [...byId.values()];
-  }
-
-  private ensureSelectedConvocatoriaOption(): void {
-    const item = this.projectCall();
-    const options = this.convocatoriaOptions();
-    const id = resolveProjectCallConvocatoriaId(item, options);
-    if (!id) {
-      return;
-    }
-
-    if (options.some((option) => option.value === id)) {
-      return;
-    }
-
-    const label = item?.nombreConvocatoria?.trim() || id;
-    this.convocatoriaOptions.set([...options, { value: id, label }]);
   }
 
   private patchForm(): void {
     const item = this.projectCall();
-    const options = this.convocatoriaOptions();
+    if (!item) {
+      this.form.reset({
+        nombre: '',
+        descripcion: '',
+        esActivo: true,
+      });
+      this.selectedConvocatoriaIds.set([]);
+      this.tempConvocatoriaSelect.set('');
+      return;
+    }
 
-    this.form.reset({
-      nombre: item?.nombre ?? '',
-      descripcion: item?.descripcion ?? '',
-      codigo: item?.codigo != null ? String(item.codigo) : '',
-      convocatoria: resolveProjectCallConvocatoriaId(item, options),
+    this.form.patchValue({
+      nombre: item.nombre ?? '',
+      descripcion: item.descripcion ?? '',
+      esActivo: item.estado !== '0',
     });
+
+    const ids = (item.convocatorias ?? []).map((c) => c.id);
+    this.selectedConvocatoriaIds.set(ids);
+    this.tempConvocatoriaSelect.set('');
+  }
+
+  onConvocatoriaSelected(val: string): void {
+    if (!val) {
+      return;
+    }
+    const id = Number(val);
+    if (!Number.isNaN(id) && !this.selectedConvocatoriaIds().includes(id)) {
+      this.selectedConvocatoriaIds.set([...this.selectedConvocatoriaIds(), id]);
+    }
+    // Limpia el select para permitir la siguiente selección
+    setTimeout(() => this.tempConvocatoriaSelect.set(''), 0);
+  }
+
+  removeConvocatoria(id: number): void {
+    this.selectedConvocatoriaIds.set(
+      this.selectedConvocatoriaIds().filter((item) => item !== id),
+    );
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const payload: ProjectCallFormData = {
+      nombre: this.form.controls.nombre.value.trim(),
+      descripcion: this.form.controls.descripcion.value.trim(),
+      estado: this.form.controls.esActivo.value ? '1' : '0',
+      idConvocatorias: this.selectedConvocatoriaIds(),
+    };
+
+    this.saveProjectCall.emit(payload);
   }
 }

@@ -36,6 +36,7 @@ import { InputField } from '../../../../../shared/components/form/input/input-fi
 import { Label } from '../../../../../shared/components/form/label/label';
 import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { DatePicker } from '../../../../../shared/components/form/date-picker/date-picker';
+import { Option, Select } from '../../../../../shared/components/form/select/select';
 import { TreeSelect } from '../../../../../shared/components/form/tree-select/tree-select';
 import {
   TypeaheadOption,
@@ -67,12 +68,13 @@ type ProjectFormGroup = FormGroup<{
   fechaActa: FormControl<string>;
   idTipoActividad: FormControl<string>;
   idCoordinacion: FormControl<string>;
+  idProyectoGrupo: FormControl<string>;
   activo: FormControl<boolean>;
 }>;
 
 @Component({
   selector: 'app-project-form',
-  imports: [ReactiveFormsModule, Label, InputField, DatePicker, Checkbox, TreeSelect, Button, TypeaheadSelect],
+  imports: [ReactiveFormsModule, Label, InputField, DatePicker, Checkbox, TreeSelect, Button, TypeaheadSelect, Select],
   templateUrl: './project-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -97,6 +99,7 @@ export class ProjectForm implements OnInit, OnChanges {
 
   readonly rawTipoActividades = signal<TipoActividadProyectoItem[]>([]);
   readonly filteredCoordinations = signal<CoordinationOption[]>([]);
+  readonly projectGroupOptions = signal<Option[]>([]);
 
   readonly form: ProjectFormGroup = new FormGroup({
     codigo: new FormControl('', {
@@ -121,6 +124,9 @@ export class ProjectForm implements OnInit, OnChanges {
     idCoordinacion: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
+    }),
+    idProyectoGrupo: new FormControl('', {
+      nonNullable: true,
     }),
     activo: new FormControl(true, {
       nonNullable: true,
@@ -199,14 +205,24 @@ export class ProjectForm implements OnInit, OnChanges {
       idTipoActividad: Number(raw.idTipoActividad),
       idCoordinacion: Number(raw.idCoordinacion),
       idProyectoPadre: this.parentProjectId(),
+      idProyectoGrupo: raw.idProyectoGrupo ? Number(raw.idProyectoGrupo) : null,
       estado: raw.activo ? '1' : '0',
     });
   }
 
   private async loadSelectOptions(): Promise<void> {
     try {
-      const types = await firstValueFrom(this.projectsService.listProjectActivityTypes());
+      const [types, groups] = await Promise.all([
+        firstValueFrom(this.projectsService.listProjectActivityTypes()),
+        firstValueFrom(this.projectsService.listProjectGroups()).catch(() => []),
+      ]);
       this.rawTipoActividades.set(types ?? []);
+      this.projectGroupOptions.set(
+        (groups ?? []).map((g) => ({
+          value: String(g.id),
+          label: g.nombre,
+        })),
+      );
     } catch (error) {
       console.error(error);
       this.rawTipoActividades.set([]);
@@ -266,6 +282,7 @@ export class ProjectForm implements OnInit, OnChanges {
       fechaActa: fecha,
       idTipoActividad: tipoActividadId != null ? String(tipoActividadId) : '',
       idCoordinacion: coordinationId != null ? String(coordinationId) : '',
+      idProyectoGrupo: item?.idProyectoGrupo != null ? String(item.idProyectoGrupo) : '',
       activo: isActivo,
     });
   }

@@ -14,6 +14,7 @@ import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-
 import {
   CostCenterOption,
   ParticipantFunctionOption,
+  ProjectGroupOption,
   DeleteBulkProjectsRequest,
   ProjectFormData,
   ProjectItem,
@@ -173,6 +174,17 @@ export class ProjectsService {
   listCostCenters(): Observable<CostCenterOption[]> {
     return this.webRequestService.get<CostCenterOption[]>(
       `${this.endpoint}/cost-centers`,
+    );
+  }
+
+  /**
+   * Lista los grupos de proyectos disponibles.
+   *
+   * @returns Observable con los grupos de proyectos activos.
+   */
+  listProjectGroups(): Observable<ProjectGroupOption[]> {
+    return this.webRequestService.get<ProjectGroupOption[]>(
+      `${this.endpoint}/groups`,
     );
   }
 

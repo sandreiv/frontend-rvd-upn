@@ -16,6 +16,13 @@ export const administrationRoutes: Routes = [
         path: 'tipo-actividades',
         component: ActivityTypesPage,
       },
+      {
+        path: 'grupos-convocatoria',
+        loadComponent: () =>
+          import('./project-calls/pages/project-calls/project-calls').then(
+            (m) => m.ProjectCalls,
+          ),
+      },
     ],
   },
 ];

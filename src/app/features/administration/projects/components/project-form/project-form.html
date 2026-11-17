@@ -85,6 +85,15 @@
 
 
 
+  <div class="mt-4">
+    <app-label>Grupo de Convocatoria (Vigencia multiperiodo - Opcional)</app-label>
+    <app-select
+      formControlName="idProyectoGrupo"
+      [options]="projectGroupOptions()"
+      placeholder="Seleccione el grupo al que pertenece el proyecto"
+    />
+  </div>
+
   <div class="mt-4 flex items-center">
     <app-checkbox
       id="project-activo-check"

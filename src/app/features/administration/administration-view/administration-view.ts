@@ -30,5 +30,10 @@ export class AdministrationView {
       icon: 'bookOpen',
       path: 'tipo-actividades',
     },
+    {
+      label: 'Grupos de Convocatoria',
+      icon: 'calendar',
+      path: 'grupos-convocatoria',
+    },
   ];
 }

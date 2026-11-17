@@ -23,6 +23,12 @@ export interface ParticipantFunctionOption {
   nombre: string;
 }
 
+export interface ProjectGroupOption {
+  id: number;
+  nombre: string;
+  descripcion?: string | null;
+}
+
 export interface TipoActividadProyectoItem {
   id: number;
   idPadre: number | null;
@@ -41,6 +47,8 @@ export interface ProjectItem {
   idCoordinacion: number;
   idProyectoPadre?: number | null;
   idMateriaTdg?: number | null;
+  idProyectoGrupo?: number | null;
+  proyectoGrupoNombre?: string | null;
   nombre: string;
   descripcion?: string | null;
   actaConsejo?: string | null;
@@ -72,6 +80,7 @@ export interface ProjectFormData {
   idCoordinacion: number;
   idProyectoPadre?: number | null;
   idMateriaTdg?: number | null;
+  idProyectoGrupo?: number | null;
   estado?: string;
   monto?: string;
   fechaInicio?: string;
