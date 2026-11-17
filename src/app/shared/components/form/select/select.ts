@@ -63,13 +63,15 @@ export class Select implements ControlValueAccessor {
   enableSearch = input(true);
   searchPlaceholder = input('Buscar...');
   emptyText = input('Sin resultados');
+  multiple = input(false);
 
   // CVA value
   value = model<string>('');
+  private readonly selectedValues = signal<string[]>([]);
 
   valueChange = new EventEmitter<string>();
 
-  private onChangeFn: (value: string) => void = () => {};
+  private onChangeFn: (value: string | string[]) => void = () => {};
   onTouched: () => void = () => {};
 
   isOpen = signal(false);
@@ -86,11 +88,15 @@ export class Select implements ControlValueAccessor {
   );
 
   selectedLabel = computed(() => {
-    const v = this.value();
-    if (!v) {
+    if (this.multiple()) {
+      return this.labelsFor(this.selectedValues()).join(', ');
+    }
+
+    const current = this.value();
+    if (!current) {
       return '';
     }
-    return this.normalizedOptions().find((o) => o.value === v)?.label ?? '';
+    return this.normalizedOptions().find((option) => option.value === current)?.label ?? '';
   });
 
   filteredOptions = computed((): NormalizedOption[] => {
@@ -146,6 +152,37 @@ export class Select implements ControlValueAccessor {
     return `relative pr-10 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800 ${base}`;
   });
 
+  private toggleValue(nextValue: string): void {
+    const current = this.selectedValues();
+    const next = current.includes(nextValue)
+      ? current.filter((item) => item !== nextValue)
+      : [...current, nextValue];
+    this.selectedValues.set(next);
+    this.onChangeFn(next);
+  }
+
+  private toValueList(value: string | string[] | number | null | undefined): string[] {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item));
+    }
+
+    if (value == null || value === '') {
+      return [];
+    }
+
+    return [String(value)];
+  }
+
+  private labelsFor(values: string[]): string[] {
+    const labels: string[] = [];
+    for (const selected of values) {
+      const label = this.normalizedOptions().find((option) => option.value === selected)?.label;
+      labels.push(label || selected);
+    }
+
+    return labels;
+  }
+
   private formatOptionLabel(label: string): string {
     const normalized = label?.trim() ?? '';
 
@@ -163,7 +200,12 @@ export class Select implements ControlValueAccessor {
 
     return formatSentenceValue(label);
   }
-  writeValue(value: string | number | null | undefined): void {
+  writeValue(value: string | string[] | number | null | undefined): void {
+    if (Array.isArray(value) || this.multiple()) {
+      this.selectedValues.set(this.toValueList(value));
+      return;
+    }
+
     const next = value == null ? '' : String(value);
     this.value.set(next);
     if (!next && this.defaultValue()) {
@@ -171,7 +213,7 @@ export class Select implements ControlValueAccessor {
     }
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: string | string[]) => void): void {
     this.onChangeFn = fn;
   }
 
@@ -210,10 +252,23 @@ export class Select implements ControlValueAccessor {
     if (option?.disabled) {
       return;
     }
+    if (this.multiple()) {
+      this.toggleValue(normalizedValue);
+      return;
+    }
+
     this.value.set(normalizedValue);
     this.onChangeFn(normalizedValue);
     this.valueChange.emit(normalizedValue);
     this.close();
+  }
+
+  isSelected(optionValue: string): boolean {
+    if (this.multiple()) {
+      return this.selectedValues().includes(optionValue);
+    }
+
+    return this.value() === optionValue;
   }
 
   onQueryInput(event: Event) {

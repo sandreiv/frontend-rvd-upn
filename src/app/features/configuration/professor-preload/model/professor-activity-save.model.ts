@@ -15,6 +15,7 @@ export interface DetalleCargaDocenteRequest {
   materiaBanco: DetalleMateriaRequest | null;
   idGrupo?: number;
   extras: string;
+  data: string | null;
 }
 
 /** Cuerpo de POST /configuration/load/save-detail-professor-preload. */

@@ -29,6 +29,7 @@ export interface SubjectItem {
   capacidad: number | null;
   tieneGrupo: boolean | null;
   esElectiva: boolean | null;
+  esCompartida: boolean | null;
   centroCosto: CoordinationCentroCosto | null;
 }
 
@@ -52,4 +53,22 @@ export interface SubjectGroupItem {
   nombre: string | null;
   capacidad: number | null;
   periodo: SubjectGroupPeriod | null;
+}
+
+/** Bloque de GET /configuration/load/list-group-schedule. */
+export interface HourBlockItem {
+  id: number;
+  nombre: string | null;
+  horaInicio: string | null;
+  horaFinal: string | null;
+}
+
+/** Clase semanal de GET /configuration/load/list-group-schedule. */
+export interface GroupScheduleItem {
+  id: number;
+  dia: number | null;
+  fechaInicio: string | null;
+  fechaFinal: string | null;
+  bloqueInicial: HourBlockItem | null;
+  bloqueFinal: HourBlockItem | null;
 }

@@ -26,9 +26,11 @@ import {
 import { InputField } from '../../../../../../../../../shared/components/form/input/input-field';
 import { Button } from '../../../../../../../../../shared/ui/button/button';
 import { Icon } from '../../../../../../../../../shared/ui/icon/icon';
+import { TooltipComponent } from '../../../../../../../../../shared/ui/tooltip';
 import { Checkbox } from '../../../../../../../../../shared/components/form/input/checkbox';
 import { formatSentenceValue } from '../../../../../../../../../shared/utils/normalized-text.util';
 import { CoordinationService } from '../../../../../../data/coordination.service';
+import { forNext } from '../../../../../../../../../core/utils/for-next.function';
 import {
   ActivityTypeNode,
   activityComponentKey,
@@ -36,6 +38,7 @@ import {
 import {
   ProfessorLoadDetailItem,
   SubjectActivityRow,
+  scheduleTooltip,
   subjectRowsFromLoadDetails,
 } from '../../../../../../model/professor-load-detail.model';
 import {
@@ -48,11 +51,12 @@ import {
   SubjectComponentItem,
   SubjectGroupItem,
   SubjectItem,
+  GroupScheduleItem,
 } from '../../../../../../model/subject-catalog.model';
 
 @Component({
   selector: 'app-subject',
-  imports: [ReactiveFormsModule, Label, Select, InputField, Button, Icon, Checkbox],
+  imports: [ReactiveFormsModule, Label, Select, InputField, Button, Icon, Checkbox, TooltipComponent],
   templateUrl: './subject.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -87,6 +91,7 @@ export class Subject {
       nonNullable: true,
       validators: [Validators.required],
     }),
+    idClaseSemanal: new FormControl<string[]>([], { nonNullable: true }),
     creditos: new FormControl<number | null>({ value: null, disabled: true }),
     cupoMaximo: new FormControl<number | null>({ value: null, disabled: true }),
     horasTotales: new FormControl<number | null>({ value: null, disabled: true }),
@@ -103,6 +108,7 @@ export class Subject {
   private readonly selectedPensumId = signal<number | null>(null);
   private readonly selectedSubjectCode = signal<string | null>(null);
   private readonly selectedComponentCode = signal<string | null>(null);
+  private readonly selectedGroupId = signal<number | null>(null);
 
   private readonly programsResource = rxResource({
     params: () => {
@@ -185,6 +191,23 @@ export class Subject {
     defaultValue: [] as SubjectGroupItem[],
   });
 
+  private readonly scheduleResource = rxResource({
+    params: () => {
+      if (this.selectedSubject()?.esCompartida !== true) {
+        return undefined;
+      }
+
+      const idGrupo = this.selectedGroupId();
+      if (idGrupo == null) {
+        return undefined;
+      }
+
+      return { idGrupo };
+    },
+    stream: ({ params }) => this.coordinationService.listGroupSchedule(params.idGrupo),
+    defaultValue: [] as GroupScheduleItem[],
+  });
+
   readonly programOptions = computed<Option[]>(() =>
     this.toOptions(
       this.programsResource.value(),
@@ -228,6 +251,25 @@ export class Subject {
   });
 
   readonly showComponents = computed(() => this.selectedSubject()?.esElectiva === true);
+
+  readonly showSchedule = computed(
+    () => this.selectedSubject()?.esCompartida === true && this.selectedGroupId() != null,
+  );
+
+  readonly scheduleOptions = computed<Option[]>(() => {
+    if (!this.showSchedule() || this.scheduleResource.isLoading()) {
+      return [];
+    }
+
+    const options: Option[] = [];
+    forNext(this.scheduleResource.value(), (item) => {
+      options.push({
+        value: String(item.id),
+        label: this.scheduleLabel(item),
+      });
+    });
+    return options;
+  });
 
   constructor() {
     effect(() => {
@@ -315,6 +357,10 @@ export class Subject {
     return this.idConvocatoria() == null || !this.groupSubjectCode();
   }
 
+  isScheduleDisabled(): boolean {
+    return this.scheduleResource.isLoading();
+  }
+
   private setupCascadeListeners(): void {
     this.form.controls.idPrograma.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -343,6 +389,7 @@ export class Subject {
         this.resetFromGroup();
         this.applySubjectTotals();
         this.syncComponentValidator();
+        this.syncScheduleValidator();
       });
 
     this.form.controls.codigoComponente.valueChanges
@@ -354,7 +401,12 @@ export class Subject {
 
     this.form.controls.idGrupo.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.applyGroupCapacity(value));
+      .subscribe((value) => {
+        this.selectedGroupId.set(this.toId(value));
+        this.form.controls.idClaseSemanal.setValue([], { emitEvent: false });
+        this.applyGroupCapacity(value);
+        this.syncScheduleValidator();
+      });
   }
 
   private resetFromPensum(): void {
@@ -364,12 +416,14 @@ export class Subject {
         codigoMateria: '',
         codigoComponente: '',
         idGrupo: '',
+        idClaseSemanal: [],
         creditos: null,
         cupoMaximo: null,
         horasTotales: null,
       },
       { emitEvent: false },
     );
+    this.clearSelectedGroup();
   }
 
   private resetFromSubject(): void {
@@ -378,12 +432,14 @@ export class Subject {
         codigoMateria: '',
         codigoComponente: '',
         idGrupo: '',
+        idClaseSemanal: [],
         creditos: null,
         cupoMaximo: null,
         horasTotales: null,
       },
       { emitEvent: false },
     );
+    this.clearSelectedGroup();
   }
 
   private resetFromGroup(): void {
@@ -391,10 +447,12 @@ export class Subject {
       {
         codigoComponente: '',
         idGrupo: '',
+        idClaseSemanal: [],
         cupoMaximo: null,
       },
       { emitEvent: false },
     );
+    this.clearSelectedGroup();
   }
 
   private applySubjectTotals(): void {
@@ -412,10 +470,12 @@ export class Subject {
     this.form.patchValue(
       {
         idGrupo: '',
+        idClaseSemanal: [],
         cupoMaximo: null,
       },
       { emitEvent: false },
     );
+    this.clearSelectedGroup();
   }
 
   private applyGroupCapacity(idGrupo: string): void {
@@ -436,6 +496,7 @@ export class Subject {
         codigoMateria: '',
         codigoComponente: '',
         idGrupo: '',
+        idClaseSemanal: [],
         creditos: null,
         cupoMaximo: null,
         horasTotales: null,
@@ -443,6 +504,7 @@ export class Subject {
       { emitEvent: false },
     );
     this.syncComponentValidator();
+    this.clearSelectedGroup();
   }
 
   private resetForm(): void {
@@ -452,6 +514,7 @@ export class Subject {
       codigoMateria: '',
       codigoComponente: '',
       idGrupo: '',
+      idClaseSemanal: [],
       creditos: null,
       cupoMaximo: null,
       horasTotales: null,
@@ -464,7 +527,9 @@ export class Subject {
     this.selectedPensumId.set(null);
     this.selectedSubjectCode.set(null);
     this.selectedComponentCode.set(null);
+    this.selectedGroupId.set(null);
     this.syncComponentValidator();
+    this.syncScheduleValidator();
   }
 
   private buildSaveRequest(): SaveDetailProfessorPreloadRequest | null {
@@ -496,6 +561,10 @@ export class Subject {
 
     const materia = subject.esElectiva === true ? component : subject;
     const idCentroCosto = this.selectedProgram()?.centroCosto?.id ?? null;
+    const data = this.scheduleData(subject);
+    if (subject.esCompartida === true && data == null) {
+      return null;
+    }
 
     return {
       idCargaDocente,
@@ -513,6 +582,7 @@ export class Subject {
               ? this.toMateriaRequest(subject, idCentroCosto)
               : null,
           extras: value.horasExtras ? '1' : '0',
+          data: this.scheduleData(subject),
         },
       ],
     };
@@ -569,6 +639,8 @@ export class Subject {
       cupoMaximo: value.cupoMaximo,
       horasTotales: value.horasTotales,
       horasExtras: value.horasExtras,
+      esCompartida: this.selectedSubject()?.esCompartida === true,
+      horarioTooltip: scheduleTooltip(this.selectedSchedules()),
     };
   }
 
@@ -602,6 +674,71 @@ export class Subject {
     }
 
     control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private syncScheduleValidator(): void {
+    const control = this.form.controls.idClaseSemanal;
+    if (this.showSchedule()) {
+      control.setValidators([Validators.required]);
+    } else {
+      control.clearValidators();
+    }
+
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private clearSelectedGroup(): void {
+    this.selectedGroupId.set(null);
+    this.syncScheduleValidator();
+  }
+
+  private selectedSchedules(): GroupScheduleItem[] {
+    const selected = new Set(this.form.controls.idClaseSemanal.value);
+    const items: GroupScheduleItem[] = [];
+    forNext(this.scheduleResource.value(), (item) => {
+      if (selected.has(String(item.id))) {
+        items.push(item);
+      }
+    });
+    return items;
+  }
+
+  private scheduleData(subject: SubjectItem): string | null {
+    if (subject.esCompartida !== true) {
+      return null;
+    }
+
+    const idsClaseSemanal: number[] = [];
+    forNext(this.form.controls.idClaseSemanal.value, (value) => {
+      const id = Number(value);
+      if (!Number.isInteger(id)) {
+        return;
+      }
+
+      idsClaseSemanal.push(id);
+    });
+    if (idsClaseSemanal.length === 0) {
+      return null;
+    }
+
+    return JSON.stringify({ idsClaseSemanal });
+  }
+
+  private scheduleLabel(item: GroupScheduleItem): string {
+    const day = this.dayName(item.dia);
+    const from = item.bloqueInicial?.horaInicio?.trim() || item.bloqueInicial?.nombre?.trim() || '';
+    const to = item.bloqueFinal?.horaFinal?.trim() || item.bloqueFinal?.nombre?.trim() || '';
+    const hours = from && to ? `${from} - ${to}` : from || to || 'Horario';
+    return day ? `${day} · ${hours}` : hours;
+  }
+
+  private dayName(day: number | null): string {
+    const names = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    if (day == null || day < 1 || day > 7) {
+      return '';
+    }
+
+    return names[day];
   }
 
   private canSelectSubject(subject: SubjectItem): boolean {

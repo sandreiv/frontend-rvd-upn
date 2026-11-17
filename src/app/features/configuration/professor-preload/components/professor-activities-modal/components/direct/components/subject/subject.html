@@ -67,6 +67,19 @@
             [disabled]="isGroupDisabled()"
           />
         </div>
+        @if (showSchedule()) {
+          <div>
+            <app-label>Bloque de horas</app-label>
+            <app-select
+              formControlName="idClaseSemanal"
+              [options]="scheduleOptions()"
+              [multiple]="true"
+              placeholder="Seleccione los bloques de horas"
+              labelFormat="none"
+              [disabled]="isScheduleDisabled()"
+            />
+          </div>
+        }
         <div>
           <app-label>Créditos</app-label>
           <app-input-field type="number" formControlName="creditos" [disabled]="true" />
@@ -139,6 +152,16 @@
                 <p class="font-semibold text-gray-900 dark:text-white/90">
                   {{ sentence(row.materia) }}
                 </p>
+                @if (row.esCompartida) {
+                  <app-tooltip [text]="row.horarioTooltip" placement="top" theme="light">
+                    <span
+                      class="mt-0.5 inline-flex max-w-full cursor-help items-center gap-0.5 whitespace-normal break-words rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-4 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      <app-icon name="search" size="xs" classes="!h-3 !w-3" />
+                      Compartida
+                    </span>
+                  </app-tooltip>
+                }
                 @if (row.componente) {
                   <p class="mt-0.5 text-[11px] leading-4 text-gray-500 dark:text-gray-400">
                     {{ sentence(row.componente) }}

@@ -1,5 +1,6 @@
 import { forNext } from '../../../../core/utils/for-next.function';
 import { CoordinationCentroCosto } from './coordination.model';
+import { GroupScheduleItem } from './subject-catalog.model';
 
 /** Tipo de actividad de GET /configuration/load/list-detail-professor-load. */
 export interface ProfessorLoadActivityType {
@@ -74,6 +75,7 @@ export interface ProfessorLoadDetailActivity {
   horas: string | null;
   materiaBanco: ProfessorLoadSubject | null;
   extras: string | null;
+  clasesSemanales: GroupScheduleItem[] | null;
 }
 
 /** Ítem de GET /configuration/load/list-detail-professor-load. */
@@ -95,6 +97,8 @@ export interface SubjectActivityRow {
   cupoMaximo: number | null;
   horasTotales: number | null;
   horasExtras: boolean;
+  esCompartida: boolean;
+  horarioTooltip: string;
 }
 
 /** Filas de asignatura que pertenecen a la hoja indicada. */
@@ -133,6 +137,8 @@ function toSubjectRow(
     cupoMaximo: item.grupo?.capacidad ?? null,
     horasTotales: toHours(item.horas),
     horasExtras: item.extras?.trim() === '1',
+    esCompartida: (item.clasesSemanales?.length ?? 0) > 0,
+    horarioTooltip: scheduleTooltip(item.clasesSemanales),
   };
 }
 
@@ -182,4 +188,53 @@ function toHours(horas: string | null | undefined): number | null {
 
   const value = Number(horas.trim().replace(',', '.'));
   return Number.isFinite(value) ? value : null;
+}
+
+export function scheduleTooltip(classes: GroupScheduleItem[] | null | undefined): string {
+  const blocks: string[] = [];
+  forNext(classes, (item) => {
+    const day = dayName(item.dia);
+    const from = formatHour(item.bloqueInicial?.horaInicio);
+    const to = formatHour(item.bloqueFinal?.horaFinal);
+    const hours = from && to ? `${from} - ${to}` : from || to;
+    const text = [day, hours].filter((part) => part).join(' · ');
+    if (!text) {
+      return;
+    }
+
+    const gap = blocks.length > 0 ? ' style="margin-top:0.35rem"' : '';
+    blocks.push(`<p${gap}>${escapeHtml(text)}</p>`);
+  });
+
+  return blocks.join('');
+}
+
+function dayName(day: number | null): string {
+  const names = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  if (day == null || day < 1 || day > 7) {
+    return '';
+  }
+
+  return names[day];
+}
+
+function formatHour(value: string | null | undefined): string {
+  const raw = value?.trim() ?? '';
+  if (!raw || raw.includes(':')) {
+    return raw;
+  }
+  if (!/^\d{3,4}$/.test(raw)) {
+    return raw;
+  }
+
+  const padded = raw.padStart(4, '0');
+  return `${padded.slice(0, 2)}:${padded.slice(2)}`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }

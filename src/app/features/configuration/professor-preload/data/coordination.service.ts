@@ -22,6 +22,7 @@ import {
   SubjectComponentItem,
   SubjectGroupItem,
   SubjectItem,
+  GroupScheduleItem,
 } from '../model/subject-catalog.model';
 import { SaveDetailProfessorPreloadRequest } from '../model/professor-activity-save.model';
 import { ProfessorLoadDetailItem } from '../model/professor-load-detail.model';
@@ -168,7 +169,7 @@ export class CoordinationService {
 
   /**
    * Lista las materias de un pensum.
-   * Omite las marcadas como materia particular del programa.
+   * Incluye las materias compartidas y omite las demás materias particulares.
    *
    * @param idPensum Identificador del pensum.
    * @returns Observable con las materias. Vacío si no queda ninguna.
@@ -209,6 +210,20 @@ export class CoordinationService {
       idConvocatoria,
       codigoMateria,
     });
+  }
+
+  /**
+   * Lista el horario de clases de un grupo.
+   * Cada clase trae el día y los bloques inicial y final.
+   *
+   * @param idGrupo Identificador del grupo.
+   * @returns Observable con las clases. Vacío si el grupo no tiene horario.
+   */
+  listGroupSchedule(idGrupo: number): Observable<GroupScheduleItem[]> {
+    return this.webRequestService.get<GroupScheduleItem[]>(
+      `${this.endpoint}/list-group-schedule`,
+      { idGrupo },
+    );
   }
 
   /**
