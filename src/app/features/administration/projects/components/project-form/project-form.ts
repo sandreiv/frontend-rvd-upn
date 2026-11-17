@@ -5,6 +5,7 @@
  * 10/11/2026 - Leonel Antonio Perez Rios - Carga de actividades jerárquicas desde ProjectsService
  * 10/11/2026 - Leonel Antonio Perez Rios - Integración del componente jerárquico tipo árbol (TreeSelect)
  * 10/11/2026 - Leonel Antonio Perez Rios - Refactorización de código limpio, constantes y soporte a subproyectos
+ * 13/11/2026 - Inclusión de codigo, numeroActa, fechaActa y activo en el formulario
  */
 import {
   ChangeDetectionStrategy,
@@ -33,6 +34,8 @@ import {
 import { Button } from '../../../../../shared/ui/button/button';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
+import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
+import { DatePicker } from '../../../../../shared/components/form/date-picker/date-picker';
 import { TreeSelect } from '../../../../../shared/components/form/tree-select/tree-select';
 import {
   TypeaheadOption,
@@ -45,8 +48,8 @@ import {
   TipoActividadProyectoItem,
 } from '../../model/projects.model';
 
+const CODIGO_MAX_LENGTH = 50;
 const NOMBRE_MAX_LENGTH = 255;
-const DESCRIPCION_MAX_LENGTH = 1000;
 const ACTA_MAX_LENGTH = 100;
 const SEARCH_DEBOUNCE_TIME = 300;
 const MIN_SEARCH_CHARS = 2;
@@ -58,16 +61,18 @@ interface CoordinationOption {
 }
 
 type ProjectFormGroup = FormGroup<{
+  codigo: FormControl<string>;
   nombre: FormControl<string>;
-  descripcion: FormControl<string>;
-  actaConsejo: FormControl<string>;
+  numeroActa: FormControl<string>;
+  fechaActa: FormControl<string>;
   idTipoActividad: FormControl<string>;
   idCoordinacion: FormControl<string>;
+  activo: FormControl<boolean>;
 }>;
 
 @Component({
   selector: 'app-project-form',
-  imports: [ReactiveFormsModule, Label, InputField, TreeSelect, Button, TypeaheadSelect],
+  imports: [ReactiveFormsModule, Label, InputField, DatePicker, Checkbox, TreeSelect, Button, TypeaheadSelect],
   templateUrl: './project-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -94,17 +99,20 @@ export class ProjectForm implements OnInit, OnChanges {
   readonly filteredCoordinations = signal<CoordinationOption[]>([]);
 
   readonly form: ProjectFormGroup = new FormGroup({
+    codigo: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(CODIGO_MAX_LENGTH)],
+    }),
     nombre: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(NOMBRE_MAX_LENGTH)],
     }),
-    descripcion: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(DESCRIPCION_MAX_LENGTH)],
-    }),
-    actaConsejo: new FormControl('', {
+    numeroActa: new FormControl('', {
       nonNullable: true,
       validators: [Validators.maxLength(ACTA_MAX_LENGTH)],
+    }),
+    fechaActa: new FormControl('', {
+      nonNullable: true,
     }),
     idTipoActividad: new FormControl('', {
       nonNullable: true,
@@ -113,6 +121,9 @@ export class ProjectForm implements OnInit, OnChanges {
     idCoordinacion: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
+    }),
+    activo: new FormControl(true, {
+      nonNullable: true,
     }),
   });
 
@@ -179,13 +190,16 @@ export class ProjectForm implements OnInit, OnChanges {
     const raw = this.form.getRawValue();
 
     this.saveProject.emit({
+      codigo: raw.codigo.trim() || null,
       nombre: raw.nombre.trim(),
-      descripcion: raw.descripcion.trim() || null,
-      actaConsejo: raw.actaConsejo.trim() || null,
+      actaConsejo: raw.numeroActa.trim() || null,
+      numeroActa: raw.numeroActa.trim() || null,
+      fechaActa: raw.fechaActa || null,
+      activo: raw.activo ? '1' : '0',
       idTipoActividad: Number(raw.idTipoActividad),
       idCoordinacion: Number(raw.idCoordinacion),
       idProyectoPadre: this.parentProjectId(),
-      estado: '1',
+      estado: raw.activo ? '1' : '0',
     });
   }
 
@@ -241,12 +255,18 @@ export class ProjectForm implements OnInit, OnChanges {
 
     this.ensureSelectedCoordination(coordinationId, coordinationName);
 
+    const isActivo = item?.activo != null ? item.activo === '1' : true;
+    const numActa = item?.numeroActa ?? item?.actaConsejo ?? '';
+    const fecha = item?.fechaActa ? item.fechaActa.substring(0, 10) : '';
+
     this.form.reset({
+      codigo: item?.codigo ?? '',
       nombre: item?.nombre ?? '',
-      descripcion: item?.descripcion ?? '',
-      actaConsejo: item?.actaConsejo ?? '',
+      numeroActa: numActa,
+      fechaActa: fecha,
       idTipoActividad: tipoActividadId != null ? String(tipoActividadId) : '',
       idCoordinacion: coordinationId != null ? String(coordinationId) : '',
+      activo: isActivo,
     });
   }
 }

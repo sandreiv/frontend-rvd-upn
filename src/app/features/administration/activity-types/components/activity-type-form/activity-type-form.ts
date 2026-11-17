@@ -37,6 +37,7 @@ type ActivityTypeFormGroup = FormGroup<{
   idDependencia: FormControl<string | null>;
   docenciaDirecta: FormControl<boolean>;
   horasPorSemestre: FormControl<boolean>;
+  aplicaProyectos: FormControl<boolean>;
   minimoHoras: FormControl<number | null>;
   maximoHoras: FormControl<number | null>;
   estado: FormControl<boolean>;
@@ -182,6 +183,9 @@ export class ActivityTypeForm implements OnChanges {
       horasPorSemestre: new FormControl(false, {
         nonNullable: true,
       }),
+      aplicaProyectos: new FormControl(false, {
+        nonNullable: true,
+      }),
       minimoHoras: new FormControl<number | null>(null, {
         validators: [Validators.required, Validators.min(0)],
       }),
@@ -245,6 +249,7 @@ export class ActivityTypeForm implements OnChanges {
       idDependencia: raw.idDependencia ? Number(raw.idDependencia) : null,
       docenciaDirecta: raw.docenciaDirecta ? '1' : '0',
       horasPorSemestre: raw.horasPorSemestre ? '1' : '0',
+      aplicaProyectos: raw.aplicaProyectos ? '1' : '0',
       minimoHoras: raw.minimoHoras != null ? Number(raw.minimoHoras) : null,
       maximoHoras: raw.maximoHoras != null ? Number(raw.maximoHoras) : null,
       estado: raw.estado ? '1' : '0',
@@ -287,6 +292,7 @@ export class ActivityTypeForm implements OnChanges {
       idDependencia: item?.idDependencia ? String(item.idDependencia) : '',
       docenciaDirecta: item?.docenciaDirecta === '1',
       horasPorSemestre: item?.horasPorSemestre === '1',
+      aplicaProyectos: item?.aplicaProyectos === '1',
       minimoHoras: item?.minimoHoras != null ? Number(item.minimoHoras) : null,
       maximoHoras: item?.maximoHoras != null ? Number(item.maximoHoras) : null,
       estado: parseBooleanState(item?.estado),

@@ -8,7 +8,7 @@
       {{ isCreateMode() ? 'Agregar participante' : 'Editar participante' }}
     </h4>
     <p class="text-xs text-gray-500 dark:text-gray-400">
-      Asocia un docente y sus horas de dedicación al proyecto seleccionado.
+      Asocia un docente, su función, centro de costo y horas de dedicación al proyecto.
     </p>
   </div>
 
@@ -22,6 +22,29 @@
         placeholder="Buscar docente"
         emptyText="No se encontraron resultados"
         (queryChange)="onSearchPerson($event)"
+      />
+    </div>
+
+    <div>
+      <app-label>Función en el proyecto</app-label>
+      <app-select
+        formControlName="funcion"
+        [options]="participantFunctionOptions()"
+        placeholder="Seleccione la función"
+      />
+    </div>
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div>
+      <app-label>Centro de costo</app-label>
+      <app-typeahead-select
+        formControlName="idCentroCosto"
+        [items]="filteredCostCenters()"
+        [optionAdapter]="costCenterOptionAdapter"
+        placeholder="Buscar centro de costo"
+        emptyText="No se encontraron resultados"
+        (queryChange)="onSearchCostCenter($event)"
       />
     </div>
 
@@ -63,12 +86,12 @@
         Activo
       </h5>
       <p class="text-xs text-gray-500 dark:text-gray-400">
-        Define si el proyecto está activo para el docente.
+        Define si la asignación está activa para el docente en este proyecto.
       </p>
     </div>
 
     <app-checkbox
-      label="Activo"
+      label="Participante activo"
       [checked]="form.controls.esActivo.value"
       (checkedChange)="form.controls.esActivo.setValue($event)"
     />

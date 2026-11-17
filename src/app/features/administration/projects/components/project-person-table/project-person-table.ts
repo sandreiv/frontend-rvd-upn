@@ -4,15 +4,19 @@
  * 09/11/2026 - Leonel Antonio Perez Rios - Ajuste de columnas para participantes y roles en esquema general
  * 10/11/2026 - Leonel Antonio Perez Rios - Remoción de columna rol inexistente en BD
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de badge para la columna de estado y refactorización limpia
+ * 13/11/2026 - Inclusión de columnas Función y Centro de costo
  */
 import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Output,
+  inject,
   input,
   model,
+  signal,
 } from '@angular/core';
+import { ProjectsService } from '../../data/projects.service';
 import { DataTable } from '../../../../../shared/ui/data-table/data-table';
 import {
   DataTableActionEvent,
@@ -20,7 +24,10 @@ import {
   DataTableRowAction,
   DataTableToolbarActionEvent,
 } from '../../../../../shared/ui/data-table/table.types';
-import { ProjectPersonItem } from '../../model/projects.model';
+import {
+  ParticipantFunctionOption,
+  ProjectPersonItem,
+} from '../../model/projects.model';
 
 @Component({
   selector: 'app-project-person-table',
@@ -29,8 +36,24 @@ import { ProjectPersonItem } from '../../model/projects.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectPersonTable {
+  private readonly projectsService = inject(ProjectsService);
+  private readonly functionLabels = signal<Record<string, string>>({});
+
   persons = input<ProjectPersonItem[]>([]);
   selectedPersonIds = model<string[]>([]);
+
+  constructor() {
+    this.projectsService.listParticipantFunctions().subscribe({
+      next: (list: ParticipantFunctionOption[]) => {
+        const map: Record<string, string> = {};
+        for (const item of list ?? []) {
+          map[item.codigo] = item.nombre;
+        }
+        this.functionLabels.set(map);
+      },
+      error: () => {},
+    });
+  }
 
   @Output() refreshPersons = new EventEmitter<void>();
   @Output() addPerson = new EventEmitter<void>();
@@ -51,6 +74,16 @@ export class ProjectPersonTable {
       id: 'documento',
       header: 'Documento',
       cell: (row) => row.documento || '-',
+    },
+    {
+      id: 'funcion',
+      header: 'Función',
+      cell: (row) => this.formatFuncion(row.funcion || row.data),
+    },
+    {
+      id: 'centroCosto',
+      header: 'Centro de costo',
+      cell: (row) => this.formatCentroCosto(row),
     },
     {
       id: 'horas',
@@ -113,6 +146,31 @@ export class ProjectPersonTable {
 
   onSelectedIdsChange(keys: Array<string | number>): void {
     this.selectedPersonIds.set(keys.map((key) => String(key)));
+  }
+
+  private formatFuncion(funcion?: string | null): string {
+    if (!funcion) {
+      return '-';
+    }
+    let val = funcion.trim();
+    if (val.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (parsed && typeof parsed === 'object' && parsed.funcion) {
+          val = String(parsed.funcion);
+        }
+      } catch {
+        // ignorar
+      }
+    }
+    return this.functionLabels()[val] || val;
+  }
+
+  private formatCentroCosto(row: ProjectPersonItem): string {
+    if (row.centroCostoCodigo && row.centroCostoNombre) {
+      return `${row.centroCostoCodigo} - ${row.centroCostoNombre}`;
+    }
+    return row.centroCostoNombre || row.centroCostoCodigo || '-';
   }
 
   private formatStatusBadge(value: string | null | undefined): string {

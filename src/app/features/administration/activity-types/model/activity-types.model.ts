@@ -47,6 +47,7 @@ export interface ActivityTypeItem {
   maximoHoras: string | null;
   docenciaDirecta?: '1' | '0' | string | null;
   horasPorSemestre?: '1' | '0' | string | null;
+  aplicaProyectos?: '1' | '0' | string | null;
   estado: '1' | '0' | 'ACTIVO' | 'INACTIVO' | string;
 }
 
@@ -58,6 +59,7 @@ export interface ActivityTypeFormData {
   idDependencia?: number | null;
   docenciaDirecta: '1' | '0';
   horasPorSemestre: '1' | '0';
+  aplicaProyectos?: '1' | '0';
   minimoHoras: number | null;
   maximoHoras: number | null;
   estado: '1' | '0';

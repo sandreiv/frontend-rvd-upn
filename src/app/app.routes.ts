@@ -4,6 +4,7 @@ import { PreloadCall } from './features/configuration/preload-call/pages/preload
 import { ProfessorPreload } from './features/configuration/professor-preload/pages/professor-preload/professor-preload';
 
 import { administrationRoutes } from './features/administration/administration.routes';
+import { Projects } from './features/administration/projects/pages/projects/projects';
 import { ProjectCalls } from './features/administration/project-calls/pages/project-calls/project-calls';
 import { ProjectTypes } from './features/administration/project-types/pages/project-types/project-types';
 import { SessionRequired } from './features/auth/session-required/session-required';
@@ -12,7 +13,6 @@ import { homeRedirectGuard, menuGuard } from './core/guards/menu.guard';
 import { TeacherAccess } from './features/public-view/professor-access/professor-access';
 import { publicViewRoutes } from './features/public-view/public-view.routes';
 import { publicSessionGuard } from './core/guards/public-session.guard';
-
 
 export const routes: Routes = [
   {
@@ -54,9 +54,9 @@ export const routes: Routes = [
       { path: 'convocatoria-precarga', component: PreloadCall },
       { path: 'precarga-docente', component: ProfessorPreload },
       { path: 'administracion', children: administrationRoutes },
+      { path: 'proyectos', component: Projects },
       { path: 'convocatorias-de-proyecto', component: ProjectCalls },
       { path: 'tipos-de-proyecto', component: ProjectTypes },
-
     ],
   },
 ];

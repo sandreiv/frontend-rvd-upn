@@ -2,6 +2,7 @@
  * Autor: GRUPO DE DESARROLLO ESPECÍFICO - CIADTI - Universidad de Pamplona
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Ajuste de opciones de administración: Tipo actividades y Proyectos
+ * 11/11/2026 - Leonel Antonio Perez Rios - Se retira la opción Proyectos tras moverla a nivel de sidebar
  */
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
@@ -28,11 +29,6 @@ export class AdministrationView {
       label: 'Tipo actividades',
       icon: 'bookOpen',
       path: 'tipo-actividades',
-    },
-    {
-      label: 'Proyectos',
-      icon: 'documentPlus',
-      path: 'proyectos',
     },
   ];
 }

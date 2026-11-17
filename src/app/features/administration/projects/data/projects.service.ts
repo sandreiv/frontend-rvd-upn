@@ -4,12 +4,16 @@
  * 09/11/2026 - Leonel Antonio Perez Rios - Servicio para administración de proyectos y participantes en esquema general
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de listado de tipos de actividad y búsqueda de personas desde el mismo endpoint
  * 10/11/2026 - Leonel Antonio Perez Rios - Inclusión de método para listar todos los proyectos y productos jerárquicamente
+ * 13/11/2026 - Inclusión de centros de costo para participantes
+ * 17/11/2026 - Inclusión de listado de funciones de participantes desde backend
  */
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-call/model/preload-call.model';
 import {
+  CostCenterOption,
+  ParticipantFunctionOption,
   DeleteBulkProjectsRequest,
   ProjectFormData,
   ProjectItem,
@@ -24,6 +28,7 @@ import {
 export class ProjectsService {
   private readonly webRequestService = inject(WebRequestService);
   private readonly endpoint = '/configuration/administration/projects';
+  private participantFunctions$: Observable<ParticipantFunctionOption[]> | null = null;
 
   /**
    * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
@@ -158,6 +163,31 @@ export class ProjectsService {
    */
   deleteBulkProjectPersons(payload: DeleteBulkProjectsRequest): Observable<void> {
     return this.webRequestService.post<void>(`${this.endpoint}/participants/delete-bulk`, payload);
+  }
+
+  /**
+   * Lista los centros de costo para participantes de proyectos.
+   *
+   * @returns Observable con los centros de costo disponibles.
+   */
+  listCostCenters(): Observable<CostCenterOption[]> {
+    return this.webRequestService.get<CostCenterOption[]>(
+      `${this.endpoint}/cost-centers`,
+    );
+  }
+
+  /**
+   * Lista las funciones disponibles para participantes de proyectos desde el enum de backend.
+   *
+   * @returns Observable con las opciones de funciones.
+   */
+  listParticipantFunctions(): Observable<ParticipantFunctionOption[]> {
+    if (!this.participantFunctions$) {
+      this.participantFunctions$ = this.webRequestService
+        .get<ParticipantFunctionOption[]>(`${this.endpoint}/participant-functions`)
+        .pipe(shareReplay(1));
+    }
+    return this.participantFunctions$;
   }
 
   /**
