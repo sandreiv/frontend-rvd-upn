@@ -13,7 +13,9 @@ import { WebRequestService } from '../../../../core/service/web-request-service'
 import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-call/model/preload-call.model';
 import {
   CostCenterOption,
+  DayOfWeekOption,
   ParticipantFunctionOption,
+  ParticipantLevelOption,
   ProjectGroupOption,
   DeleteBulkProjectsRequest,
   ProjectFormData,
@@ -30,6 +32,8 @@ export class ProjectsService {
   private readonly webRequestService = inject(WebRequestService);
   private readonly endpoint = '/configuration/administration/projects';
   private participantFunctions$: Observable<ParticipantFunctionOption[]> | null = null;
+  private participantLevels$: Observable<ParticipantLevelOption[]> | null = null;
+  private daysOfWeek$: Observable<DayOfWeekOption[]> | null = null;
 
   /**
    * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
@@ -167,13 +171,23 @@ export class ProjectsService {
   }
 
   /**
-   * Lista los centros de costo para participantes de proyectos.
+   * Lista los centros de costo para participantes de proyectos, filtrando por proyecto o coordinación.
    *
+   * @param idProyecto Identificador opcional del proyecto.
+   * @param idCoordinacion Identificador opcional de la coordinación.
    * @returns Observable con los centros de costo disponibles.
    */
-  listCostCenters(): Observable<CostCenterOption[]> {
+  listCostCenters(idProyecto?: number, idCoordinacion?: number): Observable<CostCenterOption[]> {
+    const params: Record<string, string> = {};
+    if (idProyecto != null && idProyecto > 0) {
+      params['idProyecto'] = String(idProyecto);
+    }
+    if (idCoordinacion != null && idCoordinacion > 0) {
+      params['idCoordinacion'] = String(idCoordinacion);
+    }
     return this.webRequestService.get<CostCenterOption[]>(
       `${this.endpoint}/cost-centers`,
+      params,
     );
   }
 
@@ -200,6 +214,34 @@ export class ProjectsService {
         .pipe(shareReplay(1));
     }
     return this.participantFunctions$;
+  }
+
+  /**
+   * Lista los niveles disponibles para participantes y proyectos desde el enum de backend.
+   *
+   * @returns Observable con las opciones de niveles.
+   */
+  listParticipantLevels(): Observable<ParticipantLevelOption[]> {
+    if (!this.participantLevels$) {
+      this.participantLevels$ = this.webRequestService
+        .get<ParticipantLevelOption[]>(`${this.endpoint}/participant-levels`)
+        .pipe(shareReplay(1));
+    }
+    return this.participantLevels$;
+  }
+
+  /**
+   * Lista los días estándar de la semana desde el enum de backend.
+   *
+   * @returns Observable con las opciones de días de la semana.
+   */
+  listDaysOfWeek(): Observable<DayOfWeekOption[]> {
+    if (!this.daysOfWeek$) {
+      this.daysOfWeek$ = this.webRequestService
+        .get<DayOfWeekOption[]>(`${this.endpoint}/days-of-week`)
+        .pipe(shareReplay(1));
+    }
+    return this.daysOfWeek$;
   }
 
   /**

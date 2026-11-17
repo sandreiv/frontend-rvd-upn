@@ -5,6 +5,7 @@
  * 10/11/2026 - Leonel Antonio Perez Rios - Búsqueda de personas conectada al servicio de proyectos y remoción de tipo de actividad
  * 10/11/2026 - Leonel Antonio Perez Rios - Limpieza de código, validación de horas y remoción de límites inexistentes
  * 13/11/2026 - Inclusión de función en el proyecto y selector de centro de costo
+ * 17/11/2026 - Refactorización de Clean Code: tipado estricto, días dinámicos desde backend y eliminación de código muerto
  */
 import {
   ChangeDetectionStrategy,
@@ -35,6 +36,7 @@ import {
   switchMap,
 } from 'rxjs';
 import { Button } from '../../../../../shared/ui/button/button';
+import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
 import {
@@ -49,11 +51,15 @@ import { ProjectsService } from '../../data/projects.service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../../configuration/preload-call/model/preload-call.model';
 import {
   CostCenterOption,
+  DayOfWeekOption,
+  DayScheduleState,
+  ParticipantDataPayload,
   ParticipantFunctionOption,
+  ParticipantLevelOption,
+  ParticipantScheduleSlot,
   ProjectPersonFormData,
   ProjectPersonItem,
 } from '../../model/projects.model';
-import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 
 const OBSERVACION_MAX_LENGTH = 255;
 const SEARCH_DEBOUNCE_TIME = 300;
@@ -65,11 +71,20 @@ const MAX_SEARCH_RESULTS = 20;
 type ProjectPersonFormGroup = FormGroup<{
   idPersonaGeneral: FormControl<string>;
   funcion: FormControl<string>;
+  nivel: FormControl<string>;
   idCentroCosto: FormControl<string>;
   horas: FormControl<number | null>;
   observacion: FormControl<string>;
   esActivo: FormControl<boolean>;
 }>;
+
+interface HorasValidationResult {
+  valid: boolean;
+  bajoMinimo: boolean;
+  sobreMaximo: boolean;
+  minimo: number;
+  maximo: number;
+}
 
 @Component({
   selector: 'app-project-person-form',
@@ -97,11 +112,25 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   @Output() savePerson = new EventEmitter<ProjectPersonFormData>();
 
   readonly filteredPeople = signal<PersonaAutorizaConvocatoriaItem[]>([]);
-  readonly allCostCenters = signal<CostCenterOption[]>([]);
-  readonly filteredCostCenters = signal<CostCenterOption[]>([]);
-  readonly isCreateMode = computed(() => this.person() == null);
+  readonly costCenterOptions = signal<Option[]>([]);
+  readonly isCreateMode = computed<boolean>(() => this.person() == null);
 
   readonly participantFunctionOptions = signal<Option[]>([]);
+  readonly participantLevelOptions = signal<Option[]>([]);
+  readonly availableDays = signal<DayOfWeekOption[]>([]);
+  readonly weeklySchedule = signal<DayScheduleState[]>([]);
+
+  readonly totalHorasSemanales = computed<number>(() => {
+    let total = 0;
+    for (const day of this.weeklySchedule()) {
+      total += this.calculateSlotHours(day);
+    }
+    return Number.isInteger(total) ? total : Number(total.toFixed(1));
+  });
+
+  readonly activeDaysCount = computed<number>(() => {
+    return this.weeklySchedule().filter((d) => d.activo).length;
+  });
 
   readonly form: ProjectPersonFormGroup = new FormGroup({
     idPersonaGeneral: new FormControl('', {
@@ -111,6 +140,9 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     funcion: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
+    }),
+    nivel: new FormControl('', {
+      nonNullable: true,
     }),
     idCentroCosto: new FormControl('', {
       nonNullable: true,
@@ -135,7 +167,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     initialValue: null,
   });
 
-  readonly horasValidation = computed(() => {
+  readonly horasValidation = computed<HorasValidationResult>(() => {
     const horas = this.horas();
 
     if (horas == null) {
@@ -162,26 +194,31 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       .pipe(
         debounceTime(SEARCH_DEBOUNCE_TIME),
         distinctUntilChanged(),
-        switchMap((term) =>
+        switchMap((term: string) =>
           this.projectsService
             .searchPersons(term)
             .pipe(catchError(() => of([] as PersonaAutorizaConvocatoriaItem[]))),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((rows) =>
+      .subscribe((rows: PersonaAutorizaConvocatoriaItem[]) =>
         this.filteredPeople.set(rows.slice(0, MAX_SEARCH_RESULTS)),
       );
   }
 
   ngOnInit(): void {
     this.loadParticipantFunctions();
+    this.loadParticipantLevels();
+    this.loadDaysOfWeek();
     this.loadCostCenters();
     this.ensureSelectedPerson();
     this.patchForm();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['projectId'] && !changes['projectId'].firstChange) {
+      this.loadCostCenters();
+    }
     if (changes['person']) {
       this.ensureSelectedPerson();
       this.ensureSelectedCostCenter();
@@ -199,15 +236,6 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     };
   };
 
-  readonly costCenterOptionAdapter = (item: unknown): TypeaheadOption => {
-    const ceco = item as CostCenterOption;
-    return {
-      value: String(ceco.id),
-      label: `${ceco.codigo} - ${ceco.nombre}`,
-      data: ceco,
-    };
-  };
-
   onSearchPerson(term: string): void {
     const normalized = term.trim();
     if (normalized.length < MIN_SEARCH_CHARS) {
@@ -217,18 +245,47 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.searchTerm$.next(normalized);
   }
 
-  onSearchCostCenter(term: string): void {
-    const normalized = term.trim().toLowerCase();
-    if (!normalized) {
-      this.filteredCostCenters.set(this.allCostCenters().slice(0, 30));
-      return;
+  calculateSlotHours(slot: { activo: boolean; horaInicio: string; horaFin: string }): number {
+    if (!slot.activo || !slot.horaInicio || !slot.horaFin) {
+      return 0;
     }
-    const matched = this.allCostCenters().filter(
-      (c) =>
-        c.codigo?.toLowerCase().includes(normalized) ||
-        c.nombre?.toLowerCase().includes(normalized),
+    const [h1, m1] = slot.horaInicio.split(':').map(Number);
+    const [h2, m2] = slot.horaFin.split(':').map(Number);
+    if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) {
+      return 0;
+    }
+    const diffMinutes = h2 * 60 + m2 - (h1 * 60 + m1);
+    if (diffMinutes <= 0) {
+      return 0;
+    }
+    const hours = diffMinutes / 60;
+    return Number.isInteger(hours) ? hours : Number(hours.toFixed(1));
+  }
+
+  toggleDayActive(dia: string): void {
+    this.weeklySchedule.update((list: DayScheduleState[]) =>
+      list.map((d: DayScheduleState) =>
+        d.dia === dia ? { ...d, activo: !d.activo } : d,
+      ),
     );
-    this.filteredCostCenters.set(matched.slice(0, 30));
+  }
+
+  updateDayHoraInicio(dia: string, horaInicio: string | number): void {
+    const val = String(horaInicio ?? '08:00');
+    this.weeklySchedule.update((list: DayScheduleState[]) =>
+      list.map((d: DayScheduleState) =>
+        d.dia === dia ? { ...d, horaInicio: val } : d,
+      ),
+    );
+  }
+
+  updateDayHoraFin(dia: string, horaFin: string | number): void {
+    const val = String(horaFin ?? '12:00');
+    this.weeklySchedule.update((list: DayScheduleState[]) =>
+      list.map((d: DayScheduleState) =>
+        d.dia === dia ? { ...d, horaFin: val } : d,
+      ),
+    );
   }
 
   onSubmit(): void {
@@ -239,24 +296,44 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     }
 
     const raw = this.form.getRawValue();
-
     const existingData = this.person()?.data;
-    let dataObj: Record<string, unknown> = {};
+    const dataObj: ParticipantDataPayload = {};
+
     if (existingData) {
       try {
-        const parsed = JSON.parse(existingData);
+        const parsed = JSON.parse(existingData) as ParticipantDataPayload;
         if (parsed && typeof parsed === 'object') {
-          dataObj = { ...parsed };
+          Object.assign(dataObj, parsed);
         }
       } catch {
-        // Si no es JSON previo, se inicializa nuevo objeto
+        // En caso de texto plano legacy, se sobreescribe con estructura JSON
       }
     }
 
     if (raw.funcion) {
-      dataObj['funcion'] = raw.funcion;
+      dataObj.funcion = raw.funcion;
     } else {
-      delete dataObj['funcion'];
+      delete dataObj.funcion;
+    }
+
+    if (raw.nivel) {
+      dataObj.nivel = raw.nivel;
+    } else {
+      delete dataObj.nivel;
+    }
+
+    const activeSlots: ParticipantScheduleSlot[] = this.weeklySchedule()
+      .filter((d: DayScheduleState) => d.activo && d.horaInicio && d.horaFin)
+      .map((d: DayScheduleState) => ({
+        dia: d.dia,
+        horaInicio: d.horaInicio,
+        horaFin: d.horaFin,
+      }));
+
+    if (activeSlots.length > 0) {
+      dataObj.horario = activeSlots;
+    } else {
+      delete dataObj.horario;
     }
 
     const jsonString = Object.keys(dataObj).length > 0 ? JSON.stringify(dataObj) : null;
@@ -266,6 +343,8 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       idPersonaGeneral: Number(raw.idPersonaGeneral),
       idCentroCosto: raw.idCentroCosto ? Number(raw.idCentroCosto) : null,
       funcion: raw.funcion || null,
+      nivel: raw.nivel || null,
+      horario: activeSlots.length > 0 ? activeSlots : null,
       data: jsonString,
       horas: String(raw.horas ?? 0),
       observacion: raw.observacion.trim() || null,
@@ -288,15 +367,112 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     });
   }
 
+  private loadParticipantLevels(): void {
+    this.projectsService.listParticipantLevels().subscribe({
+      next: (list: ParticipantLevelOption[]) => {
+        this.participantLevelOptions.set(
+          (list ?? []).map((item: ParticipantLevelOption) => ({
+            value: item.codigo,
+            label: item.nombre,
+          })),
+        );
+      },
+      error: (e: unknown) => console.error(e),
+    });
+  }
+
+  private loadDaysOfWeek(): void {
+    this.projectsService.listDaysOfWeek().subscribe({
+      next: (days: DayOfWeekOption[]) => {
+        this.availableDays.set(days ?? []);
+        this.syncWeeklySchedule();
+      },
+      error: (e: unknown) => console.error(e),
+    });
+  }
+
+  private syncWeeklySchedule(): void {
+    const days = this.availableDays();
+    if (days.length === 0) {
+      return;
+    }
+
+    const item = this.person();
+    const existingMap = new Map<string, { activo: boolean; horaInicio: string; horaFin: string }>();
+
+    for (const d of this.weeklySchedule()) {
+      existingMap.set(d.dia, { activo: d.activo, horaInicio: d.horaInicio, horaFin: d.horaFin });
+    }
+
+    if (item?.data) {
+      try {
+        const parsed = JSON.parse(item.data) as ParticipantDataPayload;
+        if (parsed?.horario) {
+          if (Array.isArray(parsed.horario)) {
+            for (const s of parsed.horario) {
+              if (s?.dia) {
+                existingMap.set(String(s.dia).toUpperCase(), {
+                  activo: true,
+                  horaInicio: s.horaInicio ? String(s.horaInicio) : '08:00',
+                  horaFin: s.horaFin ? String(s.horaFin) : '12:00',
+                });
+              }
+            }
+          } else if (typeof parsed.horario === 'object') {
+            const dias = Array.isArray(parsed.horario.dias) ? parsed.horario.dias : [];
+            for (const diaName of dias) {
+              existingMap.set(String(diaName).toUpperCase(), {
+                activo: true,
+                horaInicio: parsed.horario.horaInicio ? String(parsed.horario.horaInicio) : '08:00',
+                horaFin: parsed.horario.horaFin ? String(parsed.horario.horaFin) : '12:00',
+              });
+            }
+          }
+        }
+      } catch {
+        // Ignora si no contiene JSON parseable
+      }
+    }
+
+    if (item?.horario && Array.isArray(item.horario)) {
+      for (const s of item.horario) {
+        if (s?.dia) {
+          existingMap.set(String(s.dia).toUpperCase(), {
+            activo: true,
+            horaInicio: s.horaInicio ? String(s.horaInicio) : '08:00',
+            horaFin: s.horaFin ? String(s.horaFin) : '12:00',
+          });
+        }
+      }
+    }
+
+    const state: DayScheduleState[] = days.map((d: DayOfWeekOption) => {
+      const saved = existingMap.get(d.codigo);
+      return {
+        dia: d.codigo,
+        nombre: d.nombre,
+        abreviacion: d.abreviacion,
+        activo: saved ? saved.activo : false,
+        horaInicio: saved ? saved.horaInicio : '08:00',
+        horaFin: saved ? saved.horaFin : '12:00',
+      };
+    });
+
+    this.weeklySchedule.set(state);
+  }
+
   private loadCostCenters(): void {
-    this.projectsService.listCostCenters().subscribe({
-      next: (list) => {
-        const rows = list ?? [];
-        this.allCostCenters.set(rows);
-        this.filteredCostCenters.set(rows.slice(0, 30));
+    const projId = this.projectId();
+    this.projectsService.listCostCenters(projId > 0 ? projId : undefined).subscribe({
+      next: (list: CostCenterOption[]) => {
+        const options: Option[] = (list ?? []).map((item: CostCenterOption) => ({
+          value: String(item.id),
+          label: `${item.codigo} - ${item.nombre}`,
+        }));
+        this.costCenterOptions.set(options);
         this.ensureSelectedCostCenter();
       },
-      error: (e) => console.error(e),
+      error: (e: unknown) => console.error(e),
     });
   }
 
@@ -308,7 +484,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
     const id = String(item.idPersonaGeneral);
     const rows = this.filteredPeople();
-    if (rows.some((row) => String(row.id) === id)) {
+    if (rows.some((row: PersonaAutorizaConvocatoriaItem) => String(row.id) === id)) {
       return;
     }
 
@@ -330,43 +506,50 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     }
 
     const id = String(item.idCentroCosto);
-    const rows = this.filteredCostCenters();
-    if (rows.some((row) => String(row.id) === id)) {
+    const currentOptions = this.costCenterOptions();
+    if (currentOptions.some((opt: Option) => opt.value === id)) {
       return;
     }
 
-    const existingInAll = this.allCostCenters().find(
-      (row) => String(row.id) === id,
-    );
+    const label =
+      item.centroCostoCodigo && item.centroCostoNombre
+        ? `${item.centroCostoCodigo} - ${item.centroCostoNombre}`
+        : item.centroCostoNombre || item.centroCostoCodigo || id;
 
-    const costCenterToAdd: CostCenterOption = existingInAll || {
-      id: item.idCentroCosto,
-      codigo: item.centroCostoCodigo || '',
-      nombre: item.centroCostoNombre || id,
-    };
-
-    this.filteredCostCenters.set([costCenterToAdd, ...rows]);
+    this.costCenterOptions.set([{ value: id, label }, ...currentOptions]);
   }
 
   private patchForm(): void {
     const item = this.person();
 
     let funcionValue = item?.funcion ?? '';
-    if (!funcionValue && item?.data) {
+    let nivelValue = item?.nivel ?? '';
+
+    if (item?.data) {
       try {
-        const parsed = JSON.parse(item.data);
-        if (parsed && typeof parsed === 'object' && parsed.funcion) {
-          funcionValue = String(parsed.funcion);
+        const parsed = JSON.parse(item.data) as ParticipantDataPayload;
+        if (parsed && typeof parsed === 'object') {
+          if (!funcionValue && parsed.funcion) {
+            funcionValue = String(parsed.funcion);
+          }
+          if (!nivelValue && parsed.nivel) {
+            nivelValue = String(parsed.nivel);
+          }
         }
       } catch {
-        funcionValue = item.data;
+        if (!funcionValue) {
+          funcionValue = item.data;
+        }
       }
     }
+
+    this.syncWeeklySchedule();
 
     this.form.reset({
       idPersonaGeneral:
         item?.idPersonaGeneral != null ? String(item.idPersonaGeneral) : '',
       funcion: funcionValue,
+      nivel: nivelValue,
       idCentroCosto:
         item?.idCentroCosto != null ? String(item.idCentroCosto) : '',
       horas:

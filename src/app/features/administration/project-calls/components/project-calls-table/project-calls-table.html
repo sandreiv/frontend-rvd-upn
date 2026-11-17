@@ -11,3 +11,52 @@
   (rowAction)="onRowAction($event)"
   (selectedRowKeysChange)="onSelectedIdsChange($event)"
 />
+
+<ng-template #convocatoriasTpl let-row>
+  @if (row.convocatorias && row.convocatorias.length > 0) {
+    <app-badge
+      variant="brand"
+      size="sm"
+      className="cursor-pointer"
+      [appTooltip]="convocatoriasTooltipTpl"
+      tooltipPlacement="top"
+      tooltipTheme="light"
+    >
+      {{ row.convocatorias.length }}
+    </app-badge>
+
+    <ng-template #convocatoriasTooltipTpl>
+      <div class="max-w-xs space-y-1.5 p-1 text-left text-xs">
+        <div class="border-b border-gray-100 pb-1 font-semibold text-gray-900 dark:border-gray-800 dark:text-white">
+          Convocatorias vinculadas ({{ row.convocatorias.length }})
+        </div>
+        <ul class="space-y-1">
+          @for (c of row.convocatorias; track c.id) {
+            <li class="flex items-start justify-between gap-2">
+              <span class="text-gray-700 dark:text-gray-300">{{ c.nombre }}</span>
+              @if (c.periodo) {
+                <app-badge variant="brand" size="xs">
+                  {{ c.periodo }}
+                </app-badge>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    </ng-template>
+  } @else {
+    <app-badge variant="neutral" size="sm">
+      0
+    </app-badge>
+  }
+</ng-template>
+
+<ng-template #estadoTpl let-row>
+  <app-badge
+    [variant]="row.estado === '1' ? 'success' : 'neutral'"
+    [dot]="true"
+    size="sm"
+  >
+    {{ row.estado === '1' ? 'Activo' : 'Inactivo' }}
+  </app-badge>
+</ng-template>

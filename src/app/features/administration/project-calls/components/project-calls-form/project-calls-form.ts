@@ -23,6 +23,7 @@ import { Label } from '../../../../../shared/components/form/label/label';
 import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { Option, Select } from '../../../../../shared/components/form/select/select';
 import { Icon } from '../../../../../shared/ui/icon/icon';
+import { Badge } from '../../../../../shared/ui/badge/badge';
 import { ProjectCallsService } from '../../data/project-calls.service';
 import {
   ConvocatoriaOpcion,
@@ -38,7 +39,7 @@ type ProjectCallFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-project-calls-form',
-  imports: [ReactiveFormsModule, Label, InputField, Checkbox, Select, Icon, Button],
+  imports: [ReactiveFormsModule, Label, InputField, Checkbox, Select, Icon, Button, Badge],
   templateUrl: './project-calls-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

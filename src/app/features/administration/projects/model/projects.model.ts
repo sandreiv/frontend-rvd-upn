@@ -23,6 +23,45 @@ export interface ParticipantFunctionOption {
   nombre: string;
 }
 
+export interface ParticipantLevelOption {
+  codigo: string;
+  nombre: string;
+}
+
+export interface DayOfWeekOption {
+  codigo: string;
+  nombre: string;
+  abreviacion: string;
+}
+
+export interface DayScheduleState {
+  dia: string;
+  nombre: string;
+  abreviacion: string;
+  activo: boolean;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantScheduleSlot {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantSchedule {
+  dias: string[];
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface ParticipantDataPayload {
+  funcion?: string;
+  nivel?: string;
+  horario?: ParticipantScheduleSlot[] | ParticipantSchedule;
+  [key: string]: unknown;
+}
+
 export interface ProjectGroupOption {
   id: number;
   nombre: string;
@@ -104,6 +143,8 @@ export interface ProjectPersonItem {
   centroCostoCodigo?: string | null;
   idPrograma?: number | null;
   funcion?: string | null;
+  nivel?: string | null;
+  horario?: ParticipantSchedule | ParticipantScheduleSlot[] | null;
   data?: string | null;
   estado?: string;
   esActivo?: '1' | '0' | 'S' | 'N' | string;
@@ -119,6 +160,8 @@ export interface ProjectPersonFormData {
   idCentroCosto?: number | null;
   idPrograma?: number | null;
   funcion?: string | null;
+  nivel?: string | null;
+  horario?: ParticipantSchedule | ParticipantScheduleSlot[] | null;
   data?: string | null;
   estado?: '1' | '0' | string;
   esActivo?: '1' | '0' | string;

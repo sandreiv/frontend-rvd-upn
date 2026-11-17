@@ -31,6 +31,7 @@ import { Icon } from '../icon/icon';
 import { Item } from '../dropdown/item/item';
 import { Checkbox } from '../../components/form/input/checkbox';
 import { Tooltip } from '../tooltip/tooltip';
+import { CommonModule } from '@angular/common';
 import { formatSentenceValue } from '../../utils/normalized-text.util';
 import { formatCurrencyValue } from '../../utils/currency.util';
 
@@ -38,7 +39,7 @@ import { formatCurrencyValue } from '../../utils/currency.util';
   selector: 'app-data-table',
   standalone: true,
   templateUrl: './data-table.html',
-  imports: [Icon, Item, Checkbox, Tooltip],
+  imports: [CommonModule, Icon, Item, Checkbox, Tooltip],
 })
 export class DataTable<T = unknown> implements AfterViewInit, OnDestroy, OnChanges {
   @ViewChild('sentinelElement') sentinelElement?: ElementRef<HTMLDivElement>;
