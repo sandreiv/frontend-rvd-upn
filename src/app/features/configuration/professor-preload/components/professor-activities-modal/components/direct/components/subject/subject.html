@@ -85,11 +85,11 @@
           <app-input-field type="number" formControlName="creditos" [disabled]="true" />
         </div>
         <div>
-          <app-label>Cupo máximo</app-label>
+          <app-label>Cupo</app-label>
           <app-input-field type="number" formControlName="cupoMaximo" [disabled]="true" />
         </div>
         <div>
-          <app-label>Horas totales</app-label>
+          <app-label>Horas</app-label>
           <app-input-field type="number" formControlName="horasTotales" [disabled]="true" />
         </div>
       </div>
@@ -117,26 +117,34 @@
       <table class="w-full table-fixed text-left text-[14px] leading-4">
         <thead class="bg-gray-50 dark:bg-white/5">
           <tr>
-            @for (
-              header of [
-                'Programa',
-                'Pensum',
-                'Materia',
-                'Grupo',
-                'Créditos',
-                'Cupo máximo',
-                'Horas totales',
-                '',
-              ];
-              track header
-            ) {
-              <th
-                class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
-                [class.w-8]="!header"
-              >
-                {{ header }}
-              </th>
-            }
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Programa
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Pensum
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Materia
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Grupo
+            </th>
+            <th
+              class="w-14 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Créditos
+            </th>
+            <th
+              class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Cupo
+            </th>
+            <th
+              class="w-24 px-1 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Horas
+            </th>
+            <th class="w-8 px-1 py-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -175,13 +183,13 @@
                   {{ sentence(row.grupo) }}
                 </span>
               </td>
-              <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+              <td class="w-14 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
                 {{ row.creditos ?? '-' }}
               </td>
-              <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+              <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
                 {{ row.cupoMaximo ?? '-' }}
               </td>
-              <td class="px-1.5 py-2">
+              <td class="w-24 px-1 py-2">
                 <div class="flex flex-wrap items-center gap-1">
                   <span class="text-gray-600 dark:text-gray-300">
                     {{ row.horasTotales ?? '-' }}
