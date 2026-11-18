@@ -11,6 +11,10 @@
     {{ activity().nombre }}
   </span>
 
+  @if (collapsesToParentCard()) {
+    <app-dependent-activity-select [activity]="activity()" />
+  }
+
   @switch (componentKey()) {
     @case ('ASIGNATURA') {
       <app-subject

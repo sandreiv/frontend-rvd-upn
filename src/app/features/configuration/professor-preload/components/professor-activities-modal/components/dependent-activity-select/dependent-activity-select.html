@@ -1,0 +1,16 @@
+@if (levels().length) {
+  <div class="flex flex-col gap-4">
+  @for (level of levels(); track level.parentId) {
+    <div class="min-w-0 w-full max-w-xl">
+      <app-label>{{ level.label }}</app-label>
+      <app-select
+        [options]="level.options"
+        [value]="level.selected"
+        placeholder="Seleccione la actividad"
+        labelFormat="none"
+        (valueChange)="onSelect($index, $event)"
+      />
+    </div>
+  }
+  </div>
+}
