@@ -4,6 +4,7 @@ import {
   activityComponentKey,
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
+import { ProfessorProjectItem } from '../../../../model/professor-project.model';
 import { Icon } from '../../../../../../../shared/ui/icon/icon';
 import { AppIconName } from '../../../../../../../shared/ui/icon/icons';
 import { ActivityCard } from '../activity-card/activity-card';
@@ -58,6 +59,7 @@ export class ActivityTree {
   readonly idConvocatoria = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly projects = input<ProfessorProjectItem[]>([]);
   readonly detailSaved = output<void>();
 
   readonly listClass = computed(() => {

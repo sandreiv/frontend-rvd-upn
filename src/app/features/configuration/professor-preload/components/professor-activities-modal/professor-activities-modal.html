@@ -82,6 +82,7 @@
                   [idConvocatoria]="idConvocatoria()"
                   [idCargaDocente]="professor()?.idCargaDocente ?? null"
                   [savedDetails]="savedDetails()"
+                  [projects]="professorProjects()"
                   (detailSaved)="reloadSavedDetails()"
                 >
                   @if (!hasSavedDetails(activity.id)) {

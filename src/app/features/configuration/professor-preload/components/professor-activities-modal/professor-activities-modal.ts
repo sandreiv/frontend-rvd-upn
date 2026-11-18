@@ -25,6 +25,10 @@ import {
   visibleActivityTree,
 } from '../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../model/professor-load-detail.model';
+import {
+  ProfessorProjectItem,
+  projectActivityIds,
+} from '../../model/professor-project.model';
 import { ActivityTree } from './components/activity-tree/activity-tree';
 
 interface ActivityCatalog {
@@ -38,6 +42,7 @@ const EMPTY_CATALOG: ActivityCatalog = {
 };
 
 const EMPTY_DETAILS: ProfessorLoadDetailItem[] = [];
+const EMPTY_PROJECTS: ProfessorProjectItem[] = [];
 
 @Component({
   selector: 'app-professor-activities-modal',
@@ -63,6 +68,7 @@ export class ProfessorActivitiesModal {
   private readonly manualActivityIds = signal<number[]>([]);
   private readonly removedActivityIds = signal<number[]>([]);
   private readonly resolvedDetailId = signal<number | null>(null);
+  private readonly resolvedProjectId = signal<number | null>(null);
   private readonly selectorKey = signal(0);
 
   constructor() {
@@ -71,6 +77,7 @@ export class ProfessorActivitiesModal {
         this.manualActivityIds.set([]);
         this.removedActivityIds.set([]);
         this.resolvedDetailId.set(null);
+        this.resolvedProjectId.set(null);
         this.selectorKey.update((key) => key + 1);
       }
     });
@@ -117,6 +124,26 @@ export class ProfessorActivitiesModal {
     defaultValue: EMPTY_DETAILS,
   });
 
+  readonly projectResource = rxResource({
+    params: () => {
+      if (!this.isOpen()) {
+        return undefined;
+      }
+
+      const idCargaDocente = this.professor()?.idCargaDocente;
+      if (idCargaDocente == null) {
+        return undefined;
+      }
+
+      return { idCargaDocente };
+    },
+    stream: ({ params }) =>
+      this.coordinationService.listProfessorProjects(params.idCargaDocente).pipe(
+        tap(() => this.resolvedProjectId.set(params.idCargaDocente)),
+      ),
+    defaultValue: EMPTY_PROJECTS,
+  });
+
   readonly professorDisplayName = computed(() => {
     const professor = this.professor();
     return professor ? professorLoadDisplayName(professor) : 'NN';
@@ -127,7 +154,10 @@ export class ProfessorActivitiesModal {
   readonly coordinationText = computed(() => this.coordinationLabel().trim() || '-');
 
   readonly isLoadingActivities = computed(
-    () => this.activitiesResource.isLoading() || this.isLoadingInitialDetails(),
+    () =>
+      this.activitiesResource.isLoading() ||
+      this.isLoadingInitialDetails() ||
+      this.isLoadingInitialProjects(),
   );
 
   readonly activitiesError = computed(() => this.activitiesResource.error());
@@ -138,6 +168,8 @@ export class ProfessorActivitiesModal {
   });
 
   readonly savedDetails = computed(() => this.detailResource.value());
+
+  readonly professorProjects = computed(() => this.projectResource.value());
 
   readonly addedActivityIds = computed(() => this.visibleActivityIds());
 
@@ -227,6 +259,15 @@ export class ProfessorActivitiesModal {
     return this.resolvedDetailId() !== idCargaDocente && this.detailResource.isLoading();
   }
 
+  private isLoadingInitialProjects(): boolean {
+    const idCargaDocente = this.professor()?.idCargaDocente;
+    if (idCargaDocente == null) {
+      return false;
+    }
+
+    return this.resolvedProjectId() !== idCargaDocente && this.projectResource.isLoading();
+  }
+
   private visibleActivityIds(): number[] {
     const removed = new Set(this.removedActivityIds());
     const ids: number[] = [];
@@ -256,6 +297,12 @@ export class ProfessorActivitiesModal {
           ids.push(id);
         }
       });
+    });
+
+    forNext(projectActivityIds(this.projectResource.value()), (id) => {
+      if (!ids.includes(id)) {
+        ids.push(id);
+      }
     });
 
     return ids;

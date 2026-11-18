@@ -47,19 +47,62 @@
       />
     }
     @case ('DIRECCIONTDG') {
-      <app-degree-work [activity]="activity()" />
+      <app-degree-work
+        [activity]="activity()"
+        [projects]="projects()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('PROYECTOSINVESTIGACION') {
-      <app-research-project [activity]="activity()" />
+      <app-research-project
+        [activity]="activity()"
+        [projects]="projects()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('EXTENSION') {
-      <app-extension-activity [activity]="activity()" />
+      <app-extension-activity
+        [activity]="activity()"
+        [projects]="projects()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('ACTIVIDADESPREDETERMINADAS') {
       <app-preset-activity [activity]="activity()" />
     }
     @case ('PROYECTOSPLAN') {
-      <app-institutional-project [activity]="activity()" />
+      <app-institutional-project
+        [activity]="activity()"
+        [projects]="projects()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
+    }
+    @case ('GESTIONINSTITUCIONAL') {
+      <app-institutional-project
+        [activity]="activity()"
+        [projects]="projects()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('SITUACIONESADMINISTRATIVAS') {
       <app-administrative-situation [activity]="activity()" />

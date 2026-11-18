@@ -12,6 +12,7 @@ import {
   activityComponentKey,
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
+import { ProfessorProjectItem } from '../../../../model/professor-project.model';
 import { Subject } from '../direct/components/subject/subject';
 import { Support } from '../direct/components/support/support';
 import { ExtensionActivity } from '../extension-activity/extension-activity';
@@ -46,6 +47,7 @@ export class ActivityCard {
   readonly idConvocatoria = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly projects = input<ProfessorProjectItem[]>([]);
   readonly detailSaved = output<void>();
 
   readonly expanded = signal(false);
