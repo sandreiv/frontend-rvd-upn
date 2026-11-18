@@ -18,14 +18,19 @@ import { ProfessorLoadItem } from '../model/professor-load.model';
 import { ActivityRestrictionItem, ActivityTypeNode } from '../model/professor-activities.model';
 import {
   PensumItem,
+  ProfessorSubjectLoadItem,
   ProgramItem,
   SubjectComponentItem,
   SubjectGroupItem,
   SubjectItem,
   GroupScheduleItem,
 } from '../model/subject-catalog.model';
-import { SaveDetailProfessorPreloadRequest } from '../model/professor-activity-save.model';
+import {
+  DeleteBulkProfessorLoadDetailRequest,
+  SaveDetailProfessorPreloadRequest,
+} from '../model/professor-activity-save.model';
 import { ProfessorLoadDetailItem } from '../model/professor-load-detail.model';
+import { ProfessorProjectItem } from '../model/professor-project.model';
 import { LinkageTypeItem, LinkageTypeListResponse } from '../model/linkage-type.model';
 import { ContractHours, ContractValue, ContractValueQuery } from '../model/professor-form.config';
 
@@ -370,6 +375,63 @@ export class CoordinationService {
     return this.webRequestService.get<ProfessorLoadDetailItem[]>(
       `${this.endpoint}/list-detail-professor-load`,
       { idCargaDocente },
+    );
+  }
+
+  /**
+   * Lista las materias ya guardadas en la carga, con su programa y su grupo.
+   * Si la materia está en varios grupos, llega una fila por grupo.
+   * Si el detalle no tiene grupo, grupo viene nulo.
+   *
+   * @param idCargaDocente Identificador de la carga docente.
+   * @returns Observable con las materias. Vacío si no hay ninguna con programa.
+   */
+  listProfessorSubjects(idCargaDocente: number): Observable<ProfessorSubjectLoadItem[]> {
+    return this.webRequestService.get<ProfessorSubjectLoadItem[]>(
+      `${this.endpoint}/list-professor-subjects`,
+      { idCargaDocente },
+    );
+  }
+
+  /**
+   * Lista los proyectos de la persona de una carga docente.
+   * Si la persona no tiene proyectos, la lista llega vacía.
+   *
+   * @param idCargaDocente Identificador de la carga docente.
+   * @returns Observable con los proyectos de esa persona.
+   */
+  listProfessorProjects(idCargaDocente: number): Observable<ProfessorProjectItem[]> {
+    return this.webRequestService.get<ProfessorProjectItem[]>(
+      `${this.endpoint}/list-professor-projects`,
+      { idCargaDocente },
+    );
+  }
+
+  /**
+   * Elimina un detalle de carga docente.
+   * Los demás detalles de la carga permanecen.
+   *
+   * @param idDetalleCargaDocente Identificador del detalle.
+   * @returns Observable sin contenido cuando la eliminación finaliza.
+   */
+  deleteDetailProfessorLoad(idDetalleCargaDocente: number): Observable<void> {
+    return this.webRequestService.delete<void>(
+      `${this.endpoint}/delete-detail-professor-load`,
+      { idDetalleCargaDocente },
+    );
+  }
+
+  /**
+   * Elimina varios detalles de carga docente.
+   * Un identificador repetido se elimina una sola vez.
+   *
+   * @param request Identificadores de los detalles a eliminar.
+   * @returns Observable sin contenido cuando la eliminación finaliza.
+   */
+  deleteDetailProfessorLoadBulk(request: DeleteBulkProfessorLoadDetailRequest): Observable<void> {
+    return this.webRequestService.post<void>(
+      `${this.endpoint}/delete-detail-professor-load-bulk`,
+      request,
     );
   }
 

@@ -23,3 +23,8 @@ export interface SaveDetailProfessorPreloadRequest {
   idCargaDocente: number;
   detalles: DetalleCargaDocenteRequest[];
 }
+
+/** Cuerpo de POST /configuration/load/delete-detail-professor-load-bulk. */
+export interface DeleteBulkProfessorLoadDetailRequest {
+  ids: number[];
+}

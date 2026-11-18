@@ -1,1 +1,10 @@
-<ng-container />
+<app-project-table
+  [projects]="rows()"
+  extraField="nivel"
+  [activityId]="activity().id"
+  [idCoordinacion]="idCoordinacion()"
+  [idUnidadRegional]="idUnidadRegional()"
+  [idCargaDocente]="idCargaDocente()"
+  [savedDetails]="savedDetails()"
+  (detailSaved)="detailSaved.emit()"
+/>

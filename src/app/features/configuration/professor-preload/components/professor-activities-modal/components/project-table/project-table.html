@@ -1,0 +1,114 @@
+@if (projects().length) {
+  <div class="flex flex-col gap-3">
+    <div class="rounded-xl border border-gray-200 dark:border-white/10">
+      <table class="w-full table-fixed text-left text-[14px] leading-4">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th class="w-10 px-1.5 py-2"></th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Proyecto
+            </th>
+            <th
+              class="w-28 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Código
+            </th>
+            @switch (extraField()) {
+              @case ('funcion') {
+                <th
+                  class="w-40 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+                >
+                  Función
+                </th>
+              }
+              @case ('nivel') {
+                <th
+                  class="w-32 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+                >
+                  Nivel
+                </th>
+              }
+              @case ('horario') {
+                <th
+                  class="w-40 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+                >
+                  Horario
+                </th>
+              }
+            }
+            <th
+              class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Horas
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of projects(); track item.id) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="px-1.5 py-2">
+                <app-checkbox
+                  [checked]="isSelected(item.id)"
+                  (checkedChange)="toggleProject(item.id, $event)"
+                />
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-800 dark:text-white/90">
+                {{ sentence(item.proyecto?.nombre) }}
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ item.proyecto?.codigo?.trim() || '-' }}
+              </td>
+              @switch (extraField()) {
+                @case ('funcion') {
+                  <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                    {{ functionLabel(item.funcion) }}
+                  </td>
+                }
+                @case ('nivel') {
+                  <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                    {{ levelLabel(item.nivel) }}
+                  </td>
+                }
+                @case ('horario') {
+                  <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                    @if (scheduleLines(item.horario).length) {
+                      <div class="flex flex-col gap-1">
+                        @for (line of scheduleLines(item.horario); track $index) {
+                          <p class="break-words">{{ line }}</p>
+                        }
+                      </div>
+                    } @else {
+                      -
+                    }
+                  </td>
+                }
+              }
+              <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
+                {{ hoursLabel(item.horas) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="flex justify-end gap-3">
+      <app-button
+        type="button"
+        size="sm"
+        variant="error"
+        [disabled]="isDisassociateDisabled()"
+        (btnClick)="disassociate()"
+      >
+        Desasociar
+      </app-button>
+      <app-button
+        type="button"
+        size="sm"
+        [disabled]="isAssociateDisabled()"
+        (btnClick)="associate()"
+      >
+        Asociar
+      </app-button>
+    </div>
+  </div>
+}
