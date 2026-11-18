@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="students()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedStudentIds()"
+  emptyMessage="No hay estudiantes asociados a este proyecto."
+  searchPlaceholder="Buscar estudiante..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

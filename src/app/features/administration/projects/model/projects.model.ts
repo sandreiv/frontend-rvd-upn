@@ -68,6 +68,14 @@ export interface ProjectGroupOption {
   descripcion?: string | null;
 }
 
+export interface TipoActividadComponenteOption {
+  codigo: string;
+  descripcion: string;
+  requiereFuncion: boolean;
+  requiereNivel: boolean;
+  requiereHorario: boolean;
+}
+
 export interface TipoActividadProyectoItem {
   id: number;
   idPadre: number | null;
@@ -77,6 +85,9 @@ export interface TipoActividadProyectoItem {
   descripcion: string | null;
   componente: string | null;
   esSeleccionable: boolean;
+  requiereFuncion?: boolean;
+  requiereNivel?: boolean;
+  requiereHorario?: boolean;
 }
 
 export interface ProjectItem {
@@ -98,6 +109,7 @@ export interface ProjectItem {
   tipoActividad?: ProjectLookup | null;
   coordinacion?: ProjectLookup | null;
   totalDocentes?: number;
+  totalEstudiantes?: number;
   idConvocatoriaProyectos?: number | null;
   idTipoProyecto?: number | null;
   monto?: string | null;
@@ -169,6 +181,35 @@ export interface ProjectPersonFormData {
 
 export interface DeleteBulkProjectsRequest {
   ids: number[];
+}
+
+export interface ProjectStudentItem {
+  id: number;
+  idProyecto: number;
+  idPersonaGeneral: number;
+  idEstudiantePensum?: number | null;
+  documento?: string;
+  nombreCompleto: string;
+  idPrograma?: number | null;
+  nombrePrograma?: string | null;
+  idCentroCosto?: number | null;
+  nombreCentroCosto?: string | null;
+}
+
+export interface StudentSearchItem {
+  idPersonaGeneral: number;
+  documento?: string | null;
+  nombreCompleto: string;
+  idEstudiantePensum?: number | null;
+  idPrograma?: number | null;
+  nombrePrograma?: string | null;
+}
+
+export interface ProjectStudentFormData {
+  id?: number;
+  idProyecto: number;
+  idPersonaGeneral: number;
+  idEstudiantePensum?: number | null;
 }
 
 export function resolveProjectLookupName(

@@ -26,7 +26,7 @@
     </div>
 
     <div>
-      <app-label>Centro de costo</app-label>
+      <app-label>Departamento</app-label>
       <app-select
         formControlName="idCentroCosto"
         [options]="costCenterOptions()"
@@ -68,97 +68,113 @@
     </div>
   </div>
 
-  <div class="mt-4 rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div>
-        <app-label>Función en el proyecto</app-label>
-        <app-select
-          formControlName="funcion"
-          [options]="participantFunctionOptions()"
-          placeholder="Seleccione la función"
-        />
-      </div>
+  @if (showCustomDataCard()) {
+    <div class="mt-4 rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+      @if (showFuncion() || showNivel()) {
+        <div class="grid grid-cols-1 gap-4" [class.lg:grid-cols-2]="showFuncion() && showNivel()">
+          @if (showFuncion()) {
+            <div>
+              <app-label>Función en el proyecto</app-label>
+              <app-select
+                formControlName="funcion"
+                [options]="participantFunctionOptions()"
+                placeholder="Seleccione la función"
+              />
+            </div>
+          }
 
-      <div>
-        <app-label>Nivel académico</app-label>
-        <app-select
-          formControlName="nivel"
-          [options]="participantLevelOptions()"
-          placeholder="Seleccione el nivel académico"
-        />
-      </div>
-    </div>
-
-    <div class="mt-4 border-t border-gray-200/70 pt-3 dark:border-white/10">
-      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">
-            Horario semanal por día
-          </span>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400">
-            Activa los días de dedicación y define las horas de inicio y fin para cada uno.
-          </p>
+          @if (showNivel()) {
+            <div>
+              <app-label>Nivel académico</app-label>
+              <app-select
+                formControlName="nivel"
+                [options]="participantLevelOptions()"
+                placeholder="Seleccione el nivel académico"
+              />
+            </div>
+          }
         </div>
+      }
 
-        @if (totalHorasSemanales() > 0) {
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            {{ totalHorasSemanales() }} hrs / semana ({{ activeDaysCount() }} {{ activeDaysCount() === 1 ? 'día' : 'días' }})
-          </span>
-        }
-      </div>
+      @if (showHorario()) {
+        <div
+          [class.mt-4]="showFuncion() || showNivel()"
+          [class.border-t]="showFuncion() || showNivel()"
+          [class.border-gray-200/70]="showFuncion() || showNivel()"
+          [class.pt-3]="showFuncion() || showNivel()"
+          [class.dark:border-white/10]="showFuncion() || showNivel()"
+        >
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                Horario semanal por día
+              </span>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                Activa los días de dedicación y define las horas de inicio y fin para cada uno.
+              </p>
+            </div>
 
-      <div class="divide-y divide-gray-200/70 rounded-xl border border-gray-200/80 bg-white shadow-xs dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
-        @for (day of weeklySchedule(); track day.dia) {
-          <div
-            class="flex items-center justify-between gap-3 px-3.5 py-1.5 min-h-[50px] transition-colors"
-            [class.bg-brand-50/20]="day.activo"
-            [class.dark:bg-brand-500/5]="day.activo"
-          >
-            <app-checkbox
-              [label]="day.nombre"
-              [checked]="day.activo"
-              (checkedChange)="toggleDayActive(day.dia)"
-            />
-
-            @if (day.activo) {
-              <div class="flex items-center gap-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs text-gray-500 dark:text-gray-400">De:</span>
-                  <app-input-field
-                    type="time"
-                    [value]="day.horaInicio"
-                    className="!h-9 !py-1 text-xs w-28 bg-white dark:bg-gray-900"
-                    (valueChange)="updateDayHoraInicio(day.dia, $event)"
-                  />
-                </div>
-
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs text-gray-500 dark:text-gray-400">A:</span>
-                  <app-input-field
-                    type="time"
-                    [value]="day.horaFin"
-                    className="!h-9 !py-1 text-xs w-28 bg-white dark:bg-gray-900"
-                    (valueChange)="updateDayHoraFin(day.dia, $event)"
-                  />
-                </div>
-
-                @if (calculateSlotHours(day) > 0) {
-                  <span class="ml-1 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    ({{ calculateSlotHours(day) }} hrs)
-                  </span>
-                }
-              </div>
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 italic">
-                Sin dedicación
+            @if (totalHorasSemanales() > 0) {
+              <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                {{ totalHorasSemanales() }} hrs / semana ({{ activeDaysCount() }} {{ activeDaysCount() === 1 ? 'día' : 'días' }})
               </span>
             }
           </div>
-        }
-      </div>
+
+          <div class="divide-y divide-gray-200/70 rounded-xl border border-gray-200/80 bg-white shadow-xs dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
+            @for (day of weeklySchedule(); track day.dia) {
+              <div
+                class="flex items-center justify-between gap-3 px-3.5 py-1.5 min-h-[50px] transition-colors"
+                [class.bg-brand-50/20]="day.activo"
+                [class.dark:bg-brand-500/5]="day.activo"
+              >
+                <app-checkbox
+                  [label]="day.nombre"
+                  [checked]="day.activo"
+                  (checkedChange)="toggleDayActive(day.dia)"
+                />
+
+                @if (day.activo) {
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs text-gray-500 dark:text-gray-400">De:</span>
+                      <app-input-field
+                        type="time"
+                        [value]="day.horaInicio"
+                        className="!h-9 !py-1 text-xs w-28 bg-white dark:bg-gray-900"
+                        (valueChange)="updateDayHoraInicio(day.dia, $event)"
+                      />
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs text-gray-500 dark:text-gray-400">A:</span>
+                      <app-input-field
+                        type="time"
+                        [value]="day.horaFin"
+                        className="!h-9 !py-1 text-xs w-28 bg-white dark:bg-gray-900"
+                        (valueChange)="updateDayHoraFin(day.dia, $event)"
+                      />
+                    </div>
+
+                    @if (calculateSlotHours(day) > 0) {
+                      <span class="ml-1 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        ({{ calculateSlotHours(day) }} hrs)
+                      </span>
+                    }
+                  </div>
+                } @else {
+                  <span class="text-xs text-gray-400 dark:text-gray-500 italic">
+                    Sin dedicación
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
-  </div>
+  }
 
   <div class="mt-4 rounded-lg border border-gray-100 p-3 dark:border-white/10">
     <div class="mb-2">

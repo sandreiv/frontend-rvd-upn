@@ -117,7 +117,7 @@ export class ProjectPersonTable {
     },
     {
       id: 'centroCosto',
-      header: 'Centro de costo',
+      header: 'Departamento',
       cell: (row) => this.formatCentroCosto(row),
     },
     {

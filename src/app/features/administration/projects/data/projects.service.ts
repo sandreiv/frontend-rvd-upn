@@ -22,6 +22,10 @@ import {
   ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
+  ProjectStudentFormData,
+  ProjectStudentItem,
+  StudentSearchItem,
+  TipoActividadComponenteOption,
   TipoActividadProyectoItem,
 } from '../model/projects.model';
 
@@ -34,6 +38,8 @@ export class ProjectsService {
   private participantFunctions$: Observable<ParticipantFunctionOption[]> | null = null;
   private participantLevels$: Observable<ParticipantLevelOption[]> | null = null;
   private daysOfWeek$: Observable<DayOfWeekOption[]> | null = null;
+  private projectActivityTypes$: Observable<TipoActividadProyectoItem[]> | null = null;
+  private activityComponents$: Observable<TipoActividadComponenteOption[]> | null = null;
 
   /**
    * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
@@ -61,6 +67,17 @@ export class ProjectsService {
   listProjectActivityTypes(): Observable<TipoActividadProyectoItem[]> {
     return this.webRequestService.get<TipoActividadProyectoItem[]>(
       `${this.endpoint}/activity-types`,
+    );
+  }
+
+  /**
+   * Lista los componentes de tipos de actividad y sus reglas dinámicas desde el backend.
+   *
+   * @returns Observable con las configuraciones por componente de actividad.
+   */
+  listActivityComponents(): Observable<TipoActividadComponenteOption[]> {
+    return this.webRequestService.get<TipoActividadComponenteOption[]>(
+      `${this.endpoint}/activity-components`,
     );
   }
 
@@ -171,6 +188,48 @@ export class ProjectsService {
   }
 
   /**
+   * Lista los estudiantes asociados a un proyecto.
+   *
+   * @param idProyecto Identificador del proyecto.
+   * @returns Observable con los estudiantes del proyecto.
+   */
+  listProjectStudents(idProyecto: number): Observable<ProjectStudentItem[]> {
+    return this.webRequestService.get<ProjectStudentItem[]>(`${this.endpoint}/students/list`, {
+      idProyecto,
+    });
+  }
+
+  /**
+   * Asocia un estudiante a un proyecto.
+   *
+   * @param payload Datos del estudiante a vincular.
+   * @returns Observable sin contenido al finalizar.
+   */
+  saveProjectStudent(payload: ProjectStudentFormData): Observable<void> {
+    return this.webRequestService.post<void>(`${this.endpoint}/students/save`, payload);
+  }
+
+  /**
+   * Elimina la asociación de un estudiante a un proyecto.
+   *
+   * @param id Identificador del registro estudiante-proyecto.
+   * @returns Observable sin contenido al finalizar.
+   */
+  deleteProjectStudent(id: number): Observable<void> {
+    return this.webRequestService.delete<void>(`${this.endpoint}/students/delete/${id}`);
+  }
+
+  /**
+   * Elimina varias asociaciones de estudiantes de un proyecto en una sola operación.
+   *
+   * @param payload Identificadores de los registros estudiante-proyecto a eliminar.
+   * @returns Observable sin contenido al finalizar.
+   */
+  deleteBulkProjectStudents(payload: DeleteBulkProjectsRequest): Observable<void> {
+    return this.webRequestService.post<void>(`${this.endpoint}/students/delete-bulk`, payload);
+  }
+
+  /**
    * Lista los centros de costo para participantes de proyectos, filtrando por proyecto o coordinación.
    *
    * @param idProyecto Identificador opcional del proyecto.
@@ -274,6 +333,23 @@ export class ProjectsService {
     }
     return this.webRequestService.get<PersonaAutorizaConvocatoriaItem[]>(
       `${this.endpoint}/persons/search`,
+      params,
+    );
+  }
+
+  /**
+   * Busca estudiantes por documento, código o nombre para asociar al proyecto.
+   *
+   * @param term Término de búsqueda.
+   * @returns Observable con la lista de estudiantes coincidentes.
+   */
+  searchStudents(term?: string): Observable<StudentSearchItem[]> {
+    const params: Record<string, string> = {};
+    if (term?.trim()) {
+      params['term'] = term.trim();
+    }
+    return this.webRequestService.get<StudentSearchItem[]>(
+      `${this.endpoint}/students/search`,
       params,
     );
   }

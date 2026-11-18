@@ -94,6 +94,11 @@ export class ProjectTable {
       cell: (row) => String(row.totalDocentes ?? 0),
     },
     {
+      id: 'totalEstudiantes',
+      header: 'Estudiantes',
+      cell: (row) => String(row.totalEstudiantes ?? 0),
+    },
+    {
       id: 'activo',
       header: 'Activo',
       cell: (row) => (row.activo === '0' ? 'Inactivo' : 'Activo'),

@@ -16,6 +16,7 @@ import {
   Output,
   SimpleChanges,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -57,8 +58,10 @@ import {
   ParticipantFunctionOption,
   ParticipantLevelOption,
   ParticipantScheduleSlot,
+  ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
+  TipoActividadProyectoItem,
 } from '../../model/projects.model';
 
 const OBSERVACION_MAX_LENGTH = 255;
@@ -106,6 +109,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
   person = input<ProjectPersonItem | null>(null);
   projectId = input<number>(0);
+  project = input<ProjectItem | null>(null);
   isSaving = input(false);
 
   @Output() cancel = new EventEmitter<void>();
@@ -119,6 +123,39 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   readonly participantLevelOptions = signal<Option[]>([]);
   readonly availableDays = signal<DayOfWeekOption[]>([]);
   readonly weeklySchedule = signal<DayScheduleState[]>([]);
+  readonly activityTypes = signal<TipoActividadProyectoItem[]>([]);
+
+  readonly targetTipoActividadId = computed<number | null>(() => {
+    return this.project()?.idTipoActividad ?? this.person()?.idTipoActividad ?? null;
+  });
+
+  readonly activeActivityType = computed<TipoActividadProyectoItem | null>(() => {
+    const targetId = this.targetTipoActividadId();
+    if (targetId == null) {
+      return null;
+    }
+    return (
+      this.activityTypes().find(
+        (item: TipoActividadProyectoItem) => Number(item.id) === Number(targetId),
+      ) ?? null
+    );
+  });
+
+  readonly showFuncion = computed<boolean>(() => {
+    return this.activeActivityType()?.requiereFuncion ?? false;
+  });
+
+  readonly showNivel = computed<boolean>(() => {
+    return this.activeActivityType()?.requiereNivel ?? false;
+  });
+
+  readonly showHorario = computed<boolean>(() => {
+    return this.activeActivityType()?.requiereHorario ?? false;
+  });
+
+  readonly showCustomDataCard = computed<boolean>(() => {
+    return this.showFuncion() || this.showNivel() || this.showHorario();
+  });
 
   readonly totalHorasSemanales = computed<number>(() => {
     let total = 0;
@@ -139,7 +176,6 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     }),
     funcion: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
     }),
     nivel: new FormControl('', {
       nonNullable: true,
@@ -204,9 +240,16 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       .subscribe((rows: PersonaAutorizaConvocatoriaItem[]) =>
         this.filteredPeople.set(rows.slice(0, MAX_SEARCH_RESULTS)),
       );
+
+    effect(() => {
+      const reqFuncion = this.showFuncion();
+      const reqNivel = this.showNivel();
+      this.updateDynamicValidators(reqFuncion, reqNivel);
+    });
   }
 
   ngOnInit(): void {
+    this.loadActivityTypes();
     this.loadParticipantFunctions();
     this.loadParticipantLevels();
     this.loadDaysOfWeek();
@@ -217,6 +260,9 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['projectId'] && !changes['projectId'].firstChange) {
+      this.loadCostCenters();
+    }
+    if (changes['project'] && !changes['project'].firstChange) {
       this.loadCostCenters();
     }
     if (changes['person']) {
@@ -310,27 +356,29 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       }
     }
 
-    if (raw.funcion) {
+    if (this.showFuncion() && raw.funcion) {
       dataObj.funcion = raw.funcion;
     } else {
       delete dataObj.funcion;
     }
 
-    if (raw.nivel) {
+    if (this.showNivel() && raw.nivel) {
       dataObj.nivel = raw.nivel;
     } else {
       delete dataObj.nivel;
     }
 
-    const activeSlots: ParticipantScheduleSlot[] = this.weeklySchedule()
-      .filter((d: DayScheduleState) => d.activo && d.horaInicio && d.horaFin)
-      .map((d: DayScheduleState) => ({
-        dia: d.dia,
-        horaInicio: d.horaInicio,
-        horaFin: d.horaFin,
-      }));
+    const activeSlots: ParticipantScheduleSlot[] = this.showHorario()
+      ? this.weeklySchedule()
+          .filter((d: DayScheduleState) => d.activo && d.horaInicio && d.horaFin)
+          .map((d: DayScheduleState) => ({
+            dia: d.dia,
+            horaInicio: d.horaInicio,
+            horaFin: d.horaFin,
+          }))
+      : [];
 
-    if (activeSlots.length > 0) {
+    if (this.showHorario() && activeSlots.length > 0) {
       dataObj.horario = activeSlots;
     } else {
       delete dataObj.horario;
@@ -342,15 +390,43 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       idProyecto: this.projectId(),
       idPersonaGeneral: Number(raw.idPersonaGeneral),
       idCentroCosto: raw.idCentroCosto ? Number(raw.idCentroCosto) : null,
-      funcion: raw.funcion || null,
-      nivel: raw.nivel || null,
-      horario: activeSlots.length > 0 ? activeSlots : null,
+      funcion: this.showFuncion() && raw.funcion ? raw.funcion : null,
+      nivel: this.showNivel() && raw.nivel ? raw.nivel : null,
+      horario: this.showHorario() && activeSlots.length > 0 ? activeSlots : null,
       data: jsonString,
       horas: String(raw.horas ?? 0),
       observacion: raw.observacion.trim() || null,
       estado: raw.esActivo ? '1' : '0',
       esActivo: raw.esActivo ? '1' : '0',
     });
+  }
+
+  private loadActivityTypes(): void {
+    this.projectsService.listProjectActivityTypes().subscribe({
+      next: (list: TipoActividadProyectoItem[]) => {
+        this.activityTypes.set(list ?? []);
+      },
+      error: (e: unknown) => console.error(e),
+    });
+  }
+
+  private updateDynamicValidators(reqFuncion: boolean, reqNivel: boolean): void {
+    const funcionControl = this.form.controls.funcion;
+    const nivelControl = this.form.controls.nivel;
+
+    if (reqFuncion) {
+      funcionControl.setValidators([Validators.required]);
+    } else {
+      funcionControl.clearValidators();
+    }
+    funcionControl.updateValueAndValidity();
+
+    if (reqNivel) {
+      nivelControl.setValidators([Validators.required]);
+    } else {
+      nivelControl.clearValidators();
+    }
+    nivelControl.updateValueAndValidity();
   }
 
   private loadParticipantFunctions(): void {
@@ -463,17 +539,20 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
   private loadCostCenters(): void {
     const projId = this.projectId();
-    this.projectsService.listCostCenters(projId > 0 ? projId : undefined).subscribe({
-      next: (list: CostCenterOption[]) => {
-        const options: Option[] = (list ?? []).map((item: CostCenterOption) => ({
-          value: String(item.id),
-          label: `${item.codigo} - ${item.nombre}`,
-        }));
-        this.costCenterOptions.set(options);
-        this.ensureSelectedCostCenter();
-      },
-      error: (e: unknown) => console.error(e),
-    });
+    const coordId = this.project()?.idCoordinacion;
+    this.projectsService
+      .listCostCenters(projId > 0 ? projId : undefined, coordId && coordId > 0 ? coordId : undefined)
+      .subscribe({
+        next: (list: CostCenterOption[]) => {
+          const options: Option[] = (list ?? []).map((item: CostCenterOption) => ({
+            value: String(item.id),
+            label: `${item.codigo} - ${item.nombre}`,
+          }));
+          this.costCenterOptions.set(options);
+          this.ensureSelectedCostCenter();
+        },
+        error: (e: unknown) => console.error(e),
+      });
   }
 
   private ensureSelectedPerson(): void {

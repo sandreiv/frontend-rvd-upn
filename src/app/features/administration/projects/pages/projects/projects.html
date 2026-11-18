@@ -11,10 +11,10 @@
       >
         <div>
           <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-            Participantes de: {{ parentProject()?.nombre ?? '' }}
+            Gestión de: {{ parentProject()?.nombre ?? '' }}
           </h4>
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Administra los docentes participantes del proyecto seleccionado.
+            Administra los docentes participantes y los estudiantes vinculados al proyecto.
           </p>
         </div>
 
@@ -28,25 +28,105 @@
         </app-button>
       </div>
 
-      @if (showForm()) {
-        <app-project-person-form
-          [person]="selectedPerson()"
-          [projectId]="parentProject()?.id ?? 0"
-          [isSaving]="isSaving()"
-          (cancel)="closeForm()"
-          (savePerson)="onSavePerson($event)"
-        />
+      <div class="flex items-center gap-2 border-b border-gray-200 dark:border-white/10">
+        <button
+          type="button"
+          (click)="setActiveTab('teachers')"
+          class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors"
+          [class.border-brand-500]="activeTab() === 'teachers'"
+          [class.text-brand-600]="activeTab() === 'teachers'"
+          [class.dark:text-brand-400]="activeTab() === 'teachers'"
+          [class.border-transparent]="activeTab() !== 'teachers'"
+          [class.text-gray-500]="activeTab() !== 'teachers'"
+          [class.hover:text-gray-700]="activeTab() !== 'teachers'"
+          [class.dark:text-gray-400]="activeTab() !== 'teachers'"
+        >
+          <span>Docentes participantes</span>
+          <span
+            class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+            [class.bg-brand-50]="activeTab() === 'teachers'"
+            [class.text-brand-700]="activeTab() === 'teachers'"
+            [class.dark:bg-brand-500/10]="activeTab() === 'teachers'"
+            [class.dark:text-brand-400]="activeTab() === 'teachers'"
+            [class.bg-gray-100]="activeTab() !== 'teachers'"
+            [class.text-gray-600]="activeTab() !== 'teachers'"
+            [class.dark:bg-white/10]="activeTab() !== 'teachers'"
+            [class.dark:text-gray-300]="activeTab() !== 'teachers'"
+          >
+            {{ persons().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="setActiveTab('students')"
+          class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors"
+          [class.border-brand-500]="activeTab() === 'students'"
+          [class.text-brand-600]="activeTab() === 'students'"
+          [class.dark:text-brand-400]="activeTab() === 'students'"
+          [class.border-transparent]="activeTab() !== 'students'"
+          [class.text-gray-500]="activeTab() !== 'students'"
+          [class.hover:text-gray-700]="activeTab() !== 'students'"
+          [class.dark:text-gray-400]="activeTab() !== 'students'"
+        >
+          <span>Estudiantes</span>
+          <span
+            class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+            [class.bg-brand-50]="activeTab() === 'students'"
+            [class.text-brand-700]="activeTab() === 'students'"
+            [class.dark:bg-brand-500/10]="activeTab() === 'students'"
+            [class.dark:text-brand-400]="activeTab() === 'students'"
+            [class.bg-gray-100]="activeTab() !== 'students'"
+            [class.text-gray-600]="activeTab() !== 'students'"
+            [class.dark:bg-white/10]="activeTab() !== 'students'"
+            [class.dark:text-gray-300]="activeTab() !== 'students'"
+          >
+            {{ students().length }}
+          </span>
+        </button>
+      </div>
+
+      @if (activeTab() === 'teachers') {
+        @if (showForm()) {
+          <app-project-person-form
+            [person]="selectedPerson()"
+            [projectId]="parentProject()?.id ?? 0"
+            [project]="parentProject()"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (savePerson)="onSavePerson($event)"
+          />
+        } @else {
+          <app-project-person-table
+            [persons]="persons()"
+            [selectedPersonIds]="selectedPersonIds()"
+            (selectedPersonIdsChange)="onSelectedPersonIdsChange($event)"
+            (refreshPersons)="refreshPersons()"
+            (addPerson)="openCreatePerson()"
+            (editPerson)="openEditPerson($event)"
+            (deletePerson)="requestDeletePerson($event)"
+            (deleteAll)="requestBulkDeletePersons($event)"
+          />
+        }
       } @else {
-        <app-project-person-table
-          [persons]="persons()"
-          [selectedPersonIds]="selectedPersonIds()"
-          (selectedPersonIdsChange)="onSelectedPersonIdsChange($event)"
-          (refreshPersons)="refreshPersons()"
-          (addPerson)="openCreatePerson()"
-          (editPerson)="openEditPerson($event)"
-          (deletePerson)="requestDeletePerson($event)"
-          (deleteAll)="requestBulkDeletePersons($event)"
-        />
+        @if (showForm()) {
+          <app-project-student-form
+            [projectId]="parentProject()?.id ?? 0"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (saveStudent)="onSaveStudent($event)"
+          />
+        } @else {
+          <app-project-student-table
+            [students]="students()"
+            [selectedStudentIds]="selectedStudentIds()"
+            (selectedStudentIdsChange)="onSelectedStudentIdsChange($event)"
+            (refreshStudents)="refreshStudents()"
+            (addStudent)="openCreateStudent()"
+            (deleteStudent)="requestDeleteStudent($event)"
+            (deleteAll)="requestBulkDeleteStudents($event)"
+          />
+        }
       }
     } @else {
       @if (showForm()) {

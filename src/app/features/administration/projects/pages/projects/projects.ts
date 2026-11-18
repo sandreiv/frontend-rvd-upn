@@ -23,6 +23,8 @@ import { ProjectForm } from '../../components/project-form/project-form';
 import { ProjectTable } from '../../components/project-table/project-table';
 import { ProjectPersonForm } from '../../components/project-person-form/project-person-form';
 import { ProjectPersonTable } from '../../components/project-person-table/project-person-table';
+import { ProjectStudentForm } from '../../components/project-student-form/project-student-form';
+import { ProjectStudentTable } from '../../components/project-student-table/project-student-table';
 import { ProjectsService } from '../../data/projects.service';
 import { ActivityTypesService } from '../../../activity-types/data/activity-types.service';
 import {
@@ -31,10 +33,13 @@ import {
   ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
+  ProjectStudentFormData,
+  ProjectStudentItem,
 } from '../../model/projects.model';
 
 type ProjectsView = 'projects' | 'persons';
-type DeleteTarget = 'project' | 'person';
+type ProjectDetailTab = 'teachers' | 'students';
+type DeleteTarget = 'project' | 'person' | 'student';
 
 @Component({
   selector: 'app-projects',
@@ -45,6 +50,8 @@ type DeleteTarget = 'project' | 'person';
     ProjectForm,
     ProjectPersonTable,
     ProjectPersonForm,
+    ProjectStudentTable,
+    ProjectStudentForm,
     NewModal,
   ],
   templateUrl: './projects.html',
@@ -56,16 +63,20 @@ export class Projects implements OnInit, OnDestroy {
   private readonly breadcrumbTitle = inject(BreadcrumbTitle);
 
   readonly activeView = signal<ProjectsView>('projects');
+  readonly activeTab = signal<ProjectDetailTab>('teachers');
   readonly parentProject = signal<ProjectItem | null>(null);
 
   readonly projects = signal<ProjectItem[]>([]);
   readonly persons = signal<ProjectPersonItem[]>([]);
+  readonly students = signal<ProjectStudentItem[]>([]);
 
   readonly selectedProjectIds = signal<string[]>([]);
   readonly selectedPersonIds = signal<string[]>([]);
+  readonly selectedStudentIds = signal<string[]>([]);
 
   readonly selectedProject = signal<ProjectItem | null>(null);
   readonly selectedPerson = signal<ProjectPersonItem | null>(null);
+  readonly selectedStudent = signal<ProjectStudentItem | null>(null);
 
   readonly showForm = signal(false);
   readonly showDeleteModal = signal(false);
@@ -99,6 +110,11 @@ export class Projects implements OnInit, OnDestroy {
         ? 'Eliminar participantes'
         : 'Eliminar participante';
     }
+    if (this.deleteTarget() === 'student') {
+      return this.idsToDelete().length > 1
+        ? 'Eliminar estudiantes'
+        : 'Eliminar estudiante';
+    }
     const isSubproject = this.selectedProject()?.idProyectoPadre != null;
     const label = isSubproject ? 'subproyecto' : 'proyecto';
     return this.idsToDelete().length > 1
@@ -113,6 +129,12 @@ export class Projects implements OnInit, OnDestroy {
         return `¿Seguro que deseas eliminar los ${count} participantes seleccionados?`;
       }
       return `¿Seguro que deseas eliminar a "${this.selectedPerson()?.nombreCompleto ?? ''}"?`;
+    }
+    if (this.deleteTarget() === 'student') {
+      if (count > 1) {
+        return `¿Seguro que deseas eliminar los ${count} estudiantes seleccionados?`;
+      }
+      return `¿Seguro que deseas eliminar a "${this.selectedStudent()?.nombreCompleto ?? ''}"?`;
     }
 
     const isSubproject = this.selectedProject()?.idProyectoPadre != null;
@@ -141,16 +163,29 @@ export class Projects implements OnInit, OnDestroy {
     this.activeView.set('projects');
     this.parentProject.set(null);
     this.persons.set([]);
+    this.students.set([]);
     this.selectedPersonIds.set([]);
+    this.selectedStudentIds.set([]);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
     this.showForm.set(false);
+  }
+
+  setActiveTab(tab: ProjectDetailTab): void {
+    if (this.activeTab() !== tab) {
+      this.activeTab.set(tab);
+      this.showForm.set(false);
+      this.selectedPerson.set(null);
+      this.selectedStudent.set(null);
+    }
   }
 
   openCreateProject(): void {
     this.parentProject.set(null);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
     this.showForm.set(true);
   }
 
@@ -158,11 +193,17 @@ export class Projects implements OnInit, OnDestroy {
     this.parentProject.set(parent);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
     this.showForm.set(true);
   }
 
   openCreatePerson(): void {
     this.selectedPerson.set(null);
+    this.showForm.set(true);
+  }
+
+  openCreateStudent(): void {
+    this.selectedStudent.set(null);
     this.showForm.set(true);
   }
 
@@ -185,6 +226,7 @@ export class Projects implements OnInit, OnDestroy {
   closeForm(): void {
     this.showForm.set(false);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
     if (!this.isPersonsView()) {
       this.selectedProject.set(null);
       this.parentProject.set(null);
@@ -194,10 +236,13 @@ export class Projects implements OnInit, OnDestroy {
   async openPersonsView(project: ProjectItem): Promise<void> {
     this.parentProject.set(project);
     this.activeView.set('persons');
+    this.activeTab.set('teachers');
     this.showForm.set(false);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
     this.selectedPersonIds.set([]);
-    await this.refreshPersons();
+    this.selectedStudentIds.set([]);
+    await Promise.all([this.refreshPersons(), this.refreshStudents()]);
   }
 
   async onSaveProject(payload: ProjectFormData): Promise<void> {
@@ -237,6 +282,22 @@ export class Projects implements OnInit, OnDestroy {
 
       this.closeForm();
       await this.refreshPersons();
+      await this.refreshProjects();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  async onSaveStudent(payload: ProjectStudentFormData): Promise<void> {
+    this.isSaving.set(true);
+
+    try {
+      await firstValueFrom(this.projectsService.saveProjectStudent(payload));
+      this.closeForm();
+      await this.refreshStudents();
+      await this.refreshProjects();
     } catch (error) {
       console.error(error);
     } finally {
@@ -278,6 +339,23 @@ export class Projects implements OnInit, OnDestroy {
     this.showDeleteModal.set(true);
   }
 
+  requestDeleteStudent(student: ProjectStudentItem): void {
+    this.deleteTarget.set('student');
+    this.selectedStudent.set(student);
+    this.idsToDelete.set([student.id]);
+    this.showDeleteModal.set(true);
+  }
+
+  requestBulkDeleteStudents(ids: number[]): void {
+    if (!ids.length) {
+      return;
+    }
+    this.deleteTarget.set('student');
+    this.selectedStudent.set(null);
+    this.idsToDelete.set(ids);
+    this.showDeleteModal.set(true);
+  }
+
   closeDeleteModal(): void {
     if (this.isDeleting()) {
       return;
@@ -296,12 +374,16 @@ export class Projects implements OnInit, OnDestroy {
     try {
       if (this.deleteTarget() === 'person') {
         await this.deletePersons(ids);
+        await this.refreshPersons();
+      } else if (this.deleteTarget() === 'student') {
+        await this.deleteStudents(ids);
+        await this.refreshStudents();
       } else {
         await this.deleteProjects(ids);
       }
 
       this.resetDeleteModalState();
-      await this.refreshCurrentList();
+      await this.refreshProjects();
     } catch (error) {
       console.error(error);
     } finally {
@@ -317,9 +399,13 @@ export class Projects implements OnInit, OnDestroy {
     this.selectedPersonIds.set(ids);
   }
 
+  onSelectedStudentIdsChange(ids: string[]): void {
+    this.selectedStudentIds.set(ids);
+  }
+
   async refreshCurrentList(): Promise<void> {
     if (this.isPersonsView()) {
-      await this.refreshPersons();
+      await Promise.all([this.refreshPersons(), this.refreshStudents()]);
       return;
     }
     await this.refreshProjects();
@@ -350,6 +436,22 @@ export class Projects implements OnInit, OnDestroy {
     }
   }
 
+  async refreshStudents(): Promise<void> {
+    const parent = this.parentProject();
+    if (!parent?.id) {
+      return;
+    }
+
+    try {
+      const rows = await firstValueFrom(
+        this.projectsService.listProjectStudents(parent.id),
+      );
+      this.students.set(rows ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   private async deleteProjects(ids: number[]): Promise<void> {
     if (ids.length === 1) {
       await firstValueFrom(this.projectsService.deleteProject(ids[0]));
@@ -370,6 +472,17 @@ export class Projects implements OnInit, OnDestroy {
       );
     }
     this.selectedPersonIds.set([]);
+  }
+
+  private async deleteStudents(ids: number[]): Promise<void> {
+    if (ids.length === 1) {
+      await firstValueFrom(this.projectsService.deleteProjectStudent(ids[0]));
+    } else {
+      await firstValueFrom(
+        this.projectsService.deleteBulkProjectStudents({ ids }),
+      );
+    }
+    this.selectedStudentIds.set([]);
   }
 
   private async loadCatalogMaps(): Promise<void> {
@@ -413,5 +526,6 @@ export class Projects implements OnInit, OnDestroy {
     this.idsToDelete.set([]);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
+    this.selectedStudent.set(null);
   }
 }
