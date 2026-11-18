@@ -68,6 +68,12 @@ export interface ProjectGroupOption {
   descripcion?: string | null;
 }
 
+export interface CoordinationOption {
+  id: number;
+  nombre: string;
+  descripcion?: string | null;
+}
+
 export interface TipoActividadComponenteOption {
   codigo: string;
   descripcion: string;

@@ -95,29 +95,14 @@ export class ProjectPersonTable {
 
   readonly columns: DataTableColumn<ProjectPersonItem>[] = [
     {
-      id: 'nombreCompleto',
-      header: 'Nombre completo',
-      cell: (row) => row.nombreCompleto || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'documento',
-      header: 'Documento',
-      cell: (row) => row.documento || '-',
-    },
-    {
-      id: 'funcion',
-      header: 'Función',
-      cell: (row) => this.formatFuncion(row.funcion || row.data),
-    },
-    {
-      id: 'nivel',
-      header: 'Nivel',
-      cell: (row) => this.formatNivel(row.nivel || row.data),
+      id: 'docente',
+      header: 'Docente',
+      allowHtml: true,
+      cell: (row) => this.formatDocente(row),
     },
     {
       id: 'centroCosto',
-      header: 'Departamento',
+      header: 'Centro de costo',
       cell: (row) => this.formatCentroCosto(row),
     },
     {
@@ -184,42 +169,76 @@ export class ProjectPersonTable {
     this.selectedPersonIds.set(keys.map((key) => String(key)));
   }
 
-  private formatFuncion(funcion?: string | null): string {
-    if (!funcion) {
-      return '-';
+  private formatDocente(row: ProjectPersonItem): string {
+    const nombre = row.nombreCompleto || '-';
+    const doc = row.documento ? `Doc: ${row.documento}` : '';
+
+    const funcionNombre = this.resolveFuncionLabel(row.funcion ?? row.data);
+    const nivelNombre = this.resolveNivelLabel(row.nivel ?? row.data);
+
+    const tags: string[] = [];
+    if (doc) {
+      tags.push(`<span>${doc}</span>`);
     }
-    let val = funcion.trim();
-    if (val.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(val) as ParticipantDataPayload;
-        if (parsed?.funcion) {
-          val = String(parsed.funcion);
-        }
-      } catch {
-        // Ignora si no es JSON válido
-      }
+    if (funcionNombre) {
+      tags.push(
+        `<span class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30"><strong class="font-semibold text-blue-800 dark:text-blue-300">Función:</strong> ${funcionNombre}</span>`,
+      );
     }
-    return this.functionLabels()[val] || val;
+    if (nivelNombre) {
+      tags.push(
+        `<span class="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10 dark:bg-purple-400/10 dark:text-purple-400 dark:ring-purple-400/30"><strong class="font-semibold text-purple-800 dark:text-purple-300">Nivel:</strong> ${nivelNombre}</span>`,
+      );
+    }
+
+    const subline = tags.length > 0
+      ? `<div class="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-normal">${tags.join(' • ')}</div>`
+      : '';
+
+    return `
+      <div>
+        <span class="font-medium text-gray-900 dark:text-white capitalize">${nombre}</span>
+        ${subline}
+      </div>
+    `;
   }
 
-  private formatNivel(nivel?: string | null): string {
+  private parseDataPayload(data?: string | null): ParticipantDataPayload | null {
+    if (!data || !data.trim().startsWith('{')) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(data.trim());
+      return parsed && typeof parsed === 'object' ? (parsed as ParticipantDataPayload) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private resolveFuncionLabel(funcion?: string | null): string | null {
+    if (!funcion) {
+      return null;
+    }
+    const trimmed = funcion.trim();
+    const parsed = this.parseDataPayload(trimmed);
+    const code = parsed?.funcion ? String(parsed.funcion) : (!trimmed.startsWith('{') ? trimmed : null);
+    if (!code) {
+      return null;
+    }
+    return this.functionLabels()[code] || code;
+  }
+
+  private resolveNivelLabel(nivel?: string | null): string | null {
     if (!nivel) {
-      return '-';
+      return null;
     }
-    let val = nivel.trim();
-    if (val.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(val) as ParticipantDataPayload;
-        if (parsed?.nivel) {
-          val = String(parsed.nivel);
-        } else {
-          return '-';
-        }
-      } catch {
-        return '-';
-      }
+    const trimmed = nivel.trim();
+    const parsed = this.parseDataPayload(trimmed);
+    const code = parsed?.nivel ? String(parsed.nivel) : (!trimmed.startsWith('{') ? trimmed : null);
+    if (!code) {
+      return null;
     }
-    return this.levelLabels()[val] || val;
+    return this.levelLabels()[code] || code;
   }
 
   private formatCentroCosto(row: ProjectPersonItem): string {
@@ -244,58 +263,52 @@ export class ProjectPersonTable {
   }
 
   private extractHorarioSummary(data?: string | null): string | null {
-    if (!data || !data.trim().startsWith('{')) {
+    const parsed = this.parseDataPayload(data);
+    if (!parsed?.horario) {
       return null;
     }
-    try {
-      const parsed = JSON.parse(data) as ParticipantDataPayload;
-      if (!parsed?.horario) {
+
+    const labels = this.dayLabels();
+    const getDayName = (code: string): string =>
+      labels[code] || labels[String(code).toUpperCase()] || code;
+
+    if (Array.isArray(parsed.horario)) {
+      const slots: ParticipantScheduleSlot[] = parsed.horario;
+      if (slots.length === 0) {
         return null;
       }
 
-      const labels = this.dayLabels();
-      const getDayName = (code: string): string =>
-        labels[code] || labels[String(code).toUpperCase()] || code;
+      const first = slots[0];
+      const allSameRange = slots.every(
+        (s: ParticipantScheduleSlot) =>
+          s.horaInicio === first?.horaInicio && s.horaFin === first?.horaFin,
+      );
 
-      if (Array.isArray(parsed.horario)) {
-        const slots: ParticipantScheduleSlot[] = parsed.horario;
-        if (slots.length === 0) {
-          return null;
-        }
-
-        const first = slots[0];
-        const allSameRange = slots.every(
-          (s: ParticipantScheduleSlot) =>
-            s.horaInicio === first?.horaInicio && s.horaFin === first?.horaFin,
-        );
-
-        if (allSameRange) {
-          const days = slots.map((s: ParticipantScheduleSlot) => getDayName(s.dia)).join(', ');
-          const range =
-            first?.horaInicio && first?.horaFin ? ` (${first.horaInicio} - ${first.horaFin})` : '';
-          return `${days}${range}`;
-        }
-
-        return slots
-          .map((s: ParticipantScheduleSlot) => {
-            const d = getDayName(s.dia);
-            return s.horaInicio && s.horaFin ? `${d} (${s.horaInicio}-${s.horaFin})` : d;
-          })
-          .join(', ');
-      }
-
-      const legacy = parsed.horario as ParticipantSchedule;
-      if (Array.isArray(legacy.dias) && legacy.dias.length > 0) {
-        const days = legacy.dias.map((d: string) => getDayName(d)).join(', ');
+      if (allSameRange) {
+        const days = slots.map((s: ParticipantScheduleSlot) => getDayName(s.dia)).join(', ');
         const range =
-          legacy.horaInicio && legacy.horaFin
-            ? ` (${legacy.horaInicio} - ${legacy.horaFin})`
-            : '';
+          first?.horaInicio && first?.horaFin ? ` (${first.horaInicio} - ${first.horaFin})` : '';
         return `${days}${range}`;
       }
-    } catch {
-      return null;
+
+      return slots
+        .map((s: ParticipantScheduleSlot) => {
+          const d = getDayName(s.dia);
+          return s.horaInicio && s.horaFin ? `${d} (${s.horaInicio}-${s.horaFin})` : d;
+        })
+        .join(', ');
     }
+
+    const legacy = parsed.horario as ParticipantSchedule;
+    if (Array.isArray(legacy.dias) && legacy.dias.length > 0) {
+      const days = legacy.dias.map((d: string) => getDayName(d)).join(', ');
+      const range =
+        legacy.horaInicio && legacy.horaFin
+          ? ` (${legacy.horaInicio} - ${legacy.horaFin})`
+          : '';
+      return `${days}${range}`;
+    }
+
     return null;
   }
 

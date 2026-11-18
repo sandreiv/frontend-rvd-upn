@@ -12,13 +12,14 @@ import { Observable, shareReplay } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-call/model/preload-call.model';
 import {
+  CoordinationOption,
   CostCenterOption,
   DayOfWeekOption,
+  DeleteBulkProjectsRequest,
   ParticipantFunctionOption,
   ParticipantLevelOption,
-  ProjectGroupOption,
-  DeleteBulkProjectsRequest,
   ProjectFormData,
+  ProjectGroupOption,
   ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
@@ -309,12 +310,12 @@ export class ProjectsService {
    * @param term Término de búsqueda por nombre o código.
    * @returns Observable con la lista de coordinaciones coincidentes.
    */
-  searchCoordinations(term?: string): Observable<{ id: number; nombre: string; descripcion?: string | null }[]> {
+  searchCoordinations(term?: string): Observable<CoordinationOption[]> {
     const params: Record<string, string> = {};
     if (term?.trim()) {
       params['term'] = term.trim();
     }
-    return this.webRequestService.get<{ id: number; nombre: string; descripcion?: string | null }[]>(
+    return this.webRequestService.get<CoordinationOption[]>(
       `${this.endpoint}/coordinations`,
       params,
     );

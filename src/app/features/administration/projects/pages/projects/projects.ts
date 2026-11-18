@@ -260,8 +260,8 @@ export class Projects implements OnInit, OnDestroy {
 
       this.closeForm();
       await this.refreshCurrentList();
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     } finally {
       this.isSaving.set(false);
     }
@@ -283,8 +283,8 @@ export class Projects implements OnInit, OnDestroy {
       this.closeForm();
       await this.refreshPersons();
       await this.refreshProjects();
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     } finally {
       this.isSaving.set(false);
     }
@@ -298,8 +298,8 @@ export class Projects implements OnInit, OnDestroy {
       this.closeForm();
       await this.refreshStudents();
       await this.refreshProjects();
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     } finally {
       this.isSaving.set(false);
     }
@@ -384,8 +384,8 @@ export class Projects implements OnInit, OnDestroy {
 
       this.resetDeleteModalState();
       await this.refreshProjects();
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     } finally {
       this.isDeleting.set(false);
     }
@@ -415,8 +415,8 @@ export class Projects implements OnInit, OnDestroy {
     try {
       const rows = await firstValueFrom(this.projectsService.listAllProjects());
       this.projects.set(this.enrichProjects(rows ?? []));
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     }
   }
 
@@ -431,8 +431,8 @@ export class Projects implements OnInit, OnDestroy {
         this.projectsService.listProjectPersons(parent.id),
       );
       this.persons.set(this.enrichPersons(rows ?? []));
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     }
   }
 
@@ -447,8 +447,8 @@ export class Projects implements OnInit, OnDestroy {
         this.projectsService.listProjectStudents(parent.id),
       );
       this.students.set(rows ?? []);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     }
   }
 
@@ -494,8 +494,8 @@ export class Projects implements OnInit, OnDestroy {
       this.activityTypeMap = new Map(
         (activityTypes ?? []).map((item) => [item.id, item.nombre]),
       );
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Manejado globalmente por el interceptor HTTP
     }
   }
 

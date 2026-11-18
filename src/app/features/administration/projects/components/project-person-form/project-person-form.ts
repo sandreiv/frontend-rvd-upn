@@ -70,6 +70,8 @@ const MIN_SEARCH_CHARS = 2;
 const MIN_HORAS = 1;
 const MAX_HORAS = 40;
 const MAX_SEARCH_RESULTS = 20;
+const DEFAULT_HORA_INICIO = '08:00';
+const DEFAULT_HORA_FIN = '12:00';
 
 type ProjectPersonFormGroup = FormGroup<{
   idPersonaGeneral: FormControl<string>;
@@ -317,7 +319,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   }
 
   updateDayHoraInicio(dia: string, horaInicio: string | number): void {
-    const val = String(horaInicio ?? '08:00');
+    const val = String(horaInicio ?? DEFAULT_HORA_INICIO);
     this.weeklySchedule.update((list: DayScheduleState[]) =>
       list.map((d: DayScheduleState) =>
         d.dia === dia ? { ...d, horaInicio: val } : d,
@@ -326,7 +328,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   }
 
   updateDayHoraFin(dia: string, horaFin: string | number): void {
-    const val = String(horaFin ?? '12:00');
+    const val = String(horaFin ?? DEFAULT_HORA_FIN);
     this.weeklySchedule.update((list: DayScheduleState[]) =>
       list.map((d: DayScheduleState) =>
         d.dia === dia ? { ...d, horaFin: val } : d,
@@ -345,15 +347,9 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     const existingData = this.person()?.data;
     const dataObj: ParticipantDataPayload = {};
 
-    if (existingData) {
-      try {
-        const parsed = JSON.parse(existingData) as ParticipantDataPayload;
-        if (parsed && typeof parsed === 'object') {
-          Object.assign(dataObj, parsed);
-        }
-      } catch {
-        // En caso de texto plano legacy, se sobreescribe con estructura JSON
-      }
+    const parsedExisting = this.parseDataPayload(existingData);
+    if (parsedExisting) {
+      Object.assign(dataObj, parsedExisting);
     }
 
     if (this.showFuncion() && raw.funcion) {
@@ -406,7 +402,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       next: (list: TipoActividadProyectoItem[]) => {
         this.activityTypes.set(list ?? []);
       },
-      error: (e: unknown) => console.error(e),
+      error: () => {},
     });
   }
 
@@ -439,7 +435,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
           })),
         );
       },
-      error: (e: unknown) => console.error(e),
+      error: () => {},
     });
   }
 
@@ -453,7 +449,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
           })),
         );
       },
-      error: (e: unknown) => console.error(e),
+      error: () => {},
     });
   }
 
@@ -463,8 +459,20 @@ export class ProjectPersonForm implements OnInit, OnChanges {
         this.availableDays.set(days ?? []);
         this.syncWeeklySchedule();
       },
-      error: (e: unknown) => console.error(e),
+      error: () => {},
     });
+  }
+
+  private parseDataPayload(data?: string | null): ParticipantDataPayload | null {
+    if (!data || !data.trim().startsWith('{')) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(data.trim());
+      return parsed && typeof parsed === 'object' ? (parsed as ParticipantDataPayload) : null;
+    } catch {
+      return null;
+    }
   }
 
   private syncWeeklySchedule(): void {
@@ -480,33 +488,27 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       existingMap.set(d.dia, { activo: d.activo, horaInicio: d.horaInicio, horaFin: d.horaFin });
     }
 
-    if (item?.data) {
-      try {
-        const parsed = JSON.parse(item.data) as ParticipantDataPayload;
-        if (parsed?.horario) {
-          if (Array.isArray(parsed.horario)) {
-            for (const s of parsed.horario) {
-              if (s?.dia) {
-                existingMap.set(String(s.dia).toUpperCase(), {
-                  activo: true,
-                  horaInicio: s.horaInicio ? String(s.horaInicio) : '08:00',
-                  horaFin: s.horaFin ? String(s.horaFin) : '12:00',
-                });
-              }
-            }
-          } else if (typeof parsed.horario === 'object') {
-            const dias = Array.isArray(parsed.horario.dias) ? parsed.horario.dias : [];
-            for (const diaName of dias) {
-              existingMap.set(String(diaName).toUpperCase(), {
-                activo: true,
-                horaInicio: parsed.horario.horaInicio ? String(parsed.horario.horaInicio) : '08:00',
-                horaFin: parsed.horario.horaFin ? String(parsed.horario.horaFin) : '12:00',
-              });
-            }
+    const parsedData = this.parseDataPayload(item?.data);
+    if (parsedData?.horario) {
+      if (Array.isArray(parsedData.horario)) {
+        for (const s of parsedData.horario) {
+          if (s?.dia) {
+            existingMap.set(String(s.dia).toUpperCase(), {
+              activo: true,
+              horaInicio: s.horaInicio ? String(s.horaInicio) : DEFAULT_HORA_INICIO,
+              horaFin: s.horaFin ? String(s.horaFin) : DEFAULT_HORA_FIN,
+            });
           }
         }
-      } catch {
-        // Ignora si no contiene JSON parseable
+      } else if (typeof parsedData.horario === 'object') {
+        const dias = Array.isArray(parsedData.horario.dias) ? parsedData.horario.dias : [];
+        for (const diaName of dias) {
+          existingMap.set(String(diaName).toUpperCase(), {
+            activo: true,
+            horaInicio: parsedData.horario.horaInicio ? String(parsedData.horario.horaInicio) : DEFAULT_HORA_INICIO,
+            horaFin: parsedData.horario.horaFin ? String(parsedData.horario.horaFin) : DEFAULT_HORA_FIN,
+          });
+        }
       }
     }
 
@@ -515,8 +517,8 @@ export class ProjectPersonForm implements OnInit, OnChanges {
         if (s?.dia) {
           existingMap.set(String(s.dia).toUpperCase(), {
             activo: true,
-            horaInicio: s.horaInicio ? String(s.horaInicio) : '08:00',
-            horaFin: s.horaFin ? String(s.horaFin) : '12:00',
+            horaInicio: s.horaInicio ? String(s.horaInicio) : DEFAULT_HORA_INICIO,
+            horaFin: s.horaFin ? String(s.horaFin) : DEFAULT_HORA_FIN,
           });
         }
       }
@@ -529,8 +531,8 @@ export class ProjectPersonForm implements OnInit, OnChanges {
         nombre: d.nombre,
         abreviacion: d.abreviacion,
         activo: saved ? saved.activo : false,
-        horaInicio: saved ? saved.horaInicio : '08:00',
-        horaFin: saved ? saved.horaFin : '12:00',
+        horaInicio: saved ? saved.horaInicio : DEFAULT_HORA_INICIO,
+        horaFin: saved ? saved.horaFin : DEFAULT_HORA_FIN,
       };
     });
 
@@ -551,7 +553,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
           this.costCenterOptions.set(options);
           this.ensureSelectedCostCenter();
         },
-        error: (e: unknown) => console.error(e),
+        error: () => {},
       });
   }
 
@@ -604,22 +606,16 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     let funcionValue = item?.funcion ?? '';
     let nivelValue = item?.nivel ?? '';
 
-    if (item?.data) {
-      try {
-        const parsed = JSON.parse(item.data) as ParticipantDataPayload;
-        if (parsed && typeof parsed === 'object') {
-          if (!funcionValue && parsed.funcion) {
-            funcionValue = String(parsed.funcion);
-          }
-          if (!nivelValue && parsed.nivel) {
-            nivelValue = String(parsed.nivel);
-          }
-        }
-      } catch {
-        if (!funcionValue) {
-          funcionValue = item.data;
-        }
+    const parsedData = this.parseDataPayload(item?.data);
+    if (parsedData) {
+      if (!funcionValue && parsedData.funcion) {
+        funcionValue = String(parsedData.funcion);
       }
+      if (!nivelValue && parsedData.nivel) {
+        nivelValue = String(parsedData.nivel);
+      }
+    } else if (item?.data && !item.data.trim().startsWith('{') && !funcionValue) {
+      funcionValue = item.data;
     }
 
     this.syncWeeklySchedule();

@@ -69,7 +69,7 @@ export class ProjectTable {
     },
     {
       id: 'coordinacion',
-      header: 'Coordinación',
+      header: 'Departamento',
       cell: (row) => resolveProjectLookupName(row.coordinacion),
       formatAsSentence: true,
     },
