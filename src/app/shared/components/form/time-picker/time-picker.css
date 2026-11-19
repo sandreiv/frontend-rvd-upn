@@ -1,0 +1,5 @@
+/* Component-specific styling for TimePicker wrapper.
+   Global popover and theme styling is centralized in src/styles.css using CSS variables (--tp-brand-*). */
+:host {
+  display: block;
+}

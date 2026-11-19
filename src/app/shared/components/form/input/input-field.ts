@@ -50,8 +50,8 @@ export class InputField implements ControlValueAccessor {
   @Input() name?: string = '';
   @Input() placeholder?: string = '';
   @Input() value: string | number = '';
-  @Input() min?: string;
-  @Input() max?: string;
+  @Input() min?: string | number;
+  @Input() max?: string | number;
   @Input() step?: number;
   @Input() disabled: boolean = false;
   @Input() success: boolean = false;

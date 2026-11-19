@@ -48,6 +48,7 @@ import {
   TypeaheadOption,
   TypeaheadSelect,
 } from '../../../../../shared/components/form/typeahead-select/typeahead-select';
+import { TimePicker } from '../../../../../shared/components/form/time-picker/time-picker';
 import { ProjectsService } from '../../data/projects.service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../../configuration/preload-call/model/preload-call.model';
 import {
@@ -101,6 +102,7 @@ interface HorasValidationResult {
     Select,
     TypeaheadSelect,
     Checkbox,
+    TimePicker,
   ],
   templateUrl: './project-person-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -159,6 +161,16 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     return this.showFuncion() || this.showNivel() || this.showHorario();
   });
 
+  readonly minHoras = computed<number>(() => {
+    const val = this.activeActivityType()?.minimoHoras;
+    return val != null && val > 0 ? val : MIN_HORAS;
+  });
+
+  readonly maxHoras = computed<number>(() => {
+    const val = this.activeActivityType()?.maximoHoras;
+    return val != null && val > 0 ? val : MAX_HORAS;
+  });
+
   readonly totalHorasSemanales = computed<number>(() => {
     let total = 0;
     for (const day of this.weeklySchedule()) {
@@ -169,6 +181,26 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
   readonly activeDaysCount = computed<number>(() => {
     return this.weeklySchedule().filter((d) => d.activo).length;
+  });
+
+  readonly isHorarioValid = computed<boolean>(() => {
+    if (!this.showHorario()) {
+      return true;
+    }
+    const horasAsignadas = this.horas();
+    if (horasAsignadas == null || horasAsignadas <= 0) {
+      return false;
+    }
+    return Math.abs(this.totalHorasSemanales() - horasAsignadas) < 0.01;
+  });
+
+  readonly horarioDiferencia = computed<number>(() => {
+    if (!this.showHorario()) {
+      return 0;
+    }
+    const horasAsignadas = this.horas() ?? 0;
+    const diff = this.totalHorasSemanales() - horasAsignadas;
+    return Number(diff.toFixed(1));
   });
 
   readonly form: ProjectPersonFormGroup = new FormGroup({
@@ -207,23 +239,25 @@ export class ProjectPersonForm implements OnInit, OnChanges {
 
   readonly horasValidation = computed<HorasValidationResult>(() => {
     const horas = this.horas();
+    const min = this.minHoras();
+    const max = this.maxHoras();
 
     if (horas == null) {
       return {
         valid: false,
         bajoMinimo: false,
         sobreMaximo: false,
-        minimo: MIN_HORAS,
-        maximo: MAX_HORAS,
+        minimo: min,
+        maximo: max,
       };
     }
 
     return {
-      valid: horas >= MIN_HORAS && horas <= MAX_HORAS,
-      bajoMinimo: horas < MIN_HORAS,
-      sobreMaximo: horas > MAX_HORAS,
-      minimo: MIN_HORAS,
-      maximo: MAX_HORAS,
+      valid: horas >= min && horas <= max,
+      bajoMinimo: horas < min,
+      sobreMaximo: horas > max,
+      minimo: min,
+      maximo: max,
     };
   });
 
@@ -246,7 +280,9 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     effect(() => {
       const reqFuncion = this.showFuncion();
       const reqNivel = this.showNivel();
-      this.updateDynamicValidators(reqFuncion, reqNivel);
+      const min = this.minHoras();
+      const max = this.maxHoras();
+      this.updateDynamicValidators(reqFuncion, reqNivel, min, max);
     });
   }
 
@@ -339,7 +375,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   onSubmit(): void {
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.isSaving()) {
+    if (this.form.invalid || !this.isHorarioValid() || this.isSaving()) {
       return;
     }
 
@@ -406,23 +442,36 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     });
   }
 
-  private updateDynamicValidators(reqFuncion: boolean, reqNivel: boolean): void {
+  private updateDynamicValidators(
+    reqFuncion: boolean,
+    reqNivel: boolean,
+    minHoras: number,
+    maxHoras: number,
+  ): void {
     const funcionControl = this.form.controls.funcion;
     const nivelControl = this.form.controls.nivel;
+    const horasControl = this.form.controls.horas;
 
     if (reqFuncion) {
       funcionControl.setValidators([Validators.required]);
     } else {
       funcionControl.clearValidators();
     }
-    funcionControl.updateValueAndValidity();
+    funcionControl.updateValueAndValidity({ emitEvent: false });
 
     if (reqNivel) {
       nivelControl.setValidators([Validators.required]);
     } else {
       nivelControl.clearValidators();
     }
-    nivelControl.updateValueAndValidity();
+    nivelControl.updateValueAndValidity({ emitEvent: false });
+
+    horasControl.setValidators([
+      Validators.required,
+      Validators.min(minHoras),
+      Validators.max(maxHoras),
+    ]);
+    horasControl.updateValueAndValidity({ emitEvent: false });
   }
 
   private loadParticipantFunctions(): void {
@@ -493,20 +542,24 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       if (Array.isArray(parsedData.horario)) {
         for (const s of parsedData.horario) {
           if (s?.dia) {
+            const hIni = this.normalizeTime(s.horaInicio, DEFAULT_HORA_INICIO);
+            const hFin = this.normalizeTime(s.horaFin, DEFAULT_HORA_FIN);
             existingMap.set(String(s.dia).toUpperCase(), {
               activo: true,
-              horaInicio: s.horaInicio ? String(s.horaInicio) : DEFAULT_HORA_INICIO,
-              horaFin: s.horaFin ? String(s.horaFin) : DEFAULT_HORA_FIN,
+              horaInicio: hIni,
+              horaFin: hFin,
             });
           }
         }
       } else if (typeof parsedData.horario === 'object') {
         const dias = Array.isArray(parsedData.horario.dias) ? parsedData.horario.dias : [];
         for (const diaName of dias) {
+          const hIni = this.normalizeTime(parsedData.horario.horaInicio, DEFAULT_HORA_INICIO);
+          const hFin = this.normalizeTime(parsedData.horario.horaFin, DEFAULT_HORA_FIN);
           existingMap.set(String(diaName).toUpperCase(), {
             activo: true,
-            horaInicio: parsedData.horario.horaInicio ? String(parsedData.horario.horaInicio) : DEFAULT_HORA_INICIO,
-            horaFin: parsedData.horario.horaFin ? String(parsedData.horario.horaFin) : DEFAULT_HORA_FIN,
+            horaInicio: hIni,
+            horaFin: hFin,
           });
         }
       }
@@ -515,10 +568,12 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     if (item?.horario && Array.isArray(item.horario)) {
       for (const s of item.horario) {
         if (s?.dia) {
+          const hIni = this.normalizeTime(s.horaInicio, DEFAULT_HORA_INICIO);
+          const hFin = this.normalizeTime(s.horaFin, DEFAULT_HORA_FIN);
           existingMap.set(String(s.dia).toUpperCase(), {
             activo: true,
-            horaInicio: s.horaInicio ? String(s.horaInicio) : DEFAULT_HORA_INICIO,
-            horaFin: s.horaFin ? String(s.horaFin) : DEFAULT_HORA_FIN,
+            horaInicio: hIni,
+            horaFin: hFin,
           });
         }
       }
@@ -642,5 +697,18 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       normalized === 'SI' ||
       normalized === 'TRUE'
     );
+  }
+
+  private normalizeTime(val: string | null | undefined, fallback: string): string {
+    if (!val) {
+      return fallback;
+    }
+    const parts = String(val).trim().split(':');
+    if (parts.length >= 2) {
+      const h = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      return `${h}:${m}`;
+    }
+    return fallback;
   }
 }

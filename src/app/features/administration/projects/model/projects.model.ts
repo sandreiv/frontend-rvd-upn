@@ -94,6 +94,8 @@ export interface TipoActividadProyectoItem {
   requiereFuncion?: boolean;
   requiereNivel?: boolean;
   requiereHorario?: boolean;
+  minimoHoras?: number | null;
+  maximoHoras?: number | null;
 }
 
 export interface ProjectItem {

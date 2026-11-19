@@ -245,7 +245,8 @@ export class TreeTable<T> {
   }
 
   isRowSelected(node: TreeTableNode<T>): boolean {
-    return this.selectedRowKeys().includes(node.id);
+    const target = String(node.id);
+    return this.selectedRowKeys().some((k) => String(k) === target);
   }
 
   areAllVisibleRowsSelected(): boolean {
@@ -253,25 +254,27 @@ export class TreeTable<T> {
     if (!visible.length) {
       return false;
     }
-    const selected = new Set(this.selectedRowKeys());
-    return visible.every((node) => selected.has(node.id));
+    const selected = new Set(this.selectedRowKeys().map((k) => String(k)));
+    return visible.every((node) => selected.has(String(node.id)));
   }
 
   onToggleRowSelection(node: TreeTableNode<T>, checked: boolean): void {
+    const target = String(node.id);
     const current = this.selectedRowKeys();
     const next = checked
       ? Array.from(new Set([...current, node.id]))
-      : current.filter((key) => key !== node.id);
+      : current.filter((key) => String(key) !== target);
 
     this.updateSelection(next);
   }
 
   onToggleAllSelection(checked: boolean): void {
     const visibleKeys = this.visibleNodes().map((node) => node.id);
+    const visibleKeyStrings = new Set(visibleKeys.map((k) => String(k)));
     const current = this.selectedRowKeys();
     const next = checked
       ? Array.from(new Set([...current, ...visibleKeys]))
-      : current.filter((key) => !visibleKeys.includes(key));
+      : current.filter((key) => !visibleKeyStrings.has(String(key)));
 
     this.updateSelection(next);
   }

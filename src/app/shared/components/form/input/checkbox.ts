@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
         @if (checked) {
           <ng-container>
             <svg
-              class="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none top-1/2 left-1/2"
+              class="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none top-1/2 left-1/2 z-10"
               xmlns="http://www.w3.org/2000/svg"
               width="14"
               height="14"
@@ -42,7 +42,7 @@ import { CommonModule } from '@angular/common';
         @if (disabled) {
           <ng-container>
             <svg
-              class="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none top-1/2 left-1/2"
+              class="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none top-1/2 left-1/2 z-10"
               xmlns="http://www.w3.org/2000/svg"
               width="14"
               height="14"
@@ -79,6 +79,7 @@ export class Checkbox {
 
   onChange(event: Event) {
     const input = event.target as HTMLInputElement;
+    this.checked = input.checked;
     this.checkedChange.emit(input.checked);
   }
 }

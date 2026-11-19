@@ -1,6 +1,7 @@
 <app-tree-table
   [columns]="columns"
   [rows]="projects()"
+  [idKey]="rowIdentity"
   [parentIdKey]="rowParentIdentity"
   [rowActions]="rowActions()"
   [enableSelection]="true"

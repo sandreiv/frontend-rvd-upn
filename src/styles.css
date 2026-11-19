@@ -6,6 +6,7 @@ layer(base);
 @import "tailwindcss";
 
 @import "@angular/cdk/overlay-prebuilt.css";
+@import "timepicker-ui/main.css";
 
 .cdk-overlay-container:has(.app-tooltip-panel) {
   z-index: 100000;
@@ -1071,3 +1072,424 @@ pre[class*="language-"] {
 pre[class*="language-"].line-numbers {
   padding-left: 2.8em !important;
 }
+
+/* ==========================================================================
+   Custom TimepickerUI Styling - Institutional Theme Palette
+   Mapped directly to the application brand variables (--color-brand-*).
+   To adapt the timepicker to another institution, simply adjust --color-brand-*.
+   ========================================================================== */
+
+:root {
+  /* Centralized Institutional Brand Mapping */
+  --tp-brand-primary: var(--color-brand-500, #007B3E);
+  --tp-brand-primary-hover: var(--color-brand-600, #006835);
+  --tp-brand-subtle-bg: var(--color-brand-50, #e6f5eb);
+  --tp-brand-subtle-text: var(--color-brand-700, #00482B);
+  --tp-brand-light-border: var(--color-brand-200, #9fd5c3);
+
+  --tp-z-backdrop: 99998;
+  --tp-z-modal: 99999;
+  --tp-font-family: Outfit, sans-serif;
+  --tp-bg: #ffffff;
+  --tp-surface: #f8fafc;
+  --tp-surface-hover: #e2e8f0;
+  --tp-input-bg: #f8fafc;
+  --tp-text: #0f172a;
+  --tp-text-secondary: #64748b;
+  --tp-primary: var(--tp-brand-primary);
+  --tp-primary-container: var(--tp-brand-subtle-bg);
+  --tp-on-primary: #ffffff;
+  --tp-on-primary-container: var(--tp-brand-subtle-text);
+  --tp-am-pm-active: var(--tp-brand-primary);
+  --tp-am-pm-text-selected: #ffffff;
+  --tp-am-pm-text-unselected: #64748b;
+  --tp-border-radius: 1.25rem;
+  --tp-border: #e2e8f0;
+  --tp-outline: var(--tp-brand-primary);
+  --tp-size-input: 66px;
+  --tp-size-input-height: 54px;
+  --tp-time-input-font-size: 1.875rem;
+  --tp-size-am-pm-width: 44px;
+  --tp-size-am-pm-height: 54px;
+  --tp-size-colon-height: 54px;
+  --tp-size-colon-width: 14px;
+}
+
+.dark {
+  --tp-brand-primary: var(--color-brand-500, #007B3E);
+  --tp-brand-primary-hover: var(--color-brand-400, #59b59b);
+  --tp-brand-subtle-bg: rgba(0, 123, 62, 0.2);
+  --tp-brand-subtle-text: var(--color-brand-300, #7cc5af);
+}
+
+/* Backdrop (Transparent for Dropdown / Popup feel) */
+.tp-ui-modal {
+  z-index: 99998 !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Modal Container (Card -> Dropdown Popup) */
+.tp-ui-wrapper {
+  position: fixed !important;
+  top: var(--tp-popup-top, -9999px) !important;
+  left: var(--tp-popup-left, -9999px) !important;
+  transform: none !important;
+  margin: 0 !important;
+  z-index: 99999 !important;
+  font-family: Outfit, sans-serif !important;
+  background-color: #ffffff !important;
+  border-radius: 1rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  padding: 0.875rem 0.875rem 0.75rem !important;
+  width: 300px !important;
+  transition: opacity 0.15s ease-out !important;
+}
+
+/* Header & Title */
+.tp-ui-header {
+  padding-bottom: 0.625rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.tp-ui-select-time {
+  display: none !important;
+}
+
+/* Time Input Digits (Hour & Minute display) */
+.tp-ui-input-wrapper {
+  width: 66px !important;
+}
+
+.tp-ui-input-ripple-wrapper {
+  width: 66px !important;
+  height: 54px !important;
+}
+
+.tp-ui-hour,
+.tp-ui-minutes {
+  font-family: Outfit, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.875rem !important;
+  width: 66px !important;
+  height: 54px !important;
+  padding: 0 !important;
+  background-color: #f8fafc !important;
+  border: none !important;
+  border-radius: 0.625rem !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.tp-ui-hour.active,
+.tp-ui-minutes.active {
+  background-color: var(--tp-brand-subtle-bg) !important;
+  border: 1.5px solid var(--tp-brand-primary) !important;
+  color: var(--tp-brand-subtle-text) !important;
+  box-shadow: none !important;
+}
+
+/* Colon dots */
+.tp-ui-dots {
+  height: 54px !important;
+  width: 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.tp-ui-dots span {
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: 50% !important;
+  background-color: #94a3b8 !important;
+}
+
+/* AM / PM Toggle (Initial Clean Split-Box Form) */
+.tp-ui-wrapper-type-time {
+  height: 54px !important;
+  width: 44px !important;
+  border-radius: 0.625rem !important;
+  overflow: hidden !important;
+  border: 1px solid #cbd5e1 !important;
+  margin-left: 0.625rem !important;
+  padding: 0 !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: stretch !important;
+  gap: 0 !important;
+}
+
+.tp-ui-am,
+.tp-ui-pm {
+  height: 27px !important;
+  width: 100% !important;
+  line-height: 27px !important;
+  font-family: Outfit, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.025em !important;
+  background-color: #ffffff !important;
+  color: #64748b !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.tp-ui-am {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.tp-ui-am.active {
+  background-color: var(--tp-brand-primary) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid var(--tp-brand-primary) !important;
+  box-shadow: none !important;
+}
+
+.tp-ui-pm.active {
+  background-color: var(--tp-brand-primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.tp-ui-am:not(.active):hover,
+.tp-ui-pm:not(.active):hover {
+  color: #0f172a !important;
+  background-color: #f8fafc !important;
+}
+
+/* Clock Face */
+.tp-ui-clock-face {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+  margin: 0 auto !important;
+}
+
+.tp-ui-value-tips {
+  font-family: Outfit, sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  color: #334155 !important;
+  transition: color 0.15s ease !important;
+}
+
+.tp-ui-value-tips.active {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Clock Hand & Selected Circle */
+.tp-ui-clock-hand {
+  background-color: var(--tp-brand-primary) !important;
+}
+
+.tp-ui-circle-hand {
+  background-color: var(--tp-brand-primary) !important;
+  box-shadow: none !important;
+}
+
+.tp-ui-dot {
+  background-color: var(--tp-brand-primary) !important;
+  width: 8px !important;
+  height: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Footer & Buttons */
+.tp-ui-footer {
+  margin: 0.625rem -0.875rem 0 -0.875rem !important;
+  padding: 0.75rem 0.875rem 0.125rem 0.875rem !important;
+  border-top: 1px solid #e2e8f0 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.tp-ui-cancel-btn {
+  font-family: Outfit, sans-serif !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: #475569 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.45rem 1rem !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.tp-ui-cancel-btn:hover {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border-color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.tp-ui-ok-btn {
+  font-family: Outfit, sans-serif !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background-color: var(--tp-brand-primary) !important;
+  border: 1px solid var(--tp-brand-primary) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.45rem 1.25rem !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.tp-ui-ok-btn:hover {
+  background-color: var(--tp-brand-primary-hover) !important;
+  border-color: var(--tp-brand-primary-hover) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Keyboard switch icon */
+.tp-ui-keyboard-icon svg {
+  fill: #94a3b8 !important;
+}
+
+.tp-ui-keyboard-icon:hover svg {
+  fill: var(--tp-brand-primary) !important;
+}
+
+/* Dark Mode Theme */
+.dark .tp-ui-modal {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dark .tp-ui-wrapper {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .tp-ui-select-time {
+  color: #f1f5f9 !important;
+}
+
+.dark .tp-ui-hour,
+.dark .tp-ui-minutes {
+  background-color: #0f172a !important;
+  border: 1px solid transparent !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-hour.active,
+.dark .tp-ui-minutes.active {
+  background-color: var(--tp-brand-subtle-bg) !important;
+  border: 1.5px solid var(--tp-brand-primary) !important;
+  color: var(--tp-brand-subtle-text) !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-wrapper-type-time {
+  background-color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.dark .tp-ui-am,
+.dark .tp-ui-pm {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-am {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .tp-ui-am.active {
+  background-color: var(--tp-brand-primary) !important;
+  border-bottom: 1px solid var(--tp-brand-primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-pm.active {
+  background-color: var(--tp-brand-primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-clock-face {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-value-tips {
+  color: #cbd5e1 !important;
+}
+
+.dark .tp-ui-clock-hand {
+  background-color: var(--tp-brand-primary) !important;
+}
+
+.dark .tp-ui-circle-hand {
+  background-color: var(--tp-brand-primary) !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-dot {
+  background-color: var(--tp-brand-primary) !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-footer {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .tp-ui-cancel-btn {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-cancel-btn:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-ok-btn {
+  background-color: var(--tp-brand-primary) !important;
+  border-color: var(--tp-brand-primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dark .tp-ui-ok-btn:hover {
+  background-color: var(--tp-brand-primary-hover) !important;
+  border-color: var(--tp-brand-primary-hover) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
