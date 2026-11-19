@@ -132,3 +132,63 @@ function isActiveActivity(estado: string | null | undefined): boolean {
   const value = (estado ?? '').trim().toUpperCase();
   return value === '' || value === '1' || value === 'ACTIVO';
 }
+
+/**
+ * Actividades cuyo idDependencia apunta al padre, en cualquier nivel del árbol.
+ * Esas actividades no se pintan como tarjeta: van en el select del padre.
+ */
+export function dependentActivityNodes(
+  root: ActivityTypeNode,
+  parentId: number,
+): ActivityTypeNode[] {
+  const found: ActivityTypeNode[] = [];
+  collectDependentActivities(root.hijos, parentId, found, new Set<number>());
+  return found.sort(compareActivityOrder);
+}
+
+/** El nodo se pinta como una sola tarjeta y sus hijos van en un select. */
+export function activityCollapsesToParentCard(node: ActivityTypeNode): boolean {
+  const children = node.hijos ?? [];
+  if (children.length === 0) {
+    return false;
+  }
+
+  let collapses = true;
+  forNext(children, (child) => {
+    if (child.idDependencia == null) {
+      collapses = false;
+    }
+  });
+
+  return collapses;
+}
+
+function collectDependentActivities(
+  nodes: ActivityTypeNode[] | null | undefined,
+  parentId: number,
+  found: ActivityTypeNode[],
+  visited: Set<number>,
+): void {
+  forNext(nodes, (node) => {
+    if (visited.has(node.id)) {
+      return;
+    }
+
+    visited.add(node.id);
+    if (Number(node.idDependencia) === parentId) {
+      found.push(node);
+    }
+
+    collectDependentActivities(node.hijos, parentId, found, visited);
+  });
+}
+
+function compareActivityOrder(left: ActivityTypeNode, right: ActivityTypeNode): number {
+  const leftOrder = Number(left.orden ?? 0);
+  const rightOrder = Number(right.orden ?? 0);
+  if (leftOrder !== rightOrder) {
+    return leftOrder - rightOrder;
+  }
+
+  return left.id - right.id;
+}

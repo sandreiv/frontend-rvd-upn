@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import {
   ActivityTypeNode,
+  activityCollapsesToParentCard,
   activityComponentKey,
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
@@ -67,9 +68,13 @@ export class ActivityTree {
       return 'flex flex-col gap-8';
     }
 
-    const grouped = this.nodes().some((node) => this.hasChildren(node));
+    const grouped = this.nodes().some((node) => this.showAsSection(node));
     return grouped ? 'flex flex-col gap-5' : 'flex flex-col gap-3';
   });
+
+  showAsSection(node: ActivityTypeNode): boolean {
+    return this.hasChildren(node) && !activityCollapsesToParentCard(node);
+  }
 
   hasChildren(node: ActivityTypeNode): boolean {
     return (node.hijos?.length ?? 0) > 0;
