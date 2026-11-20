@@ -75,7 +75,22 @@ export interface ProfessorLoadDetailActivity {
   horas: string | null;
   materiaBanco: ProfessorLoadSubject | null;
   extras: string | null;
+  descripcion: string | null;
   clasesSemanales: GroupScheduleItem[] | null;
+  termino: ProfessorLoadTerm | null;
+  actoAdministrativo: ProfessorLoadAdministrativeAct | null;
+}
+
+/** Término devuelto por list-detail-professor-load. Llega nulo si no se guardó. */
+export interface ProfessorLoadTerm {
+  desde: string | null;
+  hasta: string | null;
+}
+
+/** Acto administrativo devuelto por list-detail-professor-load. Llega nulo si no se guardó. */
+export interface ProfessorLoadAdministrativeAct {
+  numero: string | number | null;
+  fecha: string | null;
 }
 
 /** Ítem de GET /configuration/load/list-detail-professor-load. */
@@ -83,6 +98,146 @@ export interface ProfessorLoadDetailItem {
   idDetalleCargaDocente: number;
   idCargaDocente: number;
   detalles: ProfessorLoadDetailActivity[];
+}
+
+/** Fila guardada de una actividad con dependencia: nombre, descripción y horas. */
+export interface SavedDependentActivityRow {
+  id: string;
+  idDetalleCargaDocente: number;
+  nombre: string;
+  descripcion: string;
+  horas: string;
+}
+
+/** Detalles de carga cuyo tipo de actividad está en el conjunto indicado. */
+export function savedDependentActivities(
+  details: ProfessorLoadDetailItem[] | null | undefined,
+  activityIds: Set<number>,
+): SavedDependentActivityRow[] {
+  const rows: SavedDependentActivityRow[] = [];
+
+  forNext(details, (detail) => {
+    forNext(detail.detalles, (item, index) => {
+      const activityId = item.tipoActividad?.id;
+      if (activityId == null || !activityIds.has(activityId)) {
+        return;
+      }
+
+      rows.push({
+        id: `${detail.idDetalleCargaDocente}-${index}`,
+        idDetalleCargaDocente: detail.idDetalleCargaDocente,
+        nombre: item.tipoActividad?.nombre?.trim() || 'Actividad',
+        descripcion: item.descripcion?.trim() || '-',
+        horas: item.horas?.trim() || '-',
+      });
+    });
+  });
+
+  return rows;
+}
+
+/** Término y acto administrativo guardados en DECD_DATA. */
+export interface AdministrativeSituationData {
+  termino: {
+    desde: string;
+    hasta: string;
+  };
+  actoAdministrativo: {
+    numero: string;
+    fecha: string;
+  };
+}
+
+/** Fila guardada de una situación administrativa. */
+export interface SavedAdministrativeActivityRow {
+  id: string;
+  idDetalleCargaDocente: number;
+  nombre: string;
+  terminoDesde: string | null;
+  terminoHasta: string | null;
+  actoNumero: string | null;
+  actoFecha: string | null;
+  horas: string;
+}
+
+/** Detalles de situación administrativa, con el término y el acto del listado. */
+export function savedAdministrativeActivities(
+  details: ProfessorLoadDetailItem[] | null | undefined,
+  activityIds: Set<number>,
+): SavedAdministrativeActivityRow[] {
+  const rows: SavedAdministrativeActivityRow[] = [];
+
+  forNext(details, (detail) => {
+    forNext(detail.detalles, (item, index) => {
+      const activityId = item.tipoActividad?.id;
+      if (activityId == null || !activityIds.has(activityId)) {
+        return;
+      }
+
+      rows.push({
+        id: `${detail.idDetalleCargaDocente}-${index}`,
+        idDetalleCargaDocente: detail.idDetalleCargaDocente,
+        nombre: item.tipoActividad?.nombre?.trim() || 'Situación administrativa',
+        terminoDesde: displayDate(item.termino?.desde),
+        terminoHasta: displayDate(item.termino?.hasta),
+        actoNumero: displayText(item.actoAdministrativo?.numero),
+        actoFecha: displayDate(item.actoAdministrativo?.fecha),
+        horas: item.horas?.trim() || '-',
+      });
+    });
+  });
+
+  return rows;
+}
+
+/** Arma el JSON de término y acto administrativo para DECD_DATA. */
+export function administrativeSituationData(value: {
+  desde: string;
+  hasta: string;
+  numero: string;
+  fecha: string;
+}): string | null {
+  const desde = value.desde.trim();
+  const hasta = value.hasta.trim();
+  const numero = value.numero.trim();
+  const fecha = value.fecha.trim();
+  const data: Partial<AdministrativeSituationData> = {};
+
+  if (desde || hasta) {
+    data.termino = { desde, hasta };
+  }
+  if (numero || fecha) {
+    data.actoAdministrativo = { numero, fecha };
+  }
+  if (!data.termino && !data.actoAdministrativo) {
+    return null;
+  }
+
+  return JSON.stringify(data);
+}
+
+function displayDate(value: string | null | undefined): string | null {
+  const formatted = formatStoredDate(value);
+  return formatted === '-' ? null : formatted;
+}
+
+function displayText(value: string | number | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const text = String(value).trim();
+  return text || null;
+}
+
+function formatStoredDate(value: string | null | undefined): string {
+  const text = value?.trim() ?? '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!match) {
+    return text || '-';
+  }
+
+  return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
 /** Fila de la tabla de asignaturas, venga del formulario o del detalle guardado. */
@@ -181,6 +336,46 @@ function groupLabel(group: ProfessorLoadGroup | null): string {
   }
 
   return `${nombre} - ${anio ?? ''} - ${periodo}`;
+}
+
+/**
+ * Suma las horas de cada tipo de actividad guardado en el detalle de carga.
+ * Varias filas del mismo tipo se acumulan antes de entrar al total.
+ */
+export function sumAssignedHours(
+  details: ProfessorLoadDetailItem[] | null | undefined,
+): number {
+  const byType = new Map<number, number>();
+  let withoutType = 0;
+
+  forNext(details, (detail) => {
+    forNext(detail.detalles, (item) => {
+      const hours = toHours(item.horas);
+      if (hours == null) {
+        return;
+      }
+
+      const typeId = item.tipoActividad?.id;
+      if (typeId == null) {
+        withoutType = roundHours(withoutType + hours);
+        return;
+      }
+
+      const current = byType.get(typeId) ?? 0;
+      byType.set(typeId, roundHours(current + hours));
+    });
+  });
+
+  let total = withoutType;
+  forNext([...byType.values()], (hours) => {
+    total = roundHours(total + hours);
+  });
+
+  return total;
+}
+
+function roundHours(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 function toHours(horas: string | null | undefined): number | null {

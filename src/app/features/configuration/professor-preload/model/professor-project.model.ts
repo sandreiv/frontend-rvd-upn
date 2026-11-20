@@ -18,7 +18,7 @@ export interface ProfessorProjectRef {
   idProyectoPadre: number | null;
   tipoActividad: ProfessorProjectActivity | null;
   idCoordinacion: number | null;
-  idMateriaParticular: number | null;
+  materiaParticular: ProfessorProjectParticularSubject | null;
   idProyectoGrupo: number | null;
   nombre: string | null;
   descripcion: string | null;
@@ -27,6 +27,21 @@ export interface ProfessorProjectRef {
   fechaActa: string | null;
   codigo: string | null;
   activo: number | null;
+}
+
+/** Materia particular vinculada al proyecto, con su programa. */
+export interface ProfessorProjectParticularSubject {
+  id: number;
+  materia: {
+    codigoMateria: string | null;
+    nombre: string | null;
+  } | null;
+  programa: {
+    id: number;
+    nombre: string | null;
+  } | null;
+  tipoMateria: string | null;
+  docentesXgrupo: number | null;
 }
 
 /** Bloque de horario guardado en el proyecto de la persona. */
@@ -114,6 +129,16 @@ export function projectActivityIds(
   });
 
   return ids;
+}
+
+/** Nombre de la materia particular del proyecto. */
+export function projectSubjectName(item: ProfessorProjectItem): string {
+  return item.proyecto?.materiaParticular?.materia?.nombre?.trim() || '-';
+}
+
+/** Nombre del programa de la materia particular. */
+export function projectProgramName(item: ProfessorProjectItem): string {
+  return item.proyecto?.materiaParticular?.programa?.nombre?.trim() || '-';
 }
 
 /** Etiqueta de la función del participante. */

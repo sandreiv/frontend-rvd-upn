@@ -16,6 +16,7 @@ export interface DetalleCargaDocenteRequest {
   idGrupo?: number;
   extras: string;
   data: string | null;
+  descripcion?: string | null;
 }
 
 /** Cuerpo de POST /configuration/load/save-detail-professor-preload. */

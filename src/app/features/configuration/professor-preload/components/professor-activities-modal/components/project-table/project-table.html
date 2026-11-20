@@ -13,6 +13,18 @@
             >
               Código
             </th>
+            @if (showParticularSubject()) {
+              <th
+                class="w-40 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+              >
+                Materia
+              </th>
+              <th
+                class="w-40 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+              >
+                Programa
+              </th>
+            }
             @switch (extraField()) {
               @case ('funcion') {
                 <th
@@ -36,6 +48,13 @@
                 </th>
               }
             }
+            @if (showCostCenter()) {
+              <th
+                class="w-64 px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+              >
+                Centro de costo
+              </th>
+            }
             <th
               class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
             >
@@ -58,6 +77,14 @@
               <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
                 {{ item.proyecto?.codigo?.trim() || '-' }}
               </td>
+              @if (showParticularSubject()) {
+                <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                  {{ sentence(subjectName(item)) }}
+                </td>
+                <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                  {{ sentence(programName(item)) }}
+                </td>
+              }
               @switch (extraField()) {
                 @case ('funcion') {
                   <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
@@ -82,6 +109,22 @@
                     }
                   </td>
                 }
+              }
+              @if (showCostCenter()) {
+                <td class="px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                  @if (isLinked(item.id)) {
+                    {{ savedCostCenter(item.id) }}
+                  } @else {
+                    <app-select
+                      [options]="costCenterOptions()"
+                      [value]="selectedCostCenter(item.id)"
+                      placeholder="Centro de costo"
+                      emptyText="Sin centros de costo"
+                      labelFormat="none"
+                      (valueChange)="setCostCenter(item.id, $event)"
+                    />
+                  }
+                </td>
               }
               <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
                 {{ hoursLabel(item.horas) }}

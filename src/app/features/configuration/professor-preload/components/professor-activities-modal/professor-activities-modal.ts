@@ -16,7 +16,11 @@ import { Icon } from '../../../../../shared/ui/icon/icon';
 import { Option, Select } from '../../../../../shared/components/form/select/select';
 import { forNext } from '../../../../../core/utils/for-next.function';
 import { CoordinationService } from '../../data/coordination.service';
-import { LinkageTypeItem } from '../../model/linkage-type.model';
+import {
+  LinkageTypeItem,
+  linkageHoursLimit,
+  linkageHoursPeriod,
+} from '../../model/linkage-type.model';
 import { ProfessorLoadItem, professorLoadDisplayName } from '../../model/professor-load.model';
 import {
   ActivityRestrictionItem,
@@ -24,7 +28,10 @@ import {
   activityRootIds,
   visibleActivityTree,
 } from '../../model/professor-activities.model';
-import { ProfessorLoadDetailItem } from '../../model/professor-load-detail.model';
+import {
+  ProfessorLoadDetailItem,
+  sumAssignedHours,
+} from '../../model/professor-load-detail.model';
 import {
   ProfessorProjectItem,
   projectActivityIds,
@@ -216,6 +223,23 @@ export class ProfessorActivitiesModal {
       ? 'Seleccione el tipo de actividad'
       : 'Todas las actividades fueron agregadas',
   );
+
+  readonly hoursLimit = computed(() => linkageHoursLimit(this.linkageType()));
+
+  readonly hoursPeriodLabel = computed(() => linkageHoursPeriod(this.linkageType()));
+
+  readonly totalAssignedHours = computed(() => sumAssignedHours(this.savedDetails()));
+
+  readonly isLoadingAssignedHours = computed(() => this.isLoadingInitialDetails());
+
+  readonly exceedsHoursLimit = computed(() => {
+    const limit = this.hoursLimit();
+    if (limit == null || this.isLoadingAssignedHours()) {
+      return false;
+    }
+
+    return this.totalAssignedHours() > limit;
+  });
 
   onActivitySelected(value: string): void {
     const id = Number(value);

@@ -9,6 +9,7 @@ import {
   inject,
   input,
   model,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
@@ -61,6 +62,7 @@ export class Select implements ControlValueAccessor {
   labelFormat = input<'sentence' | 'uppercase' | 'none'>('sentence');
 
   enableSearch = input(true);
+  localSearch = input(true);
   searchPlaceholder = input('Buscar...');
   emptyText = input('Sin resultados');
   multiple = input(false);
@@ -70,6 +72,7 @@ export class Select implements ControlValueAccessor {
   private readonly selectedValues = signal<string[]>([]);
 
   valueChange = new EventEmitter<string>();
+  searchChange = output<string>();
 
   private onChangeFn: (value: string | string[]) => void = () => {};
   onTouched: () => void = () => {};
@@ -103,7 +106,7 @@ export class Select implements ControlValueAccessor {
     const q = this.query().trim().toLocaleLowerCase('es-CO');
     const opts = this.normalizedOptions();
 
-    if (!this.enableSearch() || !q) {
+    if (!this.localSearch() || !this.enableSearch() || !q) {
       return opts;
     }
 
@@ -230,14 +233,14 @@ export class Select implements ControlValueAccessor {
     if (this.disabled()) return;
     this.isOpen.update((v) => !v);
     if (this.isOpen()) {
-      this.query.set('');
+      this.setQuery('');
       this.positionPanel();
     }
   }
 
   close() {
     this.isOpen.set(false);
-    this.query.set('');
+    this.setQuery('');
     this.openUp.set(false);
   }
 
@@ -273,7 +276,16 @@ export class Select implements ControlValueAccessor {
 
   onQueryInput(event: Event) {
     const inputEl = event.target as HTMLInputElement;
-    this.query.set(inputEl.value);
+    this.setQuery(inputEl.value);
+  }
+
+  private setQuery(value: string): void {
+    if (this.query() === value) {
+      return;
+    }
+
+    this.query.set(value);
+    this.searchChange.emit(value);
   }
 
   @HostListener('window:resize')
