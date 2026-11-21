@@ -29,8 +29,13 @@ import { Icon } from '../../../../../../../../../shared/ui/icon/icon';
 import { TooltipComponent } from '../../../../../../../../../shared/ui/tooltip';
 import { Checkbox } from '../../../../../../../../../shared/components/form/input/checkbox';
 import { formatSentenceValue } from '../../../../../../../../../shared/utils/normalized-text.util';
+import { ToastService } from '../../../../../../../../../core/service/toastService';
 import { CoordinationService } from '../../../../../../data/coordination.service';
 import { forNext } from '../../../../../../../../../core/utils/for-next.function';
+import {
+  findHoursLimitViolation,
+  hoursLimitMessage,
+} from '../../../../../../model/hours-limit.model';
 import {
   ActivityTypeNode,
   activityComponentKey,
@@ -62,6 +67,7 @@ import {
 })
 export class Subject {
   private readonly coordinationService = inject(CoordinationService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly activity = input.required<ActivityTypeNode>();
@@ -71,6 +77,8 @@ export class Subject {
   readonly idConvocatoria = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   readonly form = new FormGroup({
@@ -316,7 +324,7 @@ export class Subject {
     }
 
     const request = this.buildSaveRequest();
-    if (!request) {
+    if (!request || this.blockedByHoursLimit(request.detalles)) {
       return;
     }
 
@@ -553,6 +561,21 @@ export class Subject {
     this.selectedGroupId.set(null);
     this.syncComponentValidator();
     this.syncScheduleValidator();
+  }
+
+  private blockedByHoursLimit(detalles: { idTipoActividad: number; horas: number }[]): boolean {
+    const violation = findHoursLimitViolation({
+      tree: this.activityTree(),
+      linkageLimit: this.hoursLimit(),
+      saved: this.savedDetails(),
+      additions: detalles,
+    });
+    if (!violation) {
+      return false;
+    }
+
+    this.toastService.show(hoursLimitMessage(violation), 'error', 'Límite de horas');
+    return true;
   }
 
   private buildSaveRequest(): SaveDetailProfessorPreloadRequest | null {

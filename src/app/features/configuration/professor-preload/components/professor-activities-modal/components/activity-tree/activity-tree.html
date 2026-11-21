@@ -12,9 +12,14 @@
             <app-icon [name]="icon.name" size="sm" [classes]="icon.iconClass" />
           </span>
           <h4
-            class="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
+            class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
           >
-            {{ node.nombre }}
+            <span class="min-w-0 break-words">{{ node.nombre }}</span>
+            @if (hoursRange(node); as range) {
+              <app-badge variant="neutral" size="xs" className="normal-case tracking-normal">
+                {{ range }}
+              </app-badge>
+            }
           </h4>
           <div class="ml-auto shrink-0">
             <ng-content select="[activityTreeActions]" />
@@ -33,6 +38,8 @@
               [idCargaDocente]="idCargaDocente()"
               [savedDetails]="savedDetails()"
               [projects]="projects()"
+              [activityTree]="activityTree()"
+              [hoursLimit]="hoursLimit()"
               (detailSaved)="detailSaved.emit()"
             />
           } @else {
@@ -46,6 +53,8 @@
               [idCargaDocente]="idCargaDocente()"
               [savedDetails]="savedDetails()"
               [projects]="projects()"
+              [activityTree]="activityTree()"
+              [hoursLimit]="hoursLimit()"
               (detailSaved)="detailSaved.emit()"
             />
           }
@@ -53,8 +62,15 @@
       </section>
     } @else if (showAsSection(node)) {
       <section class="flex flex-col gap-3">
-        <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-          {{ node.nombre }}
+        <h5
+          class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300"
+        >
+          <span class="min-w-0 break-words">{{ node.nombre }}</span>
+          @if (hoursRange(node); as range) {
+            <app-badge variant="neutral" size="xs" className="normal-case tracking-normal">
+              {{ range }}
+            </app-badge>
+          }
         </h5>
         <app-activity-tree
           class="block"
@@ -67,6 +83,8 @@
           [idCargaDocente]="idCargaDocente()"
           [savedDetails]="savedDetails()"
           [projects]="projects()"
+          [activityTree]="activityTree()"
+          [hoursLimit]="hoursLimit()"
           (detailSaved)="detailSaved.emit()"
         />
       </section>
@@ -81,6 +99,8 @@
         [idCargaDocente]="idCargaDocente()"
         [savedDetails]="savedDetails()"
         [projects]="projects()"
+        [activityTree]="activityTree()"
+        [hoursLimit]="hoursLimit()"
         (detailSaved)="detailSaved.emit()"
       />
     }

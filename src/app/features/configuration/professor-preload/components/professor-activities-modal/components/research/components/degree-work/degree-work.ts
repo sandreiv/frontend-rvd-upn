@@ -20,6 +20,8 @@ export class DegreeWork {
   readonly idUnidadRegional = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   readonly rows = computed(() => projectsForActivity(this.projects(), this.activity().id));

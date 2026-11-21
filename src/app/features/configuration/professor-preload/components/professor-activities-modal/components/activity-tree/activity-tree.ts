@@ -6,6 +6,8 @@ import {
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
 import { ProfessorProjectItem } from '../../../../model/professor-project.model';
+import { activityHoursRangeLabel } from '../../../../model/hours-limit.model';
+import { Badge } from '../../../../../../../shared/ui/badge/badge';
 import { Icon } from '../../../../../../../shared/ui/icon/icon';
 import { AppIconName } from '../../../../../../../shared/ui/icon/icons';
 import { ActivityCard } from '../activity-card/activity-card';
@@ -47,7 +49,7 @@ const DEFAULT_SECTION_ICON: ActivitySectionIcon = {
 
 @Component({
   selector: 'app-activity-tree',
-  imports: [ActivityTree, ActivityCard, Icon],
+  imports: [ActivityTree, ActivityCard, Badge, Icon],
   templateUrl: './activity-tree.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -61,6 +63,8 @@ export class ActivityTree {
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
   readonly projects = input<ProfessorProjectItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   readonly listClass = computed(() => {
@@ -78,6 +82,11 @@ export class ActivityTree {
 
   hasChildren(node: ActivityTypeNode): boolean {
     return (node.hijos?.length ?? 0) > 0;
+  }
+
+  hoursRange(node: ActivityTypeNode): string | null {
+    const tree = this.activityTree().length ? this.activityTree() : this.nodes();
+    return activityHoursRangeLabel(node, tree);
   }
 
   sectionIcon(node: ActivityTypeNode): ActivitySectionIcon {

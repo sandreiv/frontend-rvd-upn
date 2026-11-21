@@ -6,7 +6,9 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { activityHoursRangeLabel } from '../../../../model/hours-limit.model';
 import { CollapsibleSection } from '../../../../../../../shared/components/form/collapsible-section/collapsible-section';
+import { Badge } from '../../../../../../../shared/ui/badge/badge';
 import {
   ActivityTypeNode,
   activityComponentKey,
@@ -27,6 +29,7 @@ import { ResearchProject } from '../research/components/research-project/researc
   selector: 'app-activity-card',
   imports: [
     CollapsibleSection,
+    Badge,
     Subject,
     Support,
     DegreeWork,
@@ -48,9 +51,18 @@ export class ActivityCard {
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
   readonly projects = input<ProfessorProjectItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   readonly expanded = signal(false);
 
   readonly componentKey = computed(() => activityComponentKey(this.activity().componente));
+
+  readonly hoursRange = computed(() =>
+    activityHoursRangeLabel(
+      this.activity(),
+      this.activityTree().length ? this.activityTree() : [this.activity()],
+    ),
+  );
 }

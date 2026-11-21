@@ -14,6 +14,7 @@ import { Checkbox } from '../../../../../../../shared/components/form/input/chec
 import { Select } from '../../../../../../../shared/components/form/select/select';
 import { Button } from '../../../../../../../shared/ui/button/button';
 import { formatSentenceValue } from '../../../../../../../shared/utils/normalized-text.util';
+import { ToastService } from '../../../../../../../core/service/toastService';
 import { CoordinationService } from '../../../../data/coordination.service';
 import {
   EMPTY_COORDINATION_COST_CENTERS,
@@ -23,6 +24,11 @@ import {
   DetalleCargaDocenteRequest,
   SaveDetailProfessorPreloadRequest,
 } from '../../../../model/professor-activity-save.model';
+import {
+  findHoursLimitViolation,
+  hoursLimitMessage,
+} from '../../../../model/hours-limit.model';
+import { ActivityTypeNode } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
 import {
   ProfessorProjectItem,
@@ -50,6 +56,7 @@ interface ProjectDetailRef {
 })
 export class ProjectTable {
   private readonly coordinationService = inject(CoordinationService);
+  private readonly toastService = inject(ToastService);
 
   readonly projects = input<ProfessorProjectItem[]>([]);
   readonly extraField = input<ProjectExtraField | null>(null);
@@ -60,6 +67,8 @@ export class ProjectTable {
   readonly idUnidadRegional = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   private readonly selectedIds = signal<number[]>([]);
@@ -169,7 +178,7 @@ export class ProjectTable {
 
   associate(): void {
     const request = this.buildSaveRequest();
-    if (!request || this.isSaving()) {
+    if (!request || this.isSaving() || this.blockedByHoursLimit(request.detalles)) {
       return;
     }
 
@@ -420,6 +429,21 @@ export class ProjectTable {
       : null;
     const id = particular ?? item.idPrograma;
     return id != null && Number.isInteger(id) && id > 0 ? id : undefined;
+  }
+
+  private blockedByHoursLimit(detalles: DetalleCargaDocenteRequest[]): boolean {
+    const violation = findHoursLimitViolation({
+      tree: this.activityTree(),
+      linkageLimit: this.hoursLimit(),
+      saved: this.savedDetails(),
+      additions: detalles,
+    });
+    if (!violation) {
+      return false;
+    }
+
+    this.toastService.show(hoursLimitMessage(violation), 'error', 'Límite de horas');
+    return true;
   }
 
   private listedCostCenterId(item: ProfessorProjectItem): number | null {
