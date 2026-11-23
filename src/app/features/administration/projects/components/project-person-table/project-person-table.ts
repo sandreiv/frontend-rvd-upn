@@ -12,6 +12,7 @@ import {
   Component,
   EventEmitter,
   Output,
+  computed,
   inject,
   input,
   model,
@@ -49,6 +50,7 @@ export class ProjectPersonTable {
 
   persons = input<ProjectPersonItem[]>([]);
   selectedPersonIds = model<string[]>([]);
+  isGestionable = input(true);
 
   constructor() {
     this.projectsService.listParticipantFunctions().subscribe({
@@ -103,6 +105,7 @@ export class ProjectPersonTable {
     {
       id: 'centroCosto',
       header: 'Centro de costo',
+      allowHtml: true,
       cell: (row) => this.formatCentroCosto(row),
     },
     {
@@ -125,15 +128,22 @@ export class ProjectPersonTable {
     },
   ];
 
-  readonly rowActions: DataTableRowAction<ProjectPersonItem>[] = [
-    { id: 'edit', label: 'Editar', icon: 'pencil' },
-    {
-      id: 'delete',
-      label: 'Eliminar',
-      icon: 'delete',
-      className: 'text-red-500',
-    },
-  ];
+  readonly rowActions = computed<DataTableRowAction<ProjectPersonItem>[]>(() => {
+    if (this.isGestionable()) {
+      return [
+        { id: 'edit', label: 'Editar', icon: 'pencil' },
+        {
+          id: 'delete',
+          label: 'Eliminar',
+          icon: 'delete',
+          className: 'text-red-500',
+        },
+      ];
+    }
+    return [
+      { id: 'edit', label: 'Ver detalle', icon: 'eye' },
+    ];
+  });
 
   onToolbarAction(event: DataTableToolbarActionEvent<ProjectPersonItem>): void {
     if (event.actionId === 'refresh') {
@@ -242,10 +252,21 @@ export class ProjectPersonTable {
   }
 
   private formatCentroCosto(row: ProjectPersonItem): string {
-    if (row.centroCostoCodigo && row.centroCostoNombre) {
-      return `${row.centroCostoCodigo} - ${row.centroCostoNombre}`;
+    const cc =
+      row.centroCostoCodigo && row.centroCostoNombre
+        ? `${row.centroCostoCodigo} - ${row.centroCostoNombre}`
+        : row.centroCostoNombre || row.centroCostoCodigo || '-';
+
+    if (!row.programaNombre) {
+      return cc;
     }
-    return row.centroCostoNombre || row.centroCostoCodigo || '-';
+
+    return `
+      <div>
+        <span>${cc}</span>
+        <span class="block text-[11px] text-gray-500 dark:text-gray-400 font-normal">Prog: ${row.programaNombre}</span>
+      </div>
+    `;
   }
 
   private formatHoras(row: ProjectPersonItem): string {

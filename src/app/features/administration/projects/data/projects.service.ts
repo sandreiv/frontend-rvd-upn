@@ -12,7 +12,10 @@ import { Observable, shareReplay } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../configuration/preload-call/model/preload-call.model';
 import {
+  CentroCostoItem,
   CoordinationOption,
+  CoordinacionCentrosCostoResponse,
+  CoordinacionSupervisionItem,
   CostCenterOption,
   DayOfWeekOption,
   DeleteBulkProjectsRequest,
@@ -45,10 +48,23 @@ export class ProjectsService {
   /**
    * Lista todos los proyectos y productos jerárquicamente para visualización en árbol.
    *
+   * @param idCoordinacion Opcional. Identificador de la coordinación a filtrar.
    * @returns Observable con todos los proyectos y productos.
    */
-  listAllProjects(): Observable<ProjectItem[]> {
-    return this.webRequestService.get<ProjectItem[]>(`${this.endpoint}/all`);
+  listAllProjects(idCoordinacion?: number | null): Observable<ProjectItem[]> {
+    const params = idCoordinacion != null ? { idCoordinacion } : undefined;
+    return this.webRequestService.get<ProjectItem[]>(`${this.endpoint}/all`, params);
+  }
+
+  /**
+   * Lista las coordinaciones a cargo del usuario y sus coordinaciones hijas para supervisión.
+   *
+   * @returns Observable con la lista de coordinaciones accesibles.
+   */
+  listSupervisionCoordinations(): Observable<CoordinacionSupervisionItem[]> {
+    return this.webRequestService.get<CoordinacionSupervisionItem[]>(
+      `${this.endpoint}/supervision-coordinations`,
+    );
   }
 
   /**
@@ -237,7 +253,7 @@ export class ProjectsService {
    * @param idCoordinacion Identificador opcional de la coordinación.
    * @returns Observable con los centros de costo disponibles.
    */
-  listCostCenters(idProyecto?: number, idCoordinacion?: number): Observable<CostCenterOption[]> {
+  listCostCenters(idProyecto?: number, idCoordinacion?: number): Observable<CoordinacionCentrosCostoResponse> {
     const params: Record<string, string> = {};
     if (idProyecto != null && idProyecto > 0) {
       params['idProyecto'] = String(idProyecto);
@@ -245,9 +261,22 @@ export class ProjectsService {
     if (idCoordinacion != null && idCoordinacion > 0) {
       params['idCoordinacion'] = String(idCoordinacion);
     }
-    return this.webRequestService.get<CostCenterOption[]>(
+    return this.webRequestService.get<CoordinacionCentrosCostoResponse>(
       `${this.endpoint}/cost-centers`,
       params,
+    );
+  }
+
+  /**
+   * Busca centros de costo por término de búsqueda en todo el catálogo institucional.
+   *
+   * @param term Texto a buscar.
+   * @returns Observable con los centros de costo encontrados.
+   */
+  searchCostCenters(term: string): Observable<CentroCostoItem[]> {
+    return this.webRequestService.get<CentroCostoItem[]>(
+      `${this.endpoint}/cost-centers/search`,
+      { term: term.trim() },
     );
   }
 

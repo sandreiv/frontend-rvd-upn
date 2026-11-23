@@ -6,6 +6,7 @@
  * 10/11/2026 - Leonel Antonio Perez Rios - Limpieza de código, validación de horas y remoción de límites inexistentes
  * 13/11/2026 - Inclusión de función en el proyecto y selector de centro de costo
  * 17/11/2026 - Refactorización de Clean Code: tipado estricto, días dinámicos desde backend y eliminación de código muerto
+ * 20/11/2026 - Inclusión de selector dinámico de programa curricular según aplicaPrograma y auto-sincronización con centro de costo
  */
 import {
   ChangeDetectionStrategy,
@@ -52,6 +53,8 @@ import { TimePicker } from '../../../../../shared/components/form/time-picker/ti
 import { ProjectsService } from '../../data/projects.service';
 import { PersonaAutorizaConvocatoriaItem } from '../../../../configuration/preload-call/model/preload-call.model';
 import {
+  CentroCostoItem,
+  CoordinacionCentrosCostoResponse,
   CostCenterOption,
   DayOfWeekOption,
   DayScheduleState,
@@ -59,6 +62,7 @@ import {
   ParticipantFunctionOption,
   ParticipantLevelOption,
   ParticipantScheduleSlot,
+  ProgramaCentrosCostoItem,
   ProjectItem,
   ProjectPersonFormData,
   ProjectPersonItem,
@@ -79,6 +83,7 @@ type ProjectPersonFormGroup = FormGroup<{
   funcion: FormControl<string>;
   nivel: FormControl<string>;
   idCentroCosto: FormControl<string>;
+  idPrograma: FormControl<string>;
   horas: FormControl<number | null>;
   observacion: FormControl<string>;
   esActivo: FormControl<boolean>;
@@ -115,12 +120,18 @@ export class ProjectPersonForm implements OnInit, OnChanges {
   projectId = input<number>(0);
   project = input<ProjectItem | null>(null);
   isSaving = input(false);
+  readOnly = input(false);
 
   @Output() cancel = new EventEmitter<void>();
   @Output() savePerson = new EventEmitter<ProjectPersonFormData>();
 
   readonly filteredPeople = signal<PersonaAutorizaConvocatoriaItem[]>([]);
   readonly costCenterOptions = signal<Option[]>([]);
+  readonly baseCostCenterOptions = signal<Option[]>([]);
+  readonly programOptions = signal<Option[]>([]);
+  private readonly costCenterToProgramMap = new Map<string, string>();
+  private readonly programToCostCenterMap = new Map<string, string>();
+  private readonly costCenterSearch$ = new Subject<string>();
   readonly isCreateMode = computed<boolean>(() => this.person() == null);
 
   readonly participantFunctionOptions = signal<Option[]>([]);
@@ -157,18 +168,56 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     return this.activeActivityType()?.requiereHorario ?? false;
   });
 
+  readonly showPrograma = computed<boolean>(() => {
+    return this.activeActivityType()?.aplicaPrograma ?? false;
+  });
+
   readonly showCustomDataCard = computed<boolean>(() => {
     return this.showFuncion() || this.showNivel() || this.showHorario();
   });
 
   readonly minHoras = computed<number>(() => {
-    const val = this.activeActivityType()?.minimoHoras;
-    return val != null && val > 0 ? val : MIN_HORAS;
+    let current = this.activeActivityType();
+    const visited = new Set<number>();
+    while (current != null && !visited.has(Number(current.id))) {
+      visited.add(Number(current.id));
+      if (current.minimoHoras != null && current.minimoHoras > 0) {
+        return current.minimoHoras;
+      }
+      if (current.idPadre == null) {
+        break;
+      }
+      current =
+        this.activityTypes().find(
+          (item: TipoActividadProyectoItem) =>
+            Number(item.id) === Number(current?.idPadre),
+        ) ?? null;
+    }
+    return MIN_HORAS;
   });
 
   readonly maxHoras = computed<number>(() => {
-    const val = this.activeActivityType()?.maximoHoras;
-    return val != null && val > 0 ? val : MAX_HORAS;
+    let current = this.activeActivityType();
+    const visited = new Set<number>();
+    let minOfMax: number | null = null;
+    while (current != null && !visited.has(Number(current.id))) {
+      visited.add(Number(current.id));
+      if (current.maximoHoras != null && current.maximoHoras > 0) {
+        minOfMax =
+          minOfMax != null
+            ? Math.min(minOfMax, current.maximoHoras)
+            : current.maximoHoras;
+      }
+      if (current.idPadre == null) {
+        break;
+      }
+      current =
+        this.activityTypes().find(
+          (item: TipoActividadProyectoItem) =>
+            Number(item.id) === Number(current?.idPadre),
+        ) ?? null;
+    }
+    return minOfMax ?? MAX_HORAS;
   });
 
   readonly totalHorasSemanales = computed<number>(() => {
@@ -215,6 +264,9 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       nonNullable: true,
     }),
     idCentroCosto: new FormControl('', {
+      nonNullable: true,
+    }),
+    idPrograma: new FormControl('', {
       nonNullable: true,
     }),
     horas: new FormControl<number | null>(null, {
@@ -277,6 +329,67 @@ export class ProjectPersonForm implements OnInit, OnChanges {
         this.filteredPeople.set(rows.slice(0, MAX_SEARCH_RESULTS)),
       );
 
+    this.costCenterSearch$
+      .pipe(
+        debounceTime(SEARCH_DEBOUNCE_TIME),
+        distinctUntilChanged(),
+        switchMap((term: string) => {
+          const clean = term?.trim();
+          if (!clean || clean.length < MIN_SEARCH_CHARS) {
+            return of([] as CentroCostoItem[]);
+          }
+          return this.projectsService
+            .searchCostCenters(clean)
+            .pipe(catchError(() => of([] as CentroCostoItem[])));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((extraCenters: CentroCostoItem[]) => {
+        const base = this.baseCostCenterOptions();
+        if (!extraCenters || extraCenters.length === 0) {
+          this.costCenterOptions.set(base);
+          this.ensureSelectedCostCenter();
+          return;
+        }
+
+        const existingValues = new Set(base.map((o) => o.value));
+        const extraOptions: Option[] = extraCenters
+          .filter((c) => !existingValues.has(String(c.id)))
+          .map((c) => ({
+            value: String(c.id),
+            label: c.descripcion,
+            group: 'Otros centros de costo',
+          }));
+
+        this.costCenterOptions.set([...base, ...extraOptions]);
+        this.ensureSelectedCostCenter();
+      });
+
+    this.form.controls.idPrograma.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((progId: string) => {
+        this.updateFilteredCostCenters(progId);
+        if (!progId) {
+          return;
+        }
+        const assignedCeco = this.programToCostCenterMap.get(progId);
+        if (assignedCeco) {
+          this.form.controls.idCentroCosto.setValue(assignedCeco, { emitEvent: false });
+        }
+      });
+
+    this.form.controls.idCentroCosto.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((cecoId: string) => {
+        if (!cecoId || !this.showPrograma()) {
+          return;
+        }
+        const progId = this.costCenterToProgramMap.get(cecoId);
+        if (progId) {
+          this.form.controls.idPrograma.setValue(progId, { emitEvent: false });
+        }
+      });
+
     effect(() => {
       const reqFuncion = this.showFuncion();
       const reqNivel = this.showNivel();
@@ -303,9 +416,10 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     if (changes['project'] && !changes['project'].firstChange) {
       this.loadCostCenters();
     }
-    if (changes['person']) {
+    if (changes['person'] || changes['readOnly']) {
       this.ensureSelectedPerson();
       this.ensureSelectedCostCenter();
+      this.ensureSelectedProgram();
       this.patchForm();
     }
   }
@@ -327,6 +441,10 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       return;
     }
     this.searchTerm$.next(normalized);
+  }
+
+  onSearchCostCenter(term: string): void {
+    this.costCenterSearch$.next(term ?? '');
   }
 
   calculateSlotHours(slot: { activo: boolean; horaInicio: string; horaFin: string }): number {
@@ -422,6 +540,7 @@ export class ProjectPersonForm implements OnInit, OnChanges {
       idProyecto: this.projectId(),
       idPersonaGeneral: Number(raw.idPersonaGeneral),
       idCentroCosto: raw.idCentroCosto ? Number(raw.idCentroCosto) : null,
+      idPrograma: this.showPrograma() && raw.idPrograma ? Number(raw.idPrograma) : null,
       funcion: this.showFuncion() && raw.funcion ? raw.funcion : null,
       nivel: this.showNivel() && raw.nivel ? raw.nivel : null,
       horario: this.showHorario() && activeSlots.length > 0 ? activeSlots : null,
@@ -600,16 +719,84 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.projectsService
       .listCostCenters(projId > 0 ? projId : undefined, coordId && coordId > 0 ? coordId : undefined)
       .subscribe({
-        next: (list: CostCenterOption[]) => {
-          const options: Option[] = (list ?? []).map((item: CostCenterOption) => ({
-            value: String(item.id),
-            label: `${item.codigo} - ${item.nombre}`,
-          }));
-          this.costCenterOptions.set(options);
+        next: (data: CoordinacionCentrosCostoResponse) => {
+          const options: Option[] = [];
+          const progOptions: Option[] = [];
+          const seenCostCenters = new Set<string>();
+          const seenPrograms = new Set<string>();
+          this.costCenterToProgramMap.clear();
+          this.programToCostCenterMap.clear();
+
+          const coordGroup = data?.nombre ? `Coordinación: ${data.nombre}` : 'Coordinación';
+          (data?.centrosCosto ?? []).forEach((c: CentroCostoItem) => {
+            const val = String(c.id);
+            if (!seenCostCenters.has(val)) {
+              seenCostCenters.add(val);
+              options.push({
+                value: val,
+                label: c.descripcion,
+                group: coordGroup,
+              });
+            }
+          });
+
+          (data?.programas ?? []).forEach((p: ProgramaCentrosCostoItem) => {
+            const progId = String(p.id);
+            if (!seenPrograms.has(progId)) {
+              seenPrograms.add(progId);
+              progOptions.push({
+                value: progId,
+                label: p.nombre,
+                group: p.grupo || undefined,
+              });
+            }
+
+            const firstCostCenter = p.centrosCosto?.[0];
+            if (firstCostCenter) {
+              this.programToCostCenterMap.set(progId, String(firstCostCenter.id));
+            }
+
+            const progGroup = p.nombre ? `Programa: ${p.nombre}` : 'Programa';
+            (p.centrosCosto ?? []).forEach((c: CentroCostoItem) => {
+              const val = String(c.id);
+              this.costCenterToProgramMap.set(val, progId);
+              if (!seenCostCenters.has(val)) {
+                seenCostCenters.add(val);
+                options.push({
+                  value: val,
+                  label: c.descripcion,
+                  group: progGroup,
+                });
+              }
+            });
+          });
+
+          this.programOptions.set(progOptions);
+          this.baseCostCenterOptions.set(options);
+          this.updateFilteredCostCenters(this.form.controls.idPrograma.value);
           this.ensureSelectedCostCenter();
+          this.ensureSelectedProgram();
         },
         error: () => {},
       });
+  }
+
+  private updateFilteredCostCenters(selectedProgId?: string | null): void {
+    const base = this.baseCostCenterOptions();
+    if (!selectedProgId) {
+      this.costCenterOptions.set(base);
+      this.ensureSelectedCostCenter();
+      return;
+    }
+
+    const filtered = base.filter((opt: Option) => {
+      const isCoord = !this.costCenterToProgramMap.has(opt.value);
+      const isSelectedProg = this.costCenterToProgramMap.get(opt.value) === selectedProgId;
+      return isCoord || isSelectedProg;
+    });
+
+    this.costCenterOptions.set(filtered);
+    this.ensureSelectedCostCenter();
   }
 
   private ensureSelectedPerson(): void {
@@ -655,6 +842,22 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.costCenterOptions.set([{ value: id, label }, ...currentOptions]);
   }
 
+  private ensureSelectedProgram(): void {
+    const item = this.person();
+    if (!item?.idPrograma) {
+      return;
+    }
+
+    const id = String(item.idPrograma);
+    const currentOptions = this.programOptions();
+    if (currentOptions.some((opt: Option) => opt.value === id)) {
+      return;
+    }
+
+    const label = item.programaNombre || `Programa ${id}`;
+    this.programOptions.set([{ value: id, label }, ...currentOptions]);
+  }
+
   private patchForm(): void {
     const item = this.person();
 
@@ -676,17 +879,42 @@ export class ProjectPersonForm implements OnInit, OnChanges {
     this.syncWeeklySchedule();
 
     this.form.reset({
-      idPersonaGeneral:
-        item?.idPersonaGeneral != null ? String(item.idPersonaGeneral) : '',
+      idPersonaGeneral: item?.idPersonaGeneral != null ? String(item.idPersonaGeneral) : '',
       funcion: funcionValue,
       nivel: nivelValue,
-      idCentroCosto:
-        item?.idCentroCosto != null ? String(item.idCentroCosto) : '',
-      horas:
-        item?.horas != null && item.horas !== '' ? Number(item.horas) : null,
+      idCentroCosto: item?.idCentroCosto != null ? String(item.idCentroCosto) : '',
+      idPrograma: item?.idPrograma != null ? String(item.idPrograma) : '',
+      horas: item?.horas != null && item.horas !== '' ? Number(item.horas) : null,
       observacion: item?.observacion ?? '',
       esActivo: item ? this.isChecked(item.esActivo || item.estado) : true,
     });
+
+    this.updateFilteredCostCenters(item?.idPrograma != null ? String(item.idPrograma) : '');
+
+    if (this.readOnly()) {
+      this.form.disable();
+    } else {
+      this.form.enable();
+    }
+  }
+
+  isCoordinationGroup(group: string): boolean {
+    const g = group.toLowerCase();
+    return (
+      g.startsWith('coordinación') ||
+      g.startsWith('coordinacion') ||
+      g.startsWith('facultad') ||
+      g.startsWith('decanatura') ||
+      g.startsWith('departamento')
+    );
+  }
+
+  isProgramGroup(group: string): boolean {
+    return group.toLowerCase().startsWith('programa');
+  }
+
+  cleanGroupName(group: string): string {
+    return group.replace(/^(coordinaci[oó]n|programa|facultad|departamento):\s*/i, '').trim();
   }
 
   private isChecked(value: string | null | undefined): boolean {

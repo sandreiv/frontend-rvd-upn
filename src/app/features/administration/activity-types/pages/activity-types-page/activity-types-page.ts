@@ -9,6 +9,8 @@ import { ActivityTypesService } from '../../data/activity-types.service';
 import {
   ActivityTypeFormData,
   ActivityTypeItem,
+  getEffectiveAncestorMaxHours,
+  getInheritedAncestorMinHours,
   parseActivityHours,
   sumChildrenMaxHours,
 } from '../../model/activity-types.model';
@@ -54,13 +56,21 @@ export class ActivityTypesPage implements OnInit {
       : 'Registra o modifica los tipos de actividad principales.';
   });
 
-  readonly parentMinHoras = computed(() =>
-    parseActivityHours(this.parentActivityType()?.minimoHoras),
-  );
+  readonly parentMinHoras = computed(() => {
+    const parent = this.parentActivityType();
+    if (!parent?.id) {
+      return null;
+    }
+    return getInheritedAncestorMinHours(this.activityTypes(), parent.id);
+  });
 
-  readonly parentMaxHoras = computed(() =>
-    parseActivityHours(this.parentActivityType()?.maximoHoras),
-  );
+  readonly parentMaxHoras = computed(() => {
+    const parent = this.parentActivityType();
+    if (!parent?.id) {
+      return null;
+    }
+    return getEffectiveAncestorMaxHours(this.activityTypes(), parent.id);
+  });
 
   readonly siblingsMaxHoursSum = computed(() => {
     const parent = this.parentActivityType();

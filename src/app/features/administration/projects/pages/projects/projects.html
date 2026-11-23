@@ -4,6 +4,31 @@
   iconName="briefcase"
   iconVariant="brand"
 >
+  @if (hasMultipleCoordinations()) {
+    <div sectionFrameHeaderActions class="flex items-center gap-2.5">
+      <app-select
+        class="w-full sm:w-72 md:w-80"
+        [options]="coordinacionSelectOptions()"
+        [value]="selectedCoordinacionValue()"
+        (valueChange)="onCoordinacionChange($event)"
+        placeholder="Seleccione la coordinación"
+        searchPlaceholder="Buscar coordinación..."
+        emptyText="No se encontraron coordinaciones"
+      />
+      @if (isGestionable()) {
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 whitespace-nowrap">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Gestión
+        </span>
+      } @else {
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 whitespace-nowrap">
+          <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+          Supervisión
+        </span>
+      }
+    </div>
+  }
+
   <div class="space-y-5">
     @if (isPersonsView()) {
       <div
@@ -93,12 +118,14 @@
             [projectId]="parentProject()?.id ?? 0"
             [project]="parentProject()"
             [isSaving]="isSaving()"
+            [readOnly]="!isGestionable()"
             (cancel)="closeForm()"
             (savePerson)="onSavePerson($event)"
           />
         } @else {
           <app-project-person-table
             [persons]="persons()"
+            [isGestionable]="isGestionable()"
             [selectedPersonIds]="selectedPersonIds()"
             (selectedPersonIdsChange)="onSelectedPersonIdsChange($event)"
             (refreshPersons)="refreshPersons()"
@@ -119,6 +146,7 @@
         } @else {
           <app-project-student-table
             [students]="students()"
+            [isGestionable]="isGestionable()"
             [selectedStudentIds]="selectedStudentIds()"
             (selectedStudentIdsChange)="onSelectedStudentIdsChange($event)"
             (refreshStudents)="refreshStudents()"
@@ -133,12 +161,13 @@
         <app-project-form
           [project]="selectedProject()"
           [isSaving]="isSaving()"
+          [readOnly]="!isGestionable()"
           [title]="formTitle()"
           [editTitle]="formEditTitle()"
           [description]="formDescription()"
           [parentProjectId]="parentProject()?.id ?? null"
-          [parentCoordinationId]="parentProject()?.idCoordinacion ?? null"
-          [parentCoordinationName]="parentProject()?.coordinacion?.nombre ?? ''"
+          [parentCoordinationId]="parentProject()?.idCoordinacion ?? selectedCoordinacionId()"
+          [parentCoordinationName]="parentProject()?.coordinacion?.nombre ?? currentCoordinacion()?.nombre ?? ''"
           [parentTipoActividadId]="parentProject()?.idTipoActividad ?? null"
           (cancel)="closeForm()"
           (saveProject)="onSaveProject($event)"
@@ -146,6 +175,7 @@
       } @else {
         <app-project-table
           [projects]="projects()"
+          [isGestionable]="isGestionable()"
           [selectedProjectIds]="selectedProjectIds()"
           (selectedProjectIdsChange)="onSelectedProjectIdsChange($event)"
           (refreshProjects)="refreshCurrentList()"

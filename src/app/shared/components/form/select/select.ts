@@ -1,10 +1,13 @@
-﻿import { CommonModule } from '@angular/common';
+﻿import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
-  EventEmitter,
   ElementRef,
+  EventEmitter,
   HostListener,
+  Output,
+  TemplateRef,
   computed,
+  contentChild,
   forwardRef,
   inject,
   input,
@@ -32,13 +35,13 @@ type NormalizedOption = Option & {
 };
 
 type SelectPanelItem =
-  | { type: 'group'; key: string; label: string }
+  | { type: 'group'; key: string; label: string; count: number }
   | { type: 'option'; key: string; option: NormalizedOption };
 
 @Component({
   selector: 'app-select',
   standalone: true,
-  imports: [CommonModule, Icon],
+  imports: [CommonModule, NgTemplateOutlet, Icon],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -51,6 +54,11 @@ type SelectPanelItem =
 export class Select implements ControlValueAccessor {
   private readonly el = inject(ElementRef<HTMLElement>);
   triggerRef = viewChild<ElementRef<HTMLButtonElement>>('triggerRef');
+
+  contentGroupTemplate = contentChild<TemplateRef<{ $implicit: string; label: string; count: number }>>('groupTemplate');
+  groupTemplate = input<TemplateRef<{ $implicit: string; label: string; count: number }> | null>(null);
+
+  readonly effectiveGroupTemplate = computed(() => this.groupTemplate() || this.contentGroupTemplate() || null);
 
   options = input<Option[]>([]);
   placeholder = input('Select an option');
@@ -69,7 +77,8 @@ export class Select implements ControlValueAccessor {
   value = model<string>('');
   private readonly selectedValues = signal<string[]>([]);
 
-  valueChange = new EventEmitter<string>();
+  @Output() valueChange = new EventEmitter<string>();
+  @Output() searchChange = new EventEmitter<string>();
 
   private onChangeFn: (value: string | string[]) => void = () => {};
   onTouched: () => void = () => {};
@@ -120,14 +129,23 @@ export class Select implements ControlValueAccessor {
   panelItems = computed((): SelectPanelItem[] => {
     const items: SelectPanelItem[] = [];
     let lastGroup: string | undefined;
+    const filtered = this.filteredOptions();
 
-    for (const option of this.filteredOptions()) {
+    const groupCounts = new Map<string, number>();
+    for (const opt of filtered) {
+      if (opt.group) {
+        groupCounts.set(opt.group, (groupCounts.get(opt.group) ?? 0) + 1);
+      }
+    }
+
+    for (const option of filtered) {
       const group = option.group;
       if (group && group !== lastGroup) {
         items.push({
           type: 'group',
           key: `group-${group}`,
           label: group,
+          count: groupCounts.get(group) ?? 0,
         });
         lastGroup = group;
       }
@@ -239,6 +257,7 @@ export class Select implements ControlValueAccessor {
     this.isOpen.set(false);
     this.query.set('');
     this.openUp.set(false);
+    this.searchChange.emit('');
   }
 
   select(nextValue: string | number) {
@@ -273,7 +292,9 @@ export class Select implements ControlValueAccessor {
 
   onQueryInput(event: Event) {
     const inputEl = event.target as HTMLInputElement;
-    this.query.set(inputEl.value);
+    const q = inputEl.value;
+    this.query.set(q);
+    this.searchChange.emit(q);
   }
 
   @HostListener('window:resize')

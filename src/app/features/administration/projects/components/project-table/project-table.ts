@@ -34,6 +34,7 @@ import {
 export class ProjectTable {
   projects = input<ProjectItem[]>([]);
   selectedProjectIds = model<string[]>([]);
+  isGestionable = input(true);
   emptyMessage = input('No hay proyectos registrados.');
   searchPlaceholder = input('Buscar proyecto...');
 
@@ -91,24 +92,39 @@ export class ProjectTable {
     },
   ];
 
-  readonly rowActions = computed<TreeTableRowAction<ProjectItem>[]>(() => [
-    {
-      id: 'persons',
-      label: 'Participantes',
-      icon: 'user',
-    },
-    {
-      id: 'edit',
-      label: 'Editar',
-      icon: 'pencil',
-    },
-    {
-      id: 'delete',
-      label: 'Eliminar',
-      icon: 'delete',
-      className: 'text-red-500',
-    },
-  ]);
+  readonly rowActions = computed<TreeTableRowAction<ProjectItem>[]>(() => {
+    const actions: TreeTableRowAction<ProjectItem>[] = [
+      {
+        id: 'persons',
+        label: this.isGestionable() ? 'Participantes' : 'Ver participantes',
+        icon: 'user',
+      },
+    ];
+
+    if (this.isGestionable()) {
+      actions.push(
+        {
+          id: 'edit',
+          label: 'Editar',
+          icon: 'pencil',
+        },
+        {
+          id: 'delete',
+          label: 'Eliminar',
+          icon: 'delete',
+          className: 'text-red-500',
+        },
+      );
+    } else {
+      actions.push({
+        id: 'edit',
+        label: 'Ver detalle',
+        icon: 'eye',
+      });
+    }
+
+    return actions;
+  });
 
   onAction(event: TreeTableActionEvent<ProjectItem>): void {
     if (event.actionId === 'add-subproject') {

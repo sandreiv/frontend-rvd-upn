@@ -187,30 +187,22 @@ export class ActivityTypeForm implements OnChanges {
         nonNullable: true,
       }),
       minimoHoras: new FormControl<number | null>(null, {
-        validators: [Validators.required, Validators.min(0)],
+        validators: [Validators.min(0)],
       }),
       maximoHoras: new FormControl<number | null>(null, {
-        validators: [
-          Validators.required,
-          Validators.min(0),
-          this.parentMaxHoursValidator(),
-        ],
+        validators: [Validators.min(0)],
       }),
       estado: new FormControl(true, {
         nonNullable: true,
       }),
     },
-    { validators: [hoursRangeValidator] },
+    { validators: [this.childParentRangeValidator()] },
   );
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes['activityType'] ||
-      changes['parentMaxHoras'] ||
-      changes['siblingsMaxHoursSum']
-    ) {
+    if (changes['activityType'] || changes['parentMinHoras'] || changes['parentMaxHoras'] || changes['siblingsMaxHoursSum']) {
       this.patchForm();
-      this.form.controls.maximoHoras.updateValueAndValidity({
+      this.form.updateValueAndValidity({
         emitEvent: false,
       });
     }
@@ -219,16 +211,23 @@ export class ActivityTypeForm implements OnChanges {
   get hoursRangeInvalid(): boolean {
     return (
       this.form.hasError('hoursRange') &&
-      (this.form.controls.maximoHoras.touched ||
+      ((this.form.controls.minimoHoras.touched && this.form.controls.maximoHoras.touched) ||
+        this.form.controls.minimoHoras.dirty ||
         this.form.controls.maximoHoras.dirty)
     );
   }
 
-  get parentMaxHoursInvalid(): boolean {
-    const control = this.form.controls.maximoHoras;
+  get childMinAboveParentMax(): boolean {
     return (
-      control.hasError('parentMaxHours') &&
-      (control.touched || control.dirty)
+      this.form.hasError('childMinAboveParentMax') &&
+      (this.form.controls.minimoHoras.touched || this.form.controls.minimoHoras.dirty)
+    );
+  }
+
+  get childMaxAboveParentMax(): boolean {
+    return (
+      this.form.hasError('childMaxAboveParentMax') &&
+      (this.form.controls.maximoHoras.touched || this.form.controls.maximoHoras.dirty)
     );
   }
 
@@ -241,6 +240,15 @@ export class ActivityTypeForm implements OnChanges {
 
     const raw = this.form.getRawValue();
 
+    const min =
+      raw.minimoHoras != null && String(raw.minimoHoras).trim() !== ''
+        ? (Number(raw.minimoHoras) > 0 ? Number(raw.minimoHoras) : null)
+        : null;
+    const max =
+      raw.maximoHoras != null && String(raw.maximoHoras).trim() !== ''
+        ? (Number(raw.maximoHoras) > 0 ? Number(raw.maximoHoras) : null)
+        : null;
+
     this.saveActivityType.emit({
       nombre: raw.nombre.trim(),
       descripcion: raw.descripcion.trim(),
@@ -250,39 +258,69 @@ export class ActivityTypeForm implements OnChanges {
       docenciaDirecta: raw.docenciaDirecta ? '1' : '0',
       horasPorSemestre: raw.horasPorSemestre ? '1' : '0',
       aplicaProyectos: raw.aplicaProyectos ? '1' : '0',
-      minimoHoras: raw.minimoHoras != null ? Number(raw.minimoHoras) : null,
-      maximoHoras: raw.maximoHoras != null ? Number(raw.maximoHoras) : null,
+      minimoHoras: min,
+      maximoHoras: max,
       estado: raw.estado ? '1' : '0',
     });
   }
 
-  private parentMaxHoursValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const parentMax = this.parentMaxHoras();
-      if (parentMax == null) {
-        return null;
+  private childParentRangeValidator(): ValidatorFn {
+    return (formGroup: AbstractControl): ValidationErrors | null => {
+      const minControl = formGroup.get('minimoHoras');
+      const maxControl = formGroup.get('maximoHoras');
+
+      const minRaw = minControl?.value;
+      const maxRaw = maxControl?.value;
+
+      const minVal =
+        minRaw != null && String(minRaw).trim() !== '' ? Number(minRaw) : null;
+      const maxVal =
+        maxRaw != null && String(maxRaw).trim() !== '' ? Number(maxRaw) : null;
+
+      const pMax = this.parentMaxHoras();
+
+      const errors: Record<string, any> = {};
+
+      if (minVal != null && Number.isFinite(minVal) && minVal > 0) {
+        if (pMax != null && pMax > 0 && minVal > pMax) {
+          errors['childMinAboveParentMax'] = { parentMax: pMax, value: minVal };
+        }
       }
 
-      const maximo = Number(control.value);
-      if (!Number.isFinite(maximo)) {
-        return null;
+      if (maxVal != null && Number.isFinite(maxVal) && maxVal > 0) {
+        if (pMax != null && pMax > 0 && maxVal > pMax) {
+          errors['childMaxAboveParentMax'] = { parentMax: pMax, value: maxVal };
+        }
       }
 
-      const total = this.siblingsMaxHoursSum() + maximo;
-      return total > parentMax
-        ? {
-            parentMaxHours: {
-              parentMax,
-              remaining: Math.max(parentMax - this.siblingsMaxHoursSum(), 0),
-              total,
-            },
-          }
-        : null;
+      if (
+        minVal != null &&
+        maxVal != null &&
+        Number.isFinite(minVal) &&
+        Number.isFinite(maxVal) &&
+        minVal > 0 &&
+        maxVal > 0
+      ) {
+        if (maxVal < minVal) {
+          errors['hoursRange'] = true;
+        }
+      }
+
+      return Object.keys(errors).length > 0 ? errors : null;
     };
   }
 
   private patchForm(): void {
     const item = this.activityType();
+
+    const min =
+      item?.minimoHoras != null && Number(item.minimoHoras) > 0
+        ? Number(item.minimoHoras)
+        : null;
+    const max =
+      item?.maximoHoras != null && Number(item.maximoHoras) > 0
+        ? Number(item.maximoHoras)
+        : null;
 
     this.form.reset({
       nombre: item?.nombre ?? '',
@@ -293,8 +331,8 @@ export class ActivityTypeForm implements OnChanges {
       docenciaDirecta: item?.docenciaDirecta === '1',
       horasPorSemestre: item?.horasPorSemestre === '1',
       aplicaProyectos: item?.aplicaProyectos === '1',
-      minimoHoras: item?.minimoHoras != null ? Number(item.minimoHoras) : null,
-      maximoHoras: item?.maximoHoras != null ? Number(item.maximoHoras) : null,
+      minimoHoras: min,
+      maximoHoras: max,
       estado: parseBooleanState(item?.estado),
     });
   }

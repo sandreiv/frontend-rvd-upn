@@ -87,7 +87,7 @@
                       <app-icon name="chevronRight" size="xs" />
                     }
                   </span>
-                } @else if (node.level > 0) {
+                } @else {
                   <span class="inline-block size-4 shrink-0"></span>
                 }
 
@@ -96,7 +96,7 @@
                   [ngClass]="{
                     'font-semibold text-gray-900 dark:text-white': !node.selectable && node.level === 0,
                     'font-medium text-gray-800 dark:text-gray-200': !node.selectable && node.level > 0,
-                    'font-normal': node.selectable
+                    'font-normal text-gray-700 dark:text-gray-300': node.selectable
                   }"
                 >
                   {{ node.label }}

@@ -67,7 +67,7 @@ export class InputField implements ControlValueAccessor {
   onTouched: () => void = () => {};
 
   writeValue(value: any): void {
-    this.value = value || '';
+    this.value = value !== null && value !== undefined ? value : '';
   }
 
   registerOnChange(fn: (value: any) => void): void {
@@ -99,8 +99,11 @@ export class InputField implements ControlValueAccessor {
 
   onInput(event: Event) {
     const input = event.target as HTMLInputElement;
-    const value = this.type === 'number' ? +input.value : input.value;
-    this.value = value;
+    let value: any = input.value;
+    if (this.type === 'number') {
+      value = input.value.trim() === '' ? null : Number(input.value);
+    }
+    this.value = value !== null && value !== undefined ? value : '';
     this.onChange(value);
     this.valueChange.emit(value);
   }

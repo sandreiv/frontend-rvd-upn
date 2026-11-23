@@ -12,10 +12,38 @@ export interface ProjectLookup {
   codigo?: string;
 }
 
+export interface CoordinacionSupervisionItem {
+  id: number;
+  idPadre: number | null;
+  nombre: string;
+  esAcademica?: string;
+  nivel?: number;
+  esGestionable: boolean;
+}
+
 export interface CostCenterOption {
   id: number;
   codigo: string;
   nombre: string;
+}
+
+export interface CentroCostoItem {
+  id: number;
+  descripcion: string;
+}
+
+export interface ProgramaCentrosCostoItem {
+  id: number;
+  nombre: string;
+  grupo?: string | null;
+  centrosCosto: CentroCostoItem[];
+}
+
+export interface CoordinacionCentrosCostoResponse {
+  id?: number | null;
+  nombre?: string | null;
+  centrosCosto: CentroCostoItem[];
+  programas: ProgramaCentrosCostoItem[];
 }
 
 export interface ParticipantFunctionOption {
@@ -80,6 +108,7 @@ export interface TipoActividadComponenteOption {
   requiereFuncion: boolean;
   requiereNivel: boolean;
   requiereHorario: boolean;
+  aplicaPrograma: boolean;
 }
 
 export interface TipoActividadProyectoItem {
@@ -94,6 +123,7 @@ export interface TipoActividadProyectoItem {
   requiereFuncion?: boolean;
   requiereNivel?: boolean;
   requiereHorario?: boolean;
+  aplicaPrograma?: boolean;
   minimoHoras?: number | null;
   maximoHoras?: number | null;
 }
@@ -162,6 +192,7 @@ export interface ProjectPersonItem {
   centroCostoNombre?: string | null;
   centroCostoCodigo?: string | null;
   idPrograma?: number | null;
+  programaNombre?: string | null;
   funcion?: string | null;
   nivel?: string | null;
   horario?: ParticipantSchedule | ParticipantScheduleSlot[] | null;

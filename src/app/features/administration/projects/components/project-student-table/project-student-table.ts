@@ -7,6 +7,7 @@ import {
   Component,
   EventEmitter,
   Output,
+  computed,
   input,
   model,
 } from '@angular/core';
@@ -28,6 +29,7 @@ import { ProjectStudentItem } from '../../model/projects.model';
 export class ProjectStudentTable {
   students = input<ProjectStudentItem[]>([]);
   selectedStudentIds = model<string[]>([]);
+  isGestionable = input(true);
 
   @Output() refreshStudents = new EventEmitter<void>();
   @Output() addStudent = new EventEmitter<void>();
@@ -56,14 +58,19 @@ export class ProjectStudentTable {
     },
   ];
 
-  readonly rowActions: DataTableRowAction<ProjectStudentItem>[] = [
-    {
-      id: 'delete',
-      label: 'Eliminar',
-      icon: 'delete',
-      className: 'text-red-500',
-    },
-  ];
+  readonly rowActions = computed<DataTableRowAction<ProjectStudentItem>[]>(() => {
+    if (!this.isGestionable()) {
+      return [];
+    }
+    return [
+      {
+        id: 'delete',
+        label: 'Eliminar',
+        icon: 'delete',
+        className: 'text-red-500',
+      },
+    ];
+  });
 
   onToolbarAction(event: DataTableToolbarActionEvent<ProjectStudentItem>): void {
     if (event.actionId === 'refresh') {

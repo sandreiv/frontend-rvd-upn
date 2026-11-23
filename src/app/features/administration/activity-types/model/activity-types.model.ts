@@ -77,7 +77,7 @@ export function parseActivityHours(
   }
 
   const numeric = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
 }
 
 export function sumChildrenMaxHours(
@@ -92,4 +92,53 @@ export function sumChildrenMaxHours(
     const maxHours = parseActivityHours(child.maximoHoras);
     return total + (maxHours ?? 0);
   }, 0);
+}
+
+export function getEffectiveAncestorMaxHours(
+  all: ActivityTypeItem[],
+  parentId: number | null | undefined,
+): number | null {
+  let currentId = parentId;
+  let minOfMax: number | null = null;
+  const visited = new Set<number>();
+
+  while (currentId != null && !visited.has(currentId)) {
+    visited.add(currentId);
+    const ancestor = all.find((item) => item.id === currentId);
+    if (!ancestor) {
+      break;
+    }
+
+    const max = parseActivityHours(ancestor.maximoHoras);
+    if (max != null && max > 0) {
+      minOfMax = minOfMax != null ? Math.min(minOfMax, max) : max;
+    }
+    currentId = ancestor.idPadre ?? null;
+  }
+
+  return minOfMax;
+}
+
+export function getInheritedAncestorMinHours(
+  all: ActivityTypeItem[],
+  parentId: number | null | undefined,
+): number | null {
+  let currentId = parentId;
+  const visited = new Set<number>();
+
+  while (currentId != null && !visited.has(currentId)) {
+    visited.add(currentId);
+    const ancestor = all.find((item) => item.id === currentId);
+    if (!ancestor) {
+      break;
+    }
+
+    const min = parseActivityHours(ancestor.minimoHoras);
+    if (min != null && min > 0) {
+      return min;
+    }
+    currentId = ancestor.idPadre ?? null;
+  }
+
+  return null;
 }

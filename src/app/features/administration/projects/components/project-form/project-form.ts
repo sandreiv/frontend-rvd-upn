@@ -21,16 +21,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  firstValueFrom,
-  of,
-  Subject,
-  switchMap,
-} from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { Button } from '../../../../../shared/ui/button/button';
 import { InputField } from '../../../../../shared/components/form/input/input-field';
 import { Label } from '../../../../../shared/components/form/label/label';
@@ -38,10 +29,7 @@ import { Checkbox } from '../../../../../shared/components/form/input/checkbox';
 import { DatePicker } from '../../../../../shared/components/form/date-picker/date-picker';
 import { Option, Select } from '../../../../../shared/components/form/select/select';
 import { TreeSelect } from '../../../../../shared/components/form/tree-select/tree-select';
-import {
-  TypeaheadOption,
-  TypeaheadSelect,
-} from '../../../../../shared/components/form/typeahead-select/typeahead-select';
+import { Icon } from '../../../../../shared/ui/icon/icon';
 import { ProjectsService } from '../../data/projects.service';
 import {
   ProjectFormData,
@@ -52,14 +40,6 @@ import {
 const CODIGO_MAX_LENGTH = 50;
 const NOMBRE_MAX_LENGTH = 255;
 const ACTA_MAX_LENGTH = 100;
-const SEARCH_DEBOUNCE_TIME = 300;
-const MIN_SEARCH_CHARS = 2;
-
-interface CoordinationOption {
-  id: number;
-  nombre: string;
-  descripcion?: string | null;
-}
 
 type ProjectFormGroup = FormGroup<{
   codigo: FormControl<string>;
@@ -74,16 +54,16 @@ type ProjectFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-project-form',
-  imports: [ReactiveFormsModule, Label, InputField, DatePicker, Checkbox, TreeSelect, Button, TypeaheadSelect, Select],
+  imports: [ReactiveFormsModule, Label, InputField, DatePicker, Checkbox, TreeSelect, Button, Select, Icon],
   templateUrl: './project-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectForm implements OnInit, OnChanges {
   private readonly projectsService = inject(ProjectsService);
-  private readonly searchTerm$ = new Subject<string>();
 
   project = input<ProjectItem | null>(null);
   isSaving = input(false);
+  readOnly = input(false);
   title = input('Nuevo proyecto');
   editTitle = input('Editar proyecto');
   description = input('Registra la información básica del proyecto.');
@@ -94,11 +74,21 @@ export class ProjectForm implements OnInit, OnChanges {
 
   readonly isSubprojectMode = computed(() => this.parentProjectId() != null);
 
+  readonly displayCoordinacionNombre = computed(() => {
+    let raw = '';
+    if (this.isSubprojectMode()) {
+      raw = this.parentCoordinationName() || 'No asignada';
+    } else {
+      const item = this.project();
+      raw = item?.coordinacion?.nombre || this.parentCoordinationName() || 'No asignada';
+    }
+    return this.formatTitleCase(raw);
+  });
+
   @Output() cancel = new EventEmitter<void>();
   @Output() saveProject = new EventEmitter<ProjectFormData>();
 
   readonly rawTipoActividades = signal<TipoActividadProyectoItem[]>([]);
-  readonly filteredCoordinations = signal<CoordinationOption[]>([]);
   readonly projectGroupOptions = signal<Option[]>([]);
 
   readonly form: ProjectFormGroup = new FormGroup({
@@ -133,21 +123,6 @@ export class ProjectForm implements OnInit, OnChanges {
     }),
   });
 
-  constructor() {
-    this.searchTerm$
-      .pipe(
-        debounceTime(SEARCH_DEBOUNCE_TIME),
-        distinctUntilChanged(),
-        switchMap((term) =>
-          this.projectsService
-            .searchCoordinations(term)
-            .pipe(catchError(() => of([] as CoordinationOption[]))),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe((rows) => this.filteredCoordinations.set(rows));
-  }
-
   async ngOnInit(): Promise<void> {
     await this.loadSelectOptions();
     this.patchForm();
@@ -159,31 +134,11 @@ export class ProjectForm implements OnInit, OnChanges {
       changes['parentProjectId'] ||
       changes['parentCoordinationId'] ||
       changes['parentCoordinationName'] ||
-      changes['parentTipoActividadId']
+      changes['parentTipoActividadId'] ||
+      changes['readOnly']
     ) {
       this.patchForm();
     }
-  }
-
-  readonly coordinationOptionAdapter = (item: unknown): TypeaheadOption => {
-    const option = item as CoordinationOption;
-    return {
-      value: String(option.id),
-      label: option.nombre,
-      data: option,
-    };
-  };
-
-  onSearchCoordination(term: string): void {
-    if (this.isSubprojectMode()) {
-      return;
-    }
-    const normalized = term.trim();
-    if (normalized.length < MIN_SEARCH_CHARS) {
-      this.filteredCoordinations.set([]);
-      return;
-    }
-    this.searchTerm$.next(normalized);
   }
 
   onSubmit(): void {
@@ -229,47 +184,21 @@ export class ProjectForm implements OnInit, OnChanges {
     }
   }
 
-  private ensureSelectedCoordination(
-    idCoordinacion: number | null | undefined,
-    nombreCoordinacion: string | null | undefined,
-  ): void {
-    if (idCoordinacion == null) {
-      return;
-    }
-
-    const id = String(idCoordinacion);
-    const rows = this.filteredCoordinations();
-
-    if (rows.some((row) => String(row.id) === id)) {
-      return;
-    }
-
-    this.filteredCoordinations.set([
-      ...rows,
-      {
-        id: idCoordinacion,
-        nombre: nombreCoordinacion?.trim() || id,
-      },
-    ]);
-  }
-
   private patchForm(): void {
     const item = this.project();
     const subprojectMode = this.isSubprojectMode();
 
     const coordinationId = subprojectMode
       ? this.parentCoordinationId()
-      : item?.idCoordinacion;
+      : (item?.idCoordinacion ?? this.parentCoordinationId());
 
     const coordinationName = subprojectMode
       ? this.parentCoordinationName()
-      : item?.coordinacion?.nombre;
+      : (item?.coordinacion?.nombre ?? this.parentCoordinationName());
 
     const tipoActividadId = subprojectMode
       ? this.parentTipoActividadId()
       : item?.idTipoActividad;
-
-    this.ensureSelectedCoordination(coordinationId, coordinationName);
 
     const isActivo = item?.activo != null ? item.activo === '1' : true;
     const numActa = item?.numeroActa ?? item?.actaConsejo ?? '';
@@ -285,5 +214,43 @@ export class ProjectForm implements OnInit, OnChanges {
       idProyectoGrupo: item?.idProyectoGrupo != null ? String(item.idProyectoGrupo) : '',
       activo: isActivo,
     });
+
+    if (this.readOnly()) {
+      this.form.disable();
+    } else {
+      this.form.enable();
+    }
+  }
+
+  private formatTitleCase(text: string): string {
+    if (!text) {
+      return '';
+    }
+    const lowerWords = new Set([
+      'de',
+      'del',
+      'la',
+      'las',
+      'el',
+      'los',
+      'en',
+      'y',
+      'e',
+      'o',
+      'u',
+      'a',
+      'por',
+      'para',
+    ]);
+    return text
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word, index) => {
+        if (index > 0 && lowerWords.has(word)) {
+          return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
   }
 }

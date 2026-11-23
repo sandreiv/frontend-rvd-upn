@@ -28,6 +28,11 @@ import { ProjectStudentTable } from '../../components/project-student-table/proj
 import { ProjectsService } from '../../data/projects.service';
 import { ActivityTypesService } from '../../../activity-types/data/activity-types.service';
 import {
+  Option,
+  Select,
+} from '../../../../../shared/components/form/select/select';
+import {
+  CoordinacionSupervisionItem,
   enrichProjectItem,
   ProjectFormData,
   ProjectItem,
@@ -53,6 +58,7 @@ type DeleteTarget = 'project' | 'person' | 'student';
     ProjectStudentTable,
     ProjectStudentForm,
     NewModal,
+    Select,
   ],
   templateUrl: './projects.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +71,27 @@ export class Projects implements OnInit, OnDestroy {
   readonly activeView = signal<ProjectsView>('projects');
   readonly activeTab = signal<ProjectDetailTab>('teachers');
   readonly parentProject = signal<ProjectItem | null>(null);
+
+  readonly supervisionCoordinations = signal<CoordinacionSupervisionItem[]>([]);
+  readonly selectedCoordinacionId = signal<number | null>(null);
+
+  readonly hasMultipleCoordinations = computed(() => this.supervisionCoordinations().length > 1);
+  readonly currentCoordinacion = computed(
+    () => this.supervisionCoordinations().find((c) => c.id === this.selectedCoordinacionId()) ?? null,
+  );
+  readonly isGestionable = computed(() => this.currentCoordinacion()?.esGestionable ?? true);
+
+  readonly coordinacionSelectOptions = computed<Option[]>(() => {
+    return this.supervisionCoordinations().map((c) => ({
+      value: String(c.id),
+      label: c.nombre,
+      group: c.esGestionable ? 'Mi Coordinación a cargo' : 'Coordinaciones en supervisión',
+    }));
+  });
+
+  readonly selectedCoordinacionValue = computed(() =>
+    this.selectedCoordinacionId() != null ? String(this.selectedCoordinacionId()) : '',
+  );
 
   readonly projects = signal<ProjectItem[]>([]);
   readonly persons = signal<ProjectPersonItem[]>([]);
@@ -94,15 +121,21 @@ export class Projects implements OnInit, OnDestroy {
     this.isSubprojectMode() ? 'Nuevo subproyecto' : 'Nuevo proyecto',
   );
 
-  readonly formEditTitle = computed(() =>
-    this.isSubprojectMode() ? 'Editar subproyecto' : 'Editar proyecto',
-  );
+  readonly formEditTitle = computed(() => {
+    if (!this.isGestionable()) {
+      return this.isSubprojectMode() ? 'Detalle de subproyecto' : 'Detalle de proyecto';
+    }
+    return this.isSubprojectMode() ? 'Editar subproyecto' : 'Editar proyecto';
+  });
 
-  readonly formDescription = computed(() =>
-    this.isSubprojectMode()
+  readonly formDescription = computed(() => {
+    if (!this.isGestionable()) {
+      return 'Consulta la información registrada del proyecto (modo supervisión).';
+    }
+    return this.isSubprojectMode()
       ? 'Registra un subproyecto asociado al proyecto principal.'
-      : 'Registra la información básica del proyecto.',
-  );
+      : 'Registra la información básica del proyecto.';
+  });
 
   readonly deleteModalTitle = computed(() => {
     if (this.deleteTarget() === 'person') {
@@ -152,7 +185,29 @@ export class Projects implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.breadcrumbTitle.setPageTitle('Proyectos');
     await this.loadCatalogMaps();
+    await this.loadSupervisionCoordinations();
     await this.refreshProjects();
+  }
+
+  async loadSupervisionCoordinations(): Promise<void> {
+    try {
+      const list = await firstValueFrom(this.projectsService.listSupervisionCoordinations());
+      this.supervisionCoordinations.set(list ?? []);
+      const gestionable = list?.find((c) => c.esGestionable) ?? list?.[0];
+      if (gestionable) {
+        this.selectedCoordinacionId.set(gestionable.id);
+      }
+    } catch {
+      this.supervisionCoordinations.set([]);
+    }
+  }
+
+  async onCoordinacionChange(value: string | number | null): Promise<void> {
+    const num = value != null && value !== '' ? Number(value) : null;
+    if (this.selectedCoordinacionId() !== num) {
+      this.selectedCoordinacionId.set(num);
+      await this.refreshProjects();
+    }
   }
 
   ngOnDestroy(): void {
@@ -182,6 +237,9 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   openCreateProject(): void {
+    if (!this.isGestionable()) {
+      return;
+    }
     this.parentProject.set(null);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
@@ -190,6 +248,9 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   openCreateSubproject(parent: ProjectItem): void {
+    if (!this.isGestionable()) {
+      return;
+    }
     this.parentProject.set(parent);
     this.selectedProject.set(null);
     this.selectedPerson.set(null);
@@ -198,11 +259,17 @@ export class Projects implements OnInit, OnDestroy {
   }
 
   openCreatePerson(): void {
+    if (!this.isGestionable()) {
+      return;
+    }
     this.selectedPerson.set(null);
     this.showForm.set(true);
   }
 
   openCreateStudent(): void {
+    if (!this.isGestionable()) {
+      return;
+    }
     this.selectedStudent.set(null);
     this.showForm.set(true);
   }
@@ -413,7 +480,8 @@ export class Projects implements OnInit, OnDestroy {
 
   async refreshProjects(): Promise<void> {
     try {
-      const rows = await firstValueFrom(this.projectsService.listAllProjects());
+      const coorId = this.selectedCoordinacionId();
+      const rows = await firstValueFrom(this.projectsService.listAllProjects(coorId));
       this.projects.set(this.enrichProjects(rows ?? []));
     } catch {
       // Manejado globalmente por el interceptor HTTP
