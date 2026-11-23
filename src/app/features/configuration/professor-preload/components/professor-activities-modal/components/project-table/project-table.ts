@@ -1,17 +1,24 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { forNext } from '../../../../../../../core/utils/for-next.function';
 import { Checkbox } from '../../../../../../../shared/components/form/input/checkbox';
+import { Select } from '../../../../../../../shared/components/form/select/select';
 import { Button } from '../../../../../../../shared/ui/button/button';
 import { formatSentenceValue } from '../../../../../../../shared/utils/normalized-text.util';
 import { CoordinationService } from '../../../../data/coordination.service';
+import {
+  EMPTY_COORDINATION_COST_CENTERS,
+  coordinationCostCenterOptions,
+} from '../../../../model/coordination-cost-centers.model';
 import {
   DetalleCargaDocenteRequest,
   SaveDetailProfessorPreloadRequest,
@@ -23,18 +30,21 @@ import {
   ProjectExtraField,
   projectFunctionLabel,
   projectLevelLabel,
+  projectProgramName,
   projectScheduleLines,
+  projectSubjectName,
 } from '../../../../model/professor-project.model';
 
 interface ProjectDetailRef {
   id: number;
   horas: number | null;
   idPrograma: number | null;
+  centroCosto: string | null;
 }
 
 @Component({
   selector: 'app-project-table',
-  imports: [Checkbox, Button],
+  imports: [Checkbox, Button, Select],
   templateUrl: './project-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -43,6 +53,8 @@ export class ProjectTable {
 
   readonly projects = input<ProfessorProjectItem[]>([]);
   readonly extraField = input<ProjectExtraField | null>(null);
+  readonly showParticularSubject = input(false);
+  readonly showCostCenter = input(false);
   readonly activityId = input.required<number>();
   readonly idCoordinacion = input<number | null>(null);
   readonly idUnidadRegional = input<number | null>(null);
@@ -51,7 +63,30 @@ export class ProjectTable {
   readonly detailSaved = output<void>();
 
   private readonly selectedIds = signal<number[]>([]);
+  private readonly costCenterByProject = signal<Record<number, string>>({});
   readonly isSaving = signal(false);
+
+  private readonly costCentersResource = rxResource({
+    params: () => {
+      if (!this.showCostCenter()) {
+        return undefined;
+      }
+
+      const idCoordinacion = this.idCoordinacion();
+      if (idCoordinacion == null) {
+        return undefined;
+      }
+
+      return { idCoordinacion };
+    },
+    stream: ({ params }) =>
+      this.coordinationService.listCoordinationCostCenters(params.idCoordinacion),
+    defaultValue: EMPTY_COORDINATION_COST_CENTERS,
+  });
+
+  readonly costCenterOptions = computed(() =>
+    coordinationCostCenterOptions(this.costCentersResource.value()),
+  );
 
   sentence(value: string | null | undefined): string {
     return formatSentenceValue(value);
@@ -69,6 +104,14 @@ export class ProjectTable {
     return projectScheduleLines(blocks);
   }
 
+  subjectName(item: ProfessorProjectItem): string {
+    return projectSubjectName(item);
+  }
+
+  programName(item: ProfessorProjectItem): string {
+    return projectProgramName(item);
+  }
+
   hoursLabel(horas: string | null | undefined): string {
     const value = this.parseHours(horas);
     return value == null ? '-' : String(value);
@@ -76,6 +119,29 @@ export class ProjectTable {
 
   isSelected(id: number): boolean {
     return this.selectedIds().includes(id);
+  }
+
+  isLinked(id: number): boolean {
+    return this.linkedProjectIds().includes(id);
+  }
+
+  selectedCostCenter(id: number): string {
+    return this.costCenterByProject()[id] ?? '';
+  }
+
+  savedCostCenter(id: number): string {
+    const detailId = this.projectLinks().get(id);
+    let label = '-';
+    forNext(this.activityDetails(), (detail) => {
+      if (detail.id === detailId && detail.centroCosto) {
+        label = detail.centroCosto;
+      }
+    });
+    return label;
+  }
+
+  setCostCenter(id: number, value: string): void {
+    this.costCenterByProject.update((current) => ({ ...current, [id]: value }));
   }
 
   isDisassociateDisabled(): boolean {
@@ -152,6 +218,10 @@ export class ProjectTable {
         return;
       }
 
+      if (this.showCostCenter() && this.costCenterId(item.id) == null) {
+        return;
+      }
+
       pending.push(item);
     });
 
@@ -173,13 +243,19 @@ export class ProjectTable {
         return;
       }
 
+      const idCentroCosto = this.showCostCenter()
+        ? this.costCenterId(item.id)
+        : this.listedCostCenterId(item);
       detalles.push({
         idTipoActividad: this.activityId(),
         horas,
         idCoordinacion,
         idUnidadRegional: this.idUnidadRegional() ?? undefined,
-        idPrograma: item.idPrograma ?? undefined,
-        materia: null,
+        idPrograma: this.programId(item),
+        materia:
+          idCentroCosto == null
+            ? null
+            : { codigoMateria: '', idCentroCosto },
         materiaBanco: null,
         extras: '0',
         data: null,
@@ -328,11 +404,33 @@ export class ProjectTable {
           id: detail.idDetalleCargaDocente,
           horas: this.parseHours(item.horas),
           idPrograma: item.programa?.id ?? null,
+          centroCosto: item.centroCosto?.descripcion?.trim()
+            ? formatSentenceValue(item.centroCosto.descripcion)
+            : null,
         });
       });
     });
 
     return details;
+  }
+
+  private programId(item: ProfessorProjectItem): number | undefined {
+    const particular = this.showParticularSubject()
+      ? item.proyecto?.materiaParticular?.programa?.id
+      : null;
+    const id = particular ?? item.idPrograma;
+    return id != null && Number.isInteger(id) && id > 0 ? id : undefined;
+  }
+
+  private listedCostCenterId(item: ProfessorProjectItem): number | null {
+    const id = item.idCentroCosto;
+    return id != null && Number.isInteger(id) && id > 0 ? id : null;
+  }
+
+  private costCenterId(projectId: number): number | null {
+    const raw = this.costCenterByProject()[projectId];
+    const value = Number(raw);
+    return Number.isInteger(value) && value > 0 ? value : null;
   }
 
   private parseHours(horas: string | null | undefined): number | null {

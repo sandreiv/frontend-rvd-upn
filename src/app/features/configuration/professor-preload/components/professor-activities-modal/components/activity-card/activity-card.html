@@ -11,10 +11,6 @@
     {{ activity().nombre }}
   </span>
 
-  @if (collapsesToParentCard()) {
-    <app-dependent-activity-select [activity]="activity()" />
-  }
-
   @switch (componentKey()) {
     @case ('ASIGNATURA') {
       <app-subject
@@ -84,7 +80,14 @@
       />
     }
     @case ('ACTIVIDADESPREDETERMINADAS') {
-      <app-preset-activity [activity]="activity()" />
+      <app-preset-activity
+        [activity]="activity()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @case ('PROYECTOSPLAN') {
       <app-institutional-project
@@ -109,7 +112,14 @@
       />
     }
     @case ('SITUACIONESADMINISTRATIVAS') {
-      <app-administrative-situation [activity]="activity()" />
+      <app-administrative-situation
+        [activity]="activity()"
+        [idCoordinacion]="idCoordinacion()"
+        [idUnidadRegional]="idUnidadRegional()"
+        [idCargaDocente]="idCargaDocente()"
+        [savedDetails]="savedDetails()"
+        (detailSaved)="detailSaved.emit()"
+      />
     }
     @default {
       <p class="text-sm text-gray-500 dark:text-gray-400">

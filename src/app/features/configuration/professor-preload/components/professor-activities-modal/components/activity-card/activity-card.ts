@@ -9,12 +9,10 @@ import {
 import { CollapsibleSection } from '../../../../../../../shared/components/form/collapsible-section/collapsible-section';
 import {
   ActivityTypeNode,
-  activityCollapsesToParentCard,
   activityComponentKey,
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
 import { ProfessorProjectItem } from '../../../../model/professor-project.model';
-import { DependentActivitySelect } from '../dependent-activity-select/dependent-activity-select';
 import { Subject } from '../direct/components/subject/subject';
 import { Support } from '../direct/components/support/support';
 import { ExtensionActivity } from '../extension-activity/extension-activity';
@@ -29,7 +27,6 @@ import { ResearchProject } from '../research/components/research-project/researc
   selector: 'app-activity-card',
   imports: [
     CollapsibleSection,
-    DependentActivitySelect,
     Subject,
     Support,
     DegreeWork,
@@ -56,6 +53,4 @@ export class ActivityCard {
   readonly expanded = signal(false);
 
   readonly componentKey = computed(() => activityComponentKey(this.activity().componente));
-
-  readonly collapsesToParentCard = computed(() => activityCollapsesToParentCard(this.activity()));
 }

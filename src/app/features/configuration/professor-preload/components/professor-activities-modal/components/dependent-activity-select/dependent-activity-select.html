@@ -1,16 +1,375 @@
-@if (levels().length) {
-  <div class="flex flex-col gap-4">
-  @for (level of levels(); track level.parentId) {
+<div class="flex flex-col gap-4" [formGroup]="form">
+  @if (activityOptions().length) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div class="min-w-0 w-full max-w-xl">
+        <app-label>Actividades</app-label>
+        <app-select
+          formControlName="actividades"
+          [options]="activityOptions()"
+          [multiple]="true"
+          placeholder="Seleccione las actividades"
+          labelFormat="none"
+        />
+      </div>
+      <app-button
+        type="button"
+        size="sm"
+        className="h-11 shrink-0"
+        [disabled]="isAddDisabled()"
+        (btnClick)="onAdd()"
+      >
+        Agregar
+      </app-button>
+    </div>
+  }
+
+  @if (nestedOptions().length) {
     <div class="min-w-0 w-full max-w-xl">
-      <app-label>{{ level.label }}</app-label>
+      <app-label>{{ nestedLabel() }}</app-label>
       <app-select
-        [options]="level.options"
-        [value]="level.selected"
-        placeholder="Seleccione la actividad"
+        formControlName="anidadas"
+        [options]="nestedOptions()"
+        [multiple]="true"
+        placeholder="Seleccione las actividades"
         labelFormat="none"
-        (valueChange)="onSelect($index, $event)"
       />
     </div>
   }
-  </div>
-}
+
+  @if (chips().length) {
+    <div
+      class="divide-y divide-gray-100 dark:divide-white/10"
+      [class.max-w-xl]="!withText() && !withCostCenter()"
+    >
+      @for (chip of chips(); track chip.id) {
+        @if (withAdministrative()) {
+          <div class="flex flex-col gap-3 py-3">
+            <div class="flex items-center gap-3">
+              <p
+                class="min-w-0 flex-1 break-words text-sm font-medium uppercase tracking-wide text-gray-800 dark:text-white/90"
+              >
+                {{ sentence(chip.nombre) }}
+              </p>
+              <button
+                type="button"
+                class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                aria-label="Quitar actividad"
+                (click)="removeChip(chip.id)"
+              >
+                <app-icon name="close" size="xs" />
+              </button>
+            </div>
+            <div class="flex flex-wrap items-end gap-x-6 gap-y-3">
+              <div class="shrink-0">
+                <app-label>Término</app-label>
+                <div class="flex gap-3">
+                  <div class="w-44 shrink-0">
+                    <span class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Desde</span>
+                    <app-date-picker
+                      [id]="'termino-desde-' + chip.id"
+                      [defaultDate]="chip.terminoDesde || undefined"
+                      placeholder="Seleccione"
+                      (dateChange)="setTermFrom(chip.id, $event.dateStr)"
+                    />
+                  </div>
+                  <div class="w-44 shrink-0">
+                    <span class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Hasta</span>
+                    <app-date-picker
+                      [id]="'termino-hasta-' + chip.id"
+                      [defaultDate]="chip.terminoHasta || undefined"
+                      placeholder="Seleccione"
+                      (dateChange)="setTermTo(chip.id, $event.dateStr)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="shrink-0">
+                <app-label>Acto administrativo</app-label>
+                <div class="flex gap-3">
+                  <div class="w-40 shrink-0">
+                    <span class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Número</span>
+                    <app-input-field
+                      type="text"
+                      placeholder="Número"
+                      [value]="chip.actoNumero"
+                      (valueChange)="setActNumber(chip.id, $event)"
+                    />
+                  </div>
+                  <div class="w-44 shrink-0">
+                    <span class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Fecha</span>
+                    <app-date-picker
+                      [id]="'acto-fecha-' + chip.id"
+                      [defaultDate]="chip.actoFecha || undefined"
+                      placeholder="Seleccione"
+                      (dateChange)="setActDate(chip.id, $event.dateStr)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="w-28 shrink-0">
+                <app-label>Horas</app-label>
+                <app-input-field
+                  type="number"
+                  min="0"
+                  [step]="0.5"
+                  placeholder="Horas"
+                  [value]="chip.horas ?? ''"
+                  (valueChange)="setHours(chip.id, $event)"
+                />
+              </div>
+            </div>
+            <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+              @if (withCostCenter()) {
+                <div class="w-full shrink-0 sm:w-64">
+                  <app-label>Centro de costo</app-label>
+                  <app-select
+                    [options]="costCenterOptions()"
+                    [value]="chip.centroCosto"
+                    [localSearch]="false"
+                    placeholder="Centro de costo"
+                    searchPlaceholder="Buscar centro de costo..."
+                    [emptyText]="costCenterEmptyText()"
+                    labelFormat="none"
+                    (searchChange)="onCostCenterQuery($event)"
+                    (valueChange)="setCostCenter(chip.id, $event)"
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        } @else if (withText()) {
+          <div class="flex flex-col gap-3 py-3">
+            <div class="flex items-center gap-3">
+              <p
+                class="min-w-0 flex-1 break-words text-sm font-medium uppercase tracking-wide text-gray-800 dark:text-white/90"
+              >
+                {{ sentence(chip.nombre) }}
+              </p>
+              <button
+                type="button"
+                class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                aria-label="Quitar actividad"
+                (click)="removeChip(chip.id)"
+              >
+                <app-icon name="close" size="xs" />
+              </button>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="min-w-0 flex-1">
+                <app-label>Descripción</app-label>
+                <app-input-field
+                  type="text"
+                  placeholder="Descripción"
+                  [value]="chip.texto"
+                  (valueChange)="setText(chip.id, $event)"
+                />
+              </div>
+              @if (withCostCenter()) {
+                <div class="w-full shrink-0 sm:w-64">
+                  <app-label>Centro de costo</app-label>
+                  <app-select
+                    [options]="costCenterOptions()"
+                    [value]="chip.centroCosto"
+                    [localSearch]="false"
+                    placeholder="Centro de costo"
+                    searchPlaceholder="Buscar centro de costo..."
+                    [emptyText]="costCenterEmptyText()"
+                    labelFormat="none"
+                    (searchChange)="onCostCenterQuery($event)"
+                    (valueChange)="setCostCenter(chip.id, $event)"
+                  />
+                </div>
+              }
+              <div class="w-full shrink-0 sm:w-28">
+                <app-label>Horas</app-label>
+                <app-input-field
+                  type="number"
+                  min="0"
+                  [step]="0.5"
+                  placeholder="Horas"
+                  [value]="chip.horas ?? ''"
+                  (valueChange)="setHours(chip.id, $event)"
+                />
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="flex items-center gap-3 py-2">
+            <p class="min-w-0 flex-1 break-words text-sm text-gray-800 dark:text-white/90">
+              {{ sentence(chip.nombre) }}
+            </p>
+            @if (withCostCenter()) {
+              <div class="w-64 shrink-0">
+                <app-select
+                  [options]="costCenterOptions()"
+                  [value]="chip.centroCosto"
+                  [localSearch]="false"
+                  placeholder="Centro de costo"
+                  searchPlaceholder="Buscar centro de costo..."
+                  [emptyText]="costCenterEmptyText()"
+                  labelFormat="none"
+                  (searchChange)="onCostCenterQuery($event)"
+                  (valueChange)="setCostCenter(chip.id, $event)"
+                />
+              </div>
+            }
+            <div class="w-28 shrink-0">
+              <app-input-field
+                type="number"
+                min="0"
+                [step]="0.5"
+                placeholder="Horas"
+                [value]="chip.horas ?? ''"
+                (valueChange)="setHours(chip.id, $event)"
+              />
+            </div>
+            <button
+              type="button"
+              class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5 dark:hover:text-gray-200"
+              aria-label="Quitar actividad"
+              (click)="removeChip(chip.id)"
+            >
+              <app-icon name="close" size="xs" />
+            </button>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  @if (withAdministrative() && savedAdministrativeRows().length) {
+    <div class="rounded-xl border border-gray-200 dark:border-white/10">
+      <table class="w-full table-fixed text-left text-[14px] leading-4">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Situación
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Término
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Acto administrativo
+            </th>
+            <th
+              class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Horas
+            </th>
+            <th class="w-8 px-1 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of savedAdministrativeRows(); track row.id) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="break-words px-1.5 py-2 text-gray-800 dark:text-white/90">
+                {{ sentence(row.nombre) }}
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                @if (!row.terminoDesde && !row.terminoHasta) {
+                  -
+                } @else {
+                  <div class="flex flex-col gap-1.5">
+                    @if (row.terminoDesde) {
+                      <span class="inline-flex flex-wrap items-center gap-1.5">
+                        Desde
+                        <app-badge variant="neutral" size="xs">{{ row.terminoDesde }}</app-badge>
+                      </span>
+                    }
+                    @if (row.terminoHasta) {
+                      <span class="inline-flex flex-wrap items-center gap-1.5">
+                        Hasta
+                        <app-badge variant="neutral" size="xs">{{ row.terminoHasta }}</app-badge>
+                      </span>
+                    }
+                  </div>
+                }
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                @if (!row.actoNumero && !row.actoFecha) {
+                  -
+                } @else {
+                  <div class="flex flex-col gap-1.5">
+                    @if (row.actoNumero) {
+                      <span class="inline-flex flex-wrap items-center gap-1.5">
+                        Número
+                        <app-badge variant="neutral" size="xs">{{ row.actoNumero }}</app-badge>
+                      </span>
+                    }
+                    @if (row.actoFecha) {
+                      <span class="inline-flex flex-wrap items-center gap-1.5">
+                        Fecha
+                        <app-badge variant="neutral" size="xs">{{ row.actoFecha }}</app-badge>
+                      </span>
+                    }
+                  </div>
+                }
+              </td>
+              <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
+                {{ row.horas }}
+              </td>
+              <td class="w-8 px-1 py-2 text-right">
+                <button
+                  type="button"
+                  class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/5"
+                  aria-label="Eliminar situación"
+                  [disabled]="isDeleting()"
+                  (click)="removeSavedDetail(row.idDetalleCargaDocente)"
+                >
+                  <app-icon name="delete" size="xs" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (savedRows().length) {
+    <div class="rounded-xl border border-gray-200 dark:border-white/10">
+      <table class="w-full table-fixed text-left text-[14px] leading-4">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Actividad
+            </th>
+            <th class="px-1.5 py-2 text-[12px] font-semibold uppercase tracking-normal text-gray-400">
+              Descripción
+            </th>
+            <th
+              class="w-16 px-1 py-2 text-center text-[12px] font-semibold uppercase tracking-normal text-gray-400"
+            >
+              Horas
+            </th>
+            <th class="w-8 px-1 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of savedRows(); track row.id) {
+            <tr class="border-t border-gray-100 dark:border-white/5">
+              <td class="break-words px-1.5 py-2 text-gray-800 dark:text-white/90">
+                {{ sentence(row.nombre) }}
+              </td>
+              <td class="break-words px-1.5 py-2 text-gray-600 dark:text-gray-300">
+                {{ sentence(row.descripcion) }}
+              </td>
+              <td class="w-16 px-1 py-2 text-center text-gray-600 dark:text-gray-300">
+                {{ row.horas }}
+              </td>
+              <td class="w-8 px-1 py-2 text-right">
+                <button
+                  type="button"
+                  class="inline-flex size-6 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/5"
+                  aria-label="Eliminar actividad"
+                  [disabled]="isDeleting()"
+                  (click)="removeSavedDetail(row.idDetalleCargaDocente)"
+                >
+                  <app-icon name="delete" size="xs" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

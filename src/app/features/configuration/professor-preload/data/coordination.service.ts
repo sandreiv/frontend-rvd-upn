@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { WebRequestService } from '../../../../core/service/web-request-service';
 import {
   SearchGeneralPersonParams,
@@ -31,6 +31,10 @@ import {
 } from '../model/professor-activity-save.model';
 import { ProfessorLoadDetailItem } from '../model/professor-load-detail.model';
 import { ProfessorProjectItem } from '../model/professor-project.model';
+import {
+  CoordinationCostCenter,
+  CoordinationCostCenters,
+} from '../model/coordination-cost-centers.model';
 import { LinkageTypeItem, LinkageTypeListResponse } from '../model/linkage-type.model';
 import { ContractHours, ContractValue, ContractValueQuery } from '../model/professor-form.config';
 
@@ -136,6 +140,38 @@ export class CoordinationService {
     return this.webRequestService.get<ActivityRestrictionItem[]>(
       `${this.endpoint}/list-activity-restrictions`,
       { idTipoVinculacion },
+    );
+  }
+
+  /**
+   * Lista los centros de costo de la coordinación y los de sus programas.
+   *
+   * @param idCoordinacion Identificador de la coordinación.
+   * @returns Observable con la coordinación, sus centros y los programas.
+   */
+  listCoordinationCostCenters(idCoordinacion: number): Observable<CoordinationCostCenters> {
+    return this.webRequestService.get<CoordinationCostCenters>(
+      `${this.endpoint}/list-coordination-cost-centers`,
+      { idCoordinacion },
+    );
+  }
+
+  /**
+   * Busca centros de costo por descripción o código.
+   * Un texto vacío no consulta y devuelve una lista vacía.
+   *
+   * @param texto Texto escrito en el buscador.
+   * @returns Observable con los centros que coinciden.
+   */
+  listCostCenters(texto: string): Observable<CoordinationCostCenter[]> {
+    const value = texto.trim();
+    if (!value) {
+      return of([]);
+    }
+
+    return this.webRequestService.get<CoordinationCostCenter[]>(
+      `${this.endpoint}/list-cost-centers`,
+      { texto: value },
     );
   }
 

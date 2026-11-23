@@ -117,10 +117,43 @@
     </div>
 
     <footer
-      class="flex shrink-0 justify-end gap-3 border-t border-gray-200 px-6 py-5 sm:px-8 dark:border-white/10"
+      class="flex shrink-0 flex-col gap-4 border-t border-gray-200 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8 dark:border-white/10"
     >
-      <app-button type="button" variant="outline" (btnClick)="close.emit()"> Cancelar </app-button>
-      <app-button type="button" [disabled]="true">Guardar</app-button>
+      <div class="flex flex-col gap-1">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Total de horas asignadas:
+          <span
+            class="font-semibold"
+            [class.text-gray-900]="!exceedsHoursLimit()"
+            [class.dark:text-white/90]="!exceedsHoursLimit()"
+            [class.text-error-600]="exceedsHoursLimit()"
+            [class.dark:text-error-400]="exceedsHoursLimit()"
+          >
+            {{ totalAssignedHours() }} h
+            @if (isLoadingAssignedHours()) {
+              / ...
+            } @else if (hoursLimit() != null) {
+              / {{ hoursLimit() }} h
+            }
+          </span>
+          @if (hoursPeriodLabel()) {
+            {{ hoursPeriodLabel() }}
+          }
+        </p>
+
+        @if (exceedsHoursLimit()) {
+          <p class="text-xs text-error-600 dark:text-error-400">
+            Supera el máximo de horas del tipo de vinculación. Ajusta la distribución para poder
+            guardar.
+          </p>
+        }
+      </div>
+
+      <div class="flex shrink-0 justify-end gap-3">
+        <app-button type="button" variant="outline" (btnClick)="close.emit()">
+          Cancelar
+        </app-button>
+      </div>
     </footer>
   </div>
 </app-modal>

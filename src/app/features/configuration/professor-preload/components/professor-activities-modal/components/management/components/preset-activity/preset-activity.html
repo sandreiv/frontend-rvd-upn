@@ -1,1 +1,10 @@
-<ng-container />
+<app-dependent-activity-select
+  [activity]="activity()"
+  [idCoordinacion]="idCoordinacion()"
+  [idUnidadRegional]="idUnidadRegional()"
+  [idCargaDocente]="idCargaDocente()"
+  [savedDetails]="savedDetails()"
+  [withText]="true"
+  [withCostCenter]="true"
+  (detailSaved)="detailSaved.emit()"
+/>
