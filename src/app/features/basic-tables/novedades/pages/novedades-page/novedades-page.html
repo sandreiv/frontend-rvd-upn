@@ -1,0 +1,39 @@
+<app-section-frame
+  title="Novedades"
+  description="Administra el catálogo de novedades (RVD.NOVEDADES) usado por los módulos de carga docente."
+  iconName="newspaper"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-novedad-form
+        [item]="selectedItem()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveItem)="onSave($event)"
+      />
+    } @else {
+      <app-novedad-table
+        [items]="items()"
+        [selectedIds]="selectedIds()"
+        (selectedIdsChange)="onSelectedIdsChange($event)"
+        (refreshItems)="refresh()"
+        (addItem)="openCreateForm()"
+        (editItem)="openEditForm($event)"
+        (deleteItem)="requestDelete($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>
