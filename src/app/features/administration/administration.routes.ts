@@ -23,6 +23,18 @@ export const administrationRoutes: Routes = [
             (m) => m.ProjectCalls,
           ),
       },
+      {
+        path: 'tablas-basicas',
+        redirectTo: 'tablas-basicas/novedades',
+        pathMatch: 'full',
+      },
+      {
+        path: 'tablas-basicas/novedades',
+        loadComponent: () =>
+          import('./basic-tables/pages/novedades-page/novedades-page').then(
+            (m) => m.NovedadesPage,
+          ),
+      },
     ],
   },
 ];
