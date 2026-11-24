@@ -19,8 +19,13 @@ import { Option, Select } from '../../../../../../../../../shared/components/for
 import { Button } from '../../../../../../../../../shared/ui/button/button';
 import { Icon } from '../../../../../../../../../shared/ui/icon/icon';
 import { formatSentenceValue } from '../../../../../../../../../shared/utils/normalized-text.util';
+import { ToastService } from '../../../../../../../../../core/service/toastService';
 import { CoordinationService } from '../../../../../../data/coordination.service';
 import { forNext } from '../../../../../../../../../core/utils/for-next.function';
+import {
+  findHoursLimitViolation,
+  hoursLimitMessage,
+} from '../../../../../../model/hours-limit.model';
 import { ActivityTypeNode } from '../../../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../../../model/professor-load-detail.model';
 import {
@@ -43,6 +48,7 @@ import {
 })
 export class Support {
   private readonly coordinationService = inject(CoordinationService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly activity = input.required<ActivityTypeNode>();
@@ -50,6 +56,8 @@ export class Support {
   readonly idUnidadRegional = input<number | null>(null);
   readonly idCargaDocente = input<number | null>(null);
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
+  readonly activityTree = input<ActivityTypeNode[]>([]);
+  readonly hoursLimit = input<number | null>(null);
   readonly detailSaved = output<void>();
 
   readonly form = new FormGroup({
@@ -206,7 +214,7 @@ export class Support {
 
   private saveSupportSubjects(items: ProfessorSubjectLoadItem[]): void {
     const request = this.buildSaveRequest(items);
-    if (!request) {
+    if (!request || this.blockedByHoursLimit(request.detalles)) {
       return;
     }
 
@@ -220,6 +228,21 @@ export class Support {
         console.error(error);
       })
       .finally(() => this.isSaving.set(false));
+  }
+
+  private blockedByHoursLimit(detalles: DetalleCargaDocenteRequest[]): boolean {
+    const violation = findHoursLimitViolation({
+      tree: this.activityTree(),
+      linkageLimit: this.hoursLimit(),
+      saved: this.savedDetails(),
+      additions: detalles,
+    });
+    if (!violation) {
+      return false;
+    }
+
+    this.toastService.show(hoursLimitMessage(violation), 'error', 'Límite de horas');
+    return true;
   }
 
   private buildSaveRequest(
