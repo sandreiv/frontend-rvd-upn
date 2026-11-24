@@ -13,10 +13,7 @@ import {
   DataTableRowAction,
   DataTableToolbarActionEvent,
 } from '../../../../../shared/ui/data-table/table.types';
-import {
-  NovedadItem,
-  formatForPlanta,
-} from '../../model/novedades.model';
+import { NovedadItem } from '../../model/novedades.model';
 
 @Component({
   selector: 'app-novedad-table',
@@ -66,26 +63,6 @@ export class NovedadTable {
         header: 'Descripción',
         cell: (row) =>
           row.descripcion ?? '-',
-      },
-      {
-        id: 'accion',
-        header: 'Acción',
-        cell: (row) =>
-          row.accion ?? '-',
-      },
-      {
-        id: 'componente',
-        header: 'Componente',
-        cell: (row) =>
-          row.componente ?? '-',
-      },
-      {
-        id: 'forPlanta',
-        header: 'Planta',
-        cell: (row) =>
-          formatForPlanta(
-            row.forPlanta,
-          ),
       },
     ];
 

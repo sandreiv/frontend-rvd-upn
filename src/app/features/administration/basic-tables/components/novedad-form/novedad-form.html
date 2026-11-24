@@ -13,7 +13,7 @@
     </h4>
 
     <p class="text-xs text-gray-500 dark:text-gray-400">
-      Registra o modifica una novedad del catálogo RVD.NOVEDADES.
+      Registra o modifica una novedad del catálogo RVDIES.NOVEDADES.
     </p>
   </div>
 
@@ -23,12 +23,12 @@
 
       <app-input-field
         formControlName="tipo"
-        placeholder="Ej. Adición de carga académica"
+        placeholder="Ej. Aumento de carga"
       />
 
       @if (form.controls.tipo.touched && form.controls.tipo.invalid) {
         <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El tipo de novedad es obligatorio (máximo 150 caracteres).
+          El tipo de novedad es obligatorio (máximo {{ maxLength }} caracteres).
         </p>
       }
     </div>
@@ -38,68 +38,14 @@
 
       <app-input-field
         formControlName="descripcion"
-        placeholder="Ej. Adición de carga académica"
+        placeholder="Ej. Aumento de carga"
       />
 
       @if (form.controls.descripcion.touched && form.controls.descripcion.invalid) {
         <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La descripción es obligatoria (máximo 250 caracteres).
+          La descripción es obligatoria (máximo {{ maxLength }} caracteres).
         </p>
       }
-    </div>
-
-    <div>
-      <app-label>Acción</app-label>
-
-      <app-select
-        formControlName="accion"
-        [options]="accionOptions"
-        [enableSearch]="false"
-        [labelFormat]="'none'"
-        placeholder="Seleccione la acción"
-      />
-
-      @if (form.controls.accion.touched && form.controls.accion.invalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La acción es obligatoria.
-        </p>
-      }
-    </div>
-
-    <div>
-      <app-label>Componente</app-label>
-
-      <app-input-field
-        formControlName="componente"
-        placeholder="Ej. add-professor"
-      />
-
-      @if (form.controls.componente.touched && form.controls.componente.invalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          El componente es obligatorio (máximo 100 caracteres).
-        </p>
-      }
-
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Identificador que consume el frontend. Si cambia, la novedad deja de
-        encontrarse en los módulos que la usan.
-      </p>
-    </div>
-
-    <div>
-      <app-label>Aplica a planta</app-label>
-
-      <app-select
-        formControlName="forPlanta"
-        [options]="forPlantaOptions"
-        [enableSearch]="false"
-        [labelFormat]="'none'"
-        placeholder="Seleccione una opción"
-      />
-
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Marca las novedades que solo aplican a docentes de planta.
-      </p>
     </div>
   </div>
 
