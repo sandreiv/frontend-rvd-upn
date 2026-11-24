@@ -3,7 +3,7 @@
  * Modificaciones:
  * 09/11/2026 - Leonel Antonio Perez Rios - Ajuste de opciones de administración: Tipo actividades y Proyectos
  * 11/11/2026 - Leonel Antonio Perez Rios - Se retira la opción Proyectos tras moverla a nivel de sidebar
- * 24/11/2026 - Tarjeta de Tablas básicas debajo de la tarjeta de Administración
+ * 24/11/2026 - Juan Diego Florez - Tarjeta de Tablas básicas debajo de la tarjeta de Administración
  */
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
