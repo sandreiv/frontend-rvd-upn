@@ -1,5 +1,9 @@
 import { Routes } from '@angular/router';
+
+
 import { AdministrationView } from './administration-view/administration-view';
+
+
 import { ActivityTypesPage } from './activity-types/pages/activity-types-page/activity-types-page';
 
 export const administrationRoutes: Routes = [
@@ -19,10 +23,37 @@ export const administrationRoutes: Routes = [
       {
         path: 'grupos-convocatoria',
         loadComponent: () =>
-          import('./project-calls/pages/project-calls/project-calls').then(
+          import(
+            
+            './project-calls/pages/project-calls/project-calls'
+          
+          ).then(
             (m) => m.ProjectCalls,
           ),
       },
+      {
+        path: 'tablas-basicas',
+        redirectTo: 'tablas-basicas/novedades',
+        pathMatch: 'full',
+      },
+      {
+        path: 'tablas-basicas/novedades',
+        loadComponent: () =>
+          import('./basic-tables/pages/novedades-page/novedades-page').then(
+            (m) => m.NovedadesPage,
+          ),
+      },
+
+      {
+        path: 'estados',
+        loadComponent: () =>
+          import(
+            './states/pages/states/states'
+          ).then(
+            (m) => m.States,
+          ),
+      },
+      
     ],
   },
 ];
