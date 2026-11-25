@@ -26,6 +26,11 @@ type AdministrationMenuItem = {
 export class AdministrationView {
   readonly menuItems: AdministrationMenuItem[] = [
     {
+      label: 'Coordinaciones',
+      icon: 'home',
+      path: 'coordinaciones',
+    },
+    {
       label: 'Tipo actividades',
       icon: 'bookOpen',
       path: 'tipo-actividades',

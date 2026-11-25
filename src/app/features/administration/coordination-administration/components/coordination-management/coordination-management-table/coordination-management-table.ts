@@ -42,18 +42,6 @@ export class CoordinationManagementTable {
 
   readonly columns: DataTableColumn<CoordinationManagementItem>[] = [
     {
-      id: 'nombre',
-      header: 'Nombre',
-      cell: (row) => row.nombre || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'descripcion',
-      header: 'Descripción',
-      cell: (row) => row.descripcion || '-',
-      formatAsSentence: true,
-    },
-    {
       id: 'unidadRegional',
       header: 'Unidad regional',
       cell: (row) => row.unidadRegional || '-',
@@ -63,30 +51,6 @@ export class CoordinationManagementTable {
       id: 'unidad',
       header: 'Unidad',
       cell: (row) => row.unidad || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'unidadPadre',
-      header: 'Unidad padre',
-      cell: (row) => row.unidadPadre || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'modalidad',
-      header: 'Modalidad',
-      cell: (row) => row.modalidad || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'metodologia',
-      header: 'Metodología',
-      cell: (row) => row.metodologia || '-',
-      formatAsSentence: true,
-    },
-    {
-      id: 'centroCosto',
-      header: 'Centro costo',
-      cell: (row) => row.centroCosto || '-',
       formatAsSentence: true,
     },
     {

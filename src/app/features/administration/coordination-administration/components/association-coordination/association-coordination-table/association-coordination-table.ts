@@ -43,12 +43,6 @@ export class AssociationCoordinationTable {
       formatAsSentence: true,
     },
     {
-      id: 'materia',
-      header: 'Materia',
-      cell: (row) => row.materia || row.codigoMateria || '-',
-      formatAsSentence: true,
-    },
-    {
       id: 'centroCosto',
       header: 'Centro costo',
       cell: (row) => row.centroCosto || '-',
