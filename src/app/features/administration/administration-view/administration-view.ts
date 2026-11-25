@@ -65,6 +65,11 @@ export class AdministrationView {
       icon: 'adjustmentsHorizontal',
       path: 'estados',
         },
+        {
+          label: 'Coordinaciones',
+          icon: 'home',
+          path: 'coordinaciones',
+        },
       ],
     },
   ];

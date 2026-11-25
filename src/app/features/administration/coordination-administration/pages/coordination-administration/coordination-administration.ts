@@ -22,12 +22,10 @@ import {
   CoordinationAdministrationTabId,
   CoordinationAssociationFormData,
   CoordinationAssociationItem,
-  SubjectCatalogOptionItem,
   CostCenterAssignmentFormData,
   CostCenterAssignmentItem,
   PersonCoordinationFormData,
   PersonCoordinationItem,
-  PersonCoordinationKey,
   CoordinationManagementFormData,
   CoordinationManagementItem,
 } from '../../model/coordination-administration.model';
@@ -40,7 +38,7 @@ type CoordinationSwitchItem = {
 
 @Component({
   selector: 'app-coordination-administration',
-  imports: [ReactiveFormsModule, SectionFrame, AssociationCoordinationTable, AssociationCoordinationForm, NewModal, Icon, PersonCoordinationTable, PersonCoordinationForm, NewModal , Icon, Button, CoordinationManagementTable, CoordinationManagementForm],
+  imports: [ReactiveFormsModule, SectionFrame, AssociationCoordinationTable, AssociationCoordinationForm, NewModal, PersonCoordinationTable, PersonCoordinationForm, NewModal, Button, CoordinationManagementTable, CoordinationManagementForm, Icon, CostCenterAssignmentForm, CostCenterAssignmentTable],
   templateUrl: './coordination-administration.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -49,24 +47,24 @@ export class CoordinationAdministration implements OnInit {
   private readonly breadcrumbTitle = inject(BreadcrumbTitle);
 
   readonly switchItems: CoordinationSwitchItem[] = [
-        {
-            id: 'associationCoordinations',
-            label: 'Asociar programa o materia',
-            icon: 'adjustmentsHorizontal',
-        },
-        {
-            id: 'people',
-            label: 'Asociar coordinador',
-            icon: 'user',
-        },
-        {
-            id: 'careerProfessors',
-            label: 'Docentes planta',
-            icon: 'academicCap',
-        },
+    {
+      id: 'associationCoordinations',
+      label: 'Asociar programa',
+      icon: 'adjustmentsHorizontal',
+    },
+    {
+      id: 'people',
+      label: 'Asociar director',
+      icon: 'user',
+    },
+    {
+      id: 'costCenters',
+      label: 'Centros de costo',
+      icon: 'briefcase',
+    },
   ];
 
-   readonly selectedTab = signal<CoordinationAdministrationTabId>('associationCoordinations');
+  readonly selectedTab = signal<CoordinationAdministrationTabId>('associationCoordinations');
 
   readonly associations = signal<CoordinationAssociationItem[]>([]);
   readonly selectedAssociationIds = signal<string[]>([]);
@@ -74,7 +72,6 @@ export class CoordinationAdministration implements OnInit {
 
   readonly coordinations = signal<CatalogOptionItem[]>([]);
   readonly programs = signal<CatalogOptionItem[]>([]);
-  readonly subjects = signal<SubjectCatalogOptionItem[]>([]);
   readonly costCenters = signal<CatalogOptionItem[]>([]);
 
   readonly showForm = signal(false);
@@ -93,20 +90,12 @@ export class CoordinationAdministration implements OnInit {
   readonly selectedCostCenterAssignment = signal<CostCenterAssignmentItem | null>(null);
 
   readonly people = signal<CatalogOptionItem[]>([]);
-  readonly plantProfessors = signal<CatalogOptionItem[]>([]);
 
   readonly peopleCoordinations = signal<PersonCoordinationItem[]>([]);
   readonly selectedPeopleCoordinationIds = signal<string[]>([]);
   readonly selectedPeopleCoordination = signal<PersonCoordinationItem | null>(null);
 
-  readonly plantProfessorCoordinations = signal<PersonCoordinationItem[]>([]);
-  readonly selectedPlantProfessorCoordinationIds = signal<string[]>([]);
-  readonly selectedPlantProfessorCoordination = signal<PersonCoordinationItem | null>(null);
-
-  readonly compositeKeysToDelete = signal<PersonCoordinationKey[]>([]);
-  readonly deleteContext = signal<
-  'associationCoordinations' | 'costCenters' | 'people' | 'careerProfessors'
-  >('associationCoordinations');
+  readonly deleteContext = signal<'associationCoordinations' | 'costCenters' | 'people'>('associationCoordinations');
   
   
   readonly deleteModalTitle = computed(() =>
@@ -123,74 +112,60 @@ export class CoordinationAdministration implements OnInit {
     return `¿Seguro que deseas eliminar la asociación ${this.associationToDelete()?.coordinacion ?? ''}?`;
   });
 
-    readonly coordinationFilterControl = new FormControl('', {
-    nonNullable: true,
-    });
+  readonly coordinationFilterControl = new FormControl('', { nonNullable: true });
 
-    readonly appliedCoordinationFilterId = signal<number | null>(null);
+  readonly appliedCoordinationFilterId = signal<number | null>(null);
 
-    get coordinationFilterOptions(): Option[] {
+  get coordinationFilterOptions(): Option[] {
     return this.coordinations().map((item) => ({
-        value: String(item.id),
-        label: item.label,
+      value: String(item.id),
+      label: item.label,
     }));
-    }
+  }
 
-    readonly filteredAssociations = computed(() => {
+  readonly filteredAssociations = computed(() => {
     const idCoordinacion = this.appliedCoordinationFilterId();
 
     if (idCoordinacion == null) {
-        return [];
+      return [];
     }
 
     return this.associations().filter(
-        (item) => Number(item.idCoordinacion) === idCoordinacion,
+      (item) => Number(item.idCoordinacion) === idCoordinacion,
     );
-    });
+  });
 
-    readonly filteredCostCenterAssignments = computed(() => {
+  readonly filteredCostCenterAssignments = computed(() => {
     const idCoordinacion = this.appliedCoordinationFilterId();
 
     if (idCoordinacion == null) {
-        return [];
+      return [];
     }
 
     return this.costCenterAssignments().filter(
-        (item) => Number(item.idCoordinacion) === idCoordinacion,
+      (item) => Number(item.idCoordinacion) === idCoordinacion,
     );
-    });
+  });
 
-    readonly filteredPeopleCoordinations = computed(() => {
+  readonly filteredPeopleCoordinations = computed(() => {
     const idCoordinacion = this.appliedCoordinationFilterId();
 
     if (idCoordinacion == null) {
-        return [];
+      return [];
     }
 
     return this.peopleCoordinations().filter(
-        (item) => Number(item.idCoordinacion) === idCoordinacion,
+      (item) => Number(item.idCoordinacion) === idCoordinacion,
     );
-    });
+  });
 
-    readonly filteredPlantProfessorCoordinations = computed(() => {
-    const idCoordinacion = this.appliedCoordinationFilterId();
-
-    if (idCoordinacion == null) {
-        return [];
-    }
-
-    return this.plantProfessorCoordinations().filter(
-        (item) => Number(item.idCoordinacion) === idCoordinacion,
-    );
-    });  
-
-    applyCoordinationFilter(): void {
+  applyCoordinationFilter(): void {
     const value = this.coordinationFilterControl.value;
 
     if (!value) {
-        this.appliedCoordinationFilterId.set(null);
-        this.closeForm();
-        return;
+      this.appliedCoordinationFilterId.set(null);
+      this.closeForm();
+      return;
     }
 
     this.appliedCoordinationFilterId.set(Number(value));
@@ -199,153 +174,140 @@ export class CoordinationAdministration implements OnInit {
     this.selectedAssociationIds.set([]);
     this.selectedCostCenterAssignmentIds.set([]);
     this.selectedPeopleCoordinationIds.set([]);
-    this.selectedPlantProfessorCoordinationIds.set([]);
-    }  
+  }
     
-    private hasCoordinationFilter(): boolean {
+  private hasCoordinationFilter(): boolean {
     return this.appliedCoordinationFilterId() != null;
-    } 
+  } 
     
     
-    readonly canManageCurrentCoordination = computed(
-    () => this.appliedCoordinationFilterId() != null,
-    );
-
-    readonly associationEmptyMessage = computed(() =>
+  readonly canManageCurrentCoordination = computed(() => this.appliedCoordinationFilterId() != null);
+  
+  readonly associationEmptyMessage = computed(() =>
     this.canManageCurrentCoordination()
-        ? 'No hay asociaciones registradas.'
-        : 'Seleccione una coordinación para continuar',
-    );
-
-    readonly costCenterEmptyMessage = computed(() =>
+      ? 'No hay asociaciones registradas.'
+      : 'Seleccione una coordinación para continuar',
+  );
+  readonly costCenterEmptyMessage = computed(() =>
     this.canManageCurrentCoordination()
-        ? 'No hay centros de costo asignados.'
-        : 'Seleccione una coordinación para continuar',
-    );
+      ? 'No hay centros de costo asignados.'
+      : 'Seleccione una coordinación para continuar',
+  );
 
-    readonly peopleEmptyMessage = computed(() =>
+  readonly peopleEmptyMessage = computed(() =>
     this.canManageCurrentCoordination()
-        ? 'No hay personas asociadas.'
-        : 'Seleccione una coordinación para continuar',
-    );
+      ? 'No hay personas asociadas.'
+      : 'Seleccione una coordinación para continuar',
+  );
 
-    readonly plantProfessorEmptyMessage = computed(() =>
-    this.canManageCurrentCoordination()
-        ? 'No hay docentes planta asociados.'
-        : 'Seleccione una coordinación para continuar',
-    );    
+  readonly coordinationViewMode = signal<'parents' | 'children' | 'internal'>('parents');
 
-    readonly coordinationViewMode = signal<'parents' | 'children' | 'internal'>('parents');
+  readonly managedCoordinations = signal<CoordinationManagementItem[]>([]);
+  readonly childCoordinations = signal<CoordinationManagementItem[]>([]);
 
-    readonly managedCoordinations = signal<CoordinationManagementItem[]>([]);
-    readonly childCoordinations = signal<CoordinationManagementItem[]>([]);
+  readonly selectedManagedCoordinationIds = signal<string[]>([]);
+  readonly selectedChildCoordinationIds = signal<string[]>([]);
 
-    readonly selectedManagedCoordinationIds = signal<string[]>([]);
-    readonly selectedChildCoordinationIds = signal<string[]>([]);
+  readonly selectedManagedCoordination = signal<CoordinationManagementItem | null>(null);
+  readonly selectedParentCoordination = signal<CoordinationManagementItem | null>(null);
+  readonly selectedInternalCoordination = signal<CoordinationManagementItem | null>(null);
 
-    readonly selectedManagedCoordination = signal<CoordinationManagementItem | null>(null);
-    readonly selectedParentCoordination = signal<CoordinationManagementItem | null>(null);
-    readonly selectedInternalCoordination = signal<CoordinationManagementItem | null>(null);
+  readonly showCoordinationForm = signal(false);
+  readonly showCoordinationDeleteModal = signal(false);
+  readonly coordinationIdsToDelete = signal<number[]>([]);
 
-    readonly showCoordinationForm = signal(false);
-    readonly showCoordinationDeleteModal = signal(false);
-    readonly coordinationIdsToDelete = signal<number[]>([]);
+  readonly isChildrenView = computed(() => this.coordinationViewMode() === 'children');
+  readonly isInternalView = computed(() => this.coordinationViewMode() === 'internal');
 
-    readonly modalities = signal<CatalogOptionItem[]>([]);
-    readonly methodologies = signal<CatalogOptionItem[]>([]);
-
-    readonly isChildrenView = computed(() => this.coordinationViewMode() === 'children');
-    readonly isInternalView = computed(() => this.coordinationViewMode() === 'internal');
-
-    readonly isInternalParentCoordination = computed(() => {
+  readonly isInternalParentCoordination = computed(() => {
     const coordination = this.selectedInternalCoordination();
 
     return coordination?.idCoordinacionPadre == null;
-    });
+  });
 
-    readonly isInternalParentAcademicCoordination = computed(() => {
-        const coordination = this.selectedInternalCoordination();
+  readonly isInternalParentAcademicCoordination = computed(() => {
+    const coordination = this.selectedInternalCoordination();
 
-        if (!coordination || !this.isInternalParentCoordination()) {
-            return false;
-        }
+    if (!coordination || !this.isInternalParentCoordination()) {
+      return false;
+    }
 
-        const esAcademica = String(coordination.esAcademica ?? '')
-            .trim()
-            .toUpperCase();
+    const esAcademica = String(coordination.esAcademica ?? '')
+      .trim()
+      .toUpperCase();
 
-        return ['1', 'S', 'SI', 'TRUE'].includes(esAcademica);
-    });
+    return ['1', 'S', 'SI', 'TRUE'].includes(esAcademica);
+  });
 
-    readonly displayedCoordinations = computed(() =>
+  readonly displayedCoordinations = computed(() =>
     this.isChildrenView() ? this.childCoordinations() : this.managedCoordinations(),
-    );
+  );
 
-    readonly displayedCoordinationSelectedIds = computed(() =>
+  readonly displayedCoordinationSelectedIds = computed(() =>
     this.isChildrenView()
-        ? this.selectedChildCoordinationIds()
-        : this.selectedManagedCoordinationIds(),
-    );
+      ? this.selectedChildCoordinationIds()
+      : this.selectedManagedCoordinationIds(),
+  );
 
-    readonly coordinationTableEmptyMessage = computed(() =>
+  readonly coordinationTableEmptyMessage = computed(() =>
     this.isChildrenView()
-        ? 'No hay coordinaciones hijas registradas.'
-        : 'No hay coordinaciones padre registradas.',
-    );
+      ? 'No hay coordinaciones hijas registradas.'
+      : 'No hay coordinaciones padre registradas.',
+  );
 
-    readonly coordinationTableSearchPlaceholder = computed(() =>
+  readonly coordinationTableSearchPlaceholder = computed(() =>
     this.isChildrenView()
-        ? 'Buscar coordinación hija...'
-        : 'Buscar coordinación padre...',
-    );
+      ? 'Buscar coordinación hija...'
+      : 'Buscar coordinación padre...',
+  );
 
-    readonly coordinationFormTitle = computed(() =>
+  readonly coordinationFormTitle = computed(() =>
     this.isChildrenView() ? 'Nueva coordinación hija' : 'Nueva coordinación padre',
-    );
+  );
 
-    readonly coordinationFormEditTitle = computed(() =>
+  readonly coordinationFormEditTitle = computed(() =>
     this.isChildrenView() ? 'Editar coordinación hija' : 'Editar coordinación padre',
-    );
+  );
 
-    readonly coordinationFormDescription = computed(() =>
+  readonly coordinationFormDescription = computed(() =>
     this.isChildrenView()
-        ? `Registra una coordinación hija para ${this.selectedParentCoordination()?.nombre ?? ''}.`
-        : 'Registra la información principal de la coordinación padre.',
-    );
+      ? `Registra una coordinación hija para ${this.selectedParentCoordination()?.unidad ?? ''}.`
+      : 'Registra la información principal de la coordinación padre.',
+  );
 
-    readonly coordinationDeleteModalTitle = computed(() =>
+  readonly coordinationDeleteModalTitle = computed(() =>
     this.coordinationIdsToDelete().length > 1
-        ? 'Eliminar coordinaciones'
-        : 'Eliminar coordinación',
-    );
+      ? 'Eliminar coordinaciones'
+      : 'Eliminar coordinación',
+  );
 
-    readonly coordinationDeleteModalMessage = computed(() => {
+  readonly coordinationDeleteModalMessage = computed(() => {
     const count = this.coordinationIdsToDelete().length;
 
     if (count > 1) {
-        return `¿Seguro que deseas eliminar las ${count} coordinaciones seleccionadas?`;
+      return `¿Seguro que deseas eliminar las ${count} coordinaciones seleccionadas?`;
     }
 
-    return `¿Seguro que deseas eliminar la coordinación ${this.selectedManagedCoordination()?.nombre ?? ''}?`;
-    });
+    return `¿Seguro que deseas eliminar la coordinación ${this.selectedManagedCoordination()?.unidad ?? ''}?`;
+  });
 
-    readonly internalCoordinationOptions = computed(() => {
+  readonly internalCoordinationOptions = computed(() => {
     const current = this.selectedInternalCoordination();
     const options = [...this.coordinations()];
 
     if (current && !options.some((item) => Number(item.id) === current.id)) {
-        options.unshift({
+      options.unshift({
         id: current.id,
-        label: current.nombre,
-        codigo: current.codigo ?? null,
-        });
+        label: current.unidad ?? '',
+        codigo: null,
+      });
     }
 
     return options;
-    });
+  });
 
 
-    async openChildrenView(coordination: CoordinationManagementItem): Promise<void> {
+  async openChildrenView(coordination: CoordinationManagementItem): Promise<void> {
     this.selectedParentCoordination.set(coordination);
     this.selectedManagedCoordination.set(null);
     this.selectedChildCoordinationIds.set([]);
@@ -353,9 +315,9 @@ export class CoordinationAdministration implements OnInit {
     this.coordinationViewMode.set('children');
 
     await this.refreshChildCoordinations();
-    }
+  }
 
-    backToParentCoordinations(): void {
+  backToParentCoordinations(): void {
     this.coordinationViewMode.set('parents');
     this.selectedParentCoordination.set(null);
     this.selectedInternalCoordination.set(null);
@@ -366,9 +328,9 @@ export class CoordinationAdministration implements OnInit {
 
     this.appliedCoordinationFilterId.set(null);
     this.closeForm();
-    }
+  }
 
-    openInternalConfiguration(coordination: CoordinationManagementItem): void {
+  openInternalConfiguration(coordination: CoordinationManagementItem): void {
     this.selectedInternalCoordination.set(coordination);
     this.selectedManagedCoordination.set(null);
     this.showCoordinationForm.set(false);
@@ -377,7 +339,7 @@ export class CoordinationAdministration implements OnInit {
 
     this.appliedCoordinationFilterId.set(coordination.id);
     this.coordinationFilterControl.setValue(String(coordination.id), {
-        emitEvent: false,
+      emitEvent: false,
     });
 
     this.selectTab('associationCoordinations');
@@ -385,73 +347,72 @@ export class CoordinationAdministration implements OnInit {
 
     this.selectedAssociationIds.set([]);
     this.selectedPeopleCoordinationIds.set([]);
-    this.selectedPlantProfessorCoordinationIds.set([]);
-    }    
+  }
 
-    openCreateCoordinationForm(): void {
+  openCreateCoordinationForm(): void {
     this.selectedManagedCoordination.set(null);
     this.showCoordinationForm.set(true);
-    }
+  }
 
-    openEditCoordinationForm(coordination: CoordinationManagementItem): void {
+  openEditCoordinationForm(coordination: CoordinationManagementItem): void {
     this.selectedManagedCoordination.set(coordination);
     this.showCoordinationForm.set(true);
-    }
+  }
 
-    closeCoordinationForm(): void {
+  closeCoordinationForm(): void {
     this.showCoordinationForm.set(false);
     this.selectedManagedCoordination.set(null);
-    }
+  }
 
-    async onSaveCoordination(payload: CoordinationManagementFormData): Promise<void> {
+  async onSaveCoordination(payload: CoordinationManagementFormData): Promise<void> {
     this.isSaving.set(true);
 
     try {
-        const selected = this.selectedManagedCoordination();
+      const selected = this.selectedManagedCoordination();
 
-        if (selected?.id) {
+      if (selected?.id) {
         await firstValueFrom(
-            this.administrationService.updateCoordination(selected.id, payload),
+          this.administrationService.updateCoordination(selected.id, payload),
         );
         } else if (this.isChildrenView() && this.selectedParentCoordination()?.id) {
-        await firstValueFrom(
+          await firstValueFrom(
             this.administrationService.saveChildCoordination(
-            this.selectedParentCoordination()!.id,
-            payload,
+              this.selectedParentCoordination()!.id,
+              payload,
             ),
-        );
+          );
         } else {
         await firstValueFrom(
-            this.administrationService.saveParentCoordination(payload),
+          this.administrationService.saveParentCoordination(payload),
         );
-        }
+      }
 
-        this.closeCoordinationForm();
-        await this.refreshCurrentCoordinations();
+      this.closeCoordinationForm();
+      await this.refreshCurrentCoordinations();
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isSaving.set(false);
+      this.isSaving.set(false);
     }
-    }
+  }
 
-    async refreshParentCoordinations(): Promise<void> {
+  async refreshParentCoordinations(): Promise<void> {
     this.isLoading.set(true);
 
     try {
-        const rows = await firstValueFrom(
+      const rows = await firstValueFrom(
         this.administrationService.listParentCoordinations(),
-        );
+      );
 
-        this.managedCoordinations.set(rows ?? []);
+      this.managedCoordinations.set(rows ?? []);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isLoading.set(false);
+      this.isLoading.set(false);
     }
-    }
+  }
 
-    async refreshChildCoordinations(): Promise<void> {
+  async refreshChildCoordinations(): Promise<void> {
     const parent = this.selectedParentCoordination();
 
     if (!parent?.id) {
@@ -461,93 +422,93 @@ export class CoordinationAdministration implements OnInit {
     this.isLoading.set(true);
 
     try {
-        const rows = await firstValueFrom(
+      const rows = await firstValueFrom(
         this.administrationService.listChildCoordinations(parent.id),
-        );
+      );
 
-        this.childCoordinations.set(rows ?? []);
+      this.childCoordinations.set(rows ?? []);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isLoading.set(false);
+      this.isLoading.set(false);
     }
-    }
+  }
 
-    async refreshCurrentCoordinations(): Promise<void> {
+  async refreshCurrentCoordinations(): Promise<void> {
     if (this.isChildrenView()) {
-        await this.refreshChildCoordinations();
-        return;
+      await this.refreshChildCoordinations();
+      return;
     }
 
     await this.refreshParentCoordinations();
-    }
+  }
 
-    onSelectedCoordinationIdsChange(ids: string[]): void {
+  onSelectedCoordinationIdsChange(ids: string[]): void {
     if (this.isChildrenView()) {
-        this.selectedChildCoordinationIds.set(ids);
-        return;
+      this.selectedChildCoordinationIds.set(ids);
+      return;
     }
 
     this.selectedManagedCoordinationIds.set(ids);
-    }
+  }
 
 
-    requestDeleteCoordination(coordination: CoordinationManagementItem): void {
+  requestDeleteCoordination(coordination: CoordinationManagementItem): void {
     this.selectedManagedCoordination.set(coordination);
     this.coordinationIdsToDelete.set([coordination.id]);
     this.showCoordinationDeleteModal.set(true);
-    }
+  }
 
-    requestBulkDeleteCoordinations(ids: number[]): void {
+  requestBulkDeleteCoordinations(ids: number[]): void {
     if (!ids.length) {
-        return;
+      return;
     }
 
     this.selectedManagedCoordination.set(null);
     this.coordinationIdsToDelete.set(ids);
     this.showCoordinationDeleteModal.set(true);
-    }
+  }
 
-    closeCoordinationDeleteModal(): void {
+  closeCoordinationDeleteModal(): void {
     this.showCoordinationDeleteModal.set(false);
     this.coordinationIdsToDelete.set([]);
     this.selectedManagedCoordination.set(null);
-    }
+  }
 
-    async confirmDeleteCoordination(): Promise<void> {
+  async confirmDeleteCoordination(): Promise<void> {
     const ids = this.coordinationIdsToDelete();
 
     if (!ids.length) {
-        return;
+      return;
     }
 
     this.isDeleting.set(true);
 
     try {
-        if (ids.length === 1) {
+      if (ids.length === 1) {
         await firstValueFrom(
-            this.administrationService.deleteCoordination(ids[0]),
+          this.administrationService.deleteCoordination(ids[0]),
         );
-        } else {
+      } else {
         await firstValueFrom(
-            this.administrationService.deleteBulkCoordinations({ ids }),
+          this.administrationService.deleteBulkCoordinations({ ids }),
         );
-        }
+      }
 
-        if (this.isChildrenView()) {
+      if (this.isChildrenView()) {
         this.selectedChildCoordinationIds.set([]);
-        } else {
+      } else {
         this.selectedManagedCoordinationIds.set([]);
-        }
+      }
 
-        this.closeCoordinationDeleteModal();
-        await this.refreshCurrentCoordinations();
+      this.closeCoordinationDeleteModal();
+      await this.refreshCurrentCoordinations();
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isDeleting.set(false);
+      this.isDeleting.set(false);
     }
-    }    
+  }
 
 
 
@@ -564,30 +525,23 @@ export class CoordinationAdministration implements OnInit {
         catalogs,
         associations,
         peopleCoordinations,
-        plantProfessorCoordinations,
-        coordinationCatalogs,
+        costCenterAssignments,
         parentCoordinations,
         ] = await Promise.all([
         firstValueFrom(this.administrationService.getCatalogs()),
         firstValueFrom(this.administrationService.listAssociations()),
         firstValueFrom(this.administrationService.listPeopleCoordinations()),
-        firstValueFrom(this.administrationService.listPlantProfessorCoordinations()),
-        firstValueFrom(this.administrationService.getCoordinationCatalogs()),
+        firstValueFrom(this.administrationService.listCostCenterAssignments()),
         firstValueFrom(this.administrationService.listParentCoordinations()),
       ]);
 
       this.coordinations.set(catalogs.coordinaciones ?? []);
       this.programs.set(catalogs.programas ?? []);
-      this.subjects.set(catalogs.materias ?? []);
       this.costCenters.set(catalogs.centrosCosto ?? []);
-      this.associations.set(associations ?? []);
-      //this.costCenterAssignments.set(costCenterAssignments ?? []);
       this.people.set(catalogs.personas ?? []);
-      this.plantProfessors.set(catalogs.docentes ?? []);
+      this.associations.set(associations ?? []);
       this.peopleCoordinations.set(peopleCoordinations ?? []);
-      this.plantProfessorCoordinations.set(plantProfessorCoordinations ?? []);
-      this.modalities.set(coordinationCatalogs.modalidades ?? []);
-      this.methodologies.set(coordinationCatalogs.metodologias ?? []);
+      this.costCenterAssignments.set(costCenterAssignments ?? []);
       this.managedCoordinations.set(parentCoordinations ?? []);
     } catch (error) {
       console.error(error);
@@ -599,19 +553,27 @@ export class CoordinationAdministration implements OnInit {
   selectTab(tabId: CoordinationAdministrationTabId): void {
     this.selectedTab.set(tabId);
     this.closeForm();
-   }
+
+    this.selectedAssociationIds.set([]);
+    this.selectedCostCenterAssignmentIds.set([]);
+    this.selectedPeopleCoordinationIds.set([]);
+  }
 
   openCreateForm(): void {
     if (!this.hasCoordinationFilter()) {
-        return;
+      return;
     }
 
     this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
   openEditForm(association: CoordinationAssociationItem): void {
     this.selectedAssociation.set(association);
+    this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
@@ -620,9 +582,8 @@ export class CoordinationAdministration implements OnInit {
     this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(null);
-    this.selectedPlantProfessorCoordination.set(null);
-   }
-   
+  }
+  
 
   async onSaveAssociation(payload: CoordinationAssociationFormData): Promise<void> {
     this.isSaving.set(true);
@@ -649,7 +610,6 @@ export class CoordinationAdministration implements OnInit {
     this.deleteContext.set('associationCoordinations');
     this.associationToDelete.set(association);
     this.idsToDelete.set([association.id]);
-    this.compositeKeysToDelete.set([]);
     this.showDeleteModal.set(true);
   }
 
@@ -658,6 +618,7 @@ export class CoordinationAdministration implements OnInit {
       return;
     }
 
+    this.deleteContext.set('associationCoordinations');
     this.associationToDelete.set(null);
     this.idsToDelete.set(ids);
     this.showDeleteModal.set(true);
@@ -669,110 +630,72 @@ export class CoordinationAdministration implements OnInit {
     this.associationToDelete.set(null);
   }
 
-    async confirmDelete(): Promise<void> {
-        this.isDeleting.set(true);
-
-        try {
-            if (this.deleteContext() === 'people') {
-            const registros = this.compositeKeysToDelete();
-
-            if (!registros.length) {
-                return;
-            }
-
-            if (registros.length === 1) {
-                await firstValueFrom(
-                this.administrationService.deletePeopleCoordination(
-                    registros[0].idPersonaGeneral,
-                    registros[0].idCoordinacion,
-                ),
-                );
-            } else {
-                await firstValueFrom(
-                this.administrationService.deleteBulkPeopleCoordinations({
-                    registros,
-                }),
-                );
-            }
-
-            this.selectedPeopleCoordinationIds.set([]);
-            this.compositeKeysToDelete.set([]);
-            this.closeDeleteModal();
-            await this.refreshPeopleCoordinations();
-            return;
-            }
-
-            if (this.deleteContext() === 'careerProfessors') {
-            const registros = this.compositeKeysToDelete();
-
-            if (!registros.length) {
-                return;
-            }
-
-            if (registros.length === 1) {
-                await firstValueFrom(
-                this.administrationService.deletePlantProfessorCoordination(
-                    registros[0].idPersonaGeneral,
-                    registros[0].idCoordinacion,
-                ),
-                );
-            } else {
-                await firstValueFrom(
-                this.administrationService.deleteBulkPlantProfessorCoordinations({
-                    registros,
-                }),
-                );
-            }
-
-            this.selectedPlantProfessorCoordinationIds.set([]);
-            this.compositeKeysToDelete.set([]);
-            this.closeDeleteModal();
-            await this.refreshPlantProfessorCoordinations();
-            return;
-            }
-
-            const ids = this.idsToDelete();
-
-            if (!ids.length) {
-            return;
-            }
-
-            if (this.deleteContext() === 'costCenters') {
-            if (ids.length === 1) {
-                await firstValueFrom(
-                this.administrationService.deleteCostCenterAssignment(ids[0]),
-                );
-            } else {
-                await firstValueFrom(
-                this.administrationService.deleteBulkCostCenterAssignments({ ids }),
-                );
-            }
-
-            this.selectedCostCenterAssignmentIds.set([]);
-            this.closeDeleteModal();
-            await this.refreshCostCenterAssignments();
-            return;
-            }
-
-            if (ids.length === 1) {
-            await firstValueFrom(
-                this.administrationService.deleteAssociation(ids[0]),
-            );
-            } else {
-            await firstValueFrom(
-                this.administrationService.deleteBulk({ ids }),
-            );
-            }
-
-            this.selectedAssociationIds.set([]);
-            this.closeDeleteModal();
-            await this.refreshAssociations();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            this.isDeleting.set(false);
-        }
+  async confirmDelete(): Promise<void> {
+    const ids = this.idsToDelete();
+    if (!ids.length) {
+      return;
     }
+
+    this.isDeleting.set(true);
+
+    try {
+      if (ids.length === 1) {
+        const id = ids[0];
+
+        switch (this.deleteContext()) {
+          case 'people':
+            await firstValueFrom(this.administrationService.deletePeopleCoordination(id));
+            break;
+
+          case 'costCenters':
+            await firstValueFrom(this.administrationService.deleteCostCenterAssignment(id));
+            break;
+
+          default:
+            await firstValueFrom(this.administrationService.deleteAssociation(id));
+            break;
+        }
+      } else {
+        switch (this.deleteContext()) {
+          case 'people':
+            await firstValueFrom(this.administrationService.deleteBulkPeopleCoordinations({ ids })            );
+            break;
+
+          case 'costCenters':
+            await firstValueFrom(this.administrationService.deleteBulkCostCenterAssignments({ ids }));
+            break;
+
+          default:
+            await firstValueFrom(this.administrationService.deleteBulkAssociations({ ids }));
+            break;
+        }
+      }
+
+      switch (this.deleteContext()) {
+        case 'people':
+          this.selectedPeopleCoordinationIds.set([]);
+          this.closeDeleteModal();
+          await this.refreshPeopleCoordinations();
+          break;
+
+        case 'costCenters':
+          this.selectedCostCenterAssignmentIds.set([]);
+          this.closeDeleteModal();
+          await this.refreshCostCenterAssignments();
+          break;
+
+        default:
+          this.selectedAssociationIds.set([]);
+          this.closeDeleteModal();
+          await this.refreshAssociations();
+          break;
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
 
   async refreshAssociations(): Promise<void> {
     this.isLoading.set(true);
@@ -789,234 +712,154 @@ export class CoordinationAdministration implements OnInit {
 
   openCreateCostCenterForm(): void {
     if (!this.hasCoordinationFilter()) {
-        return;
+      return;
     }
 
+    this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
-    }
+  }
 
-    openEditCostCenterForm(assignment: CostCenterAssignmentItem): void {
+  openEditCostCenterForm(assignment: CostCenterAssignmentItem): void {
+    this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(assignment);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
-    }
+  }
 
-    async onSaveCostCenterAssignment(payload: CostCenterAssignmentFormData): Promise<void> {
+  async onSaveCostCenterAssignment(payload: CostCenterAssignmentFormData): Promise<void> {
     this.isSaving.set(true);
 
     try {
-        const selected = this.selectedCostCenterAssignment();
+      const selected = this.selectedCostCenterAssignment();
 
-        if (selected?.id) {
+      if (selected?.id) {
         await firstValueFrom(
-            this.administrationService.updateCostCenterAssignment(selected.id, payload),
+          this.administrationService.updateCostCenterAssignment(selected.id, payload),
         );
-        } else {
+      } else {
         await firstValueFrom(
-            this.administrationService.saveCostCenterAssignment(payload),
+          this.administrationService.saveCostCenterAssignment(payload),
         );
-        }
+      }
 
-        this.closeForm();
-        await this.refreshCostCenterAssignments();
+      this.closeForm();
+      await this.refreshCostCenterAssignments();
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isSaving.set(false);
+      this.isSaving.set(false);
     }
-    }
+  }
 
-    async refreshCostCenterAssignments(): Promise<void> {
+  async refreshCostCenterAssignments(): Promise<void> {
     this.isLoading.set(true);
 
     try {
-        const assignments = await firstValueFrom(
+      const assignments = await firstValueFrom(
         this.administrationService.listCostCenterAssignments(),
-        );
+      );
 
-        this.costCenterAssignments.set(assignments ?? []);
+      this.costCenterAssignments.set(assignments ?? []);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isLoading.set(false);
+      this.isLoading.set(false);
     }
-    }
+  }
 
-    requestDeleteCostCenterAssignment(assignment: CostCenterAssignmentItem): void {
-        this.deleteContext.set('costCenters');
-        this.associationToDelete.set(null);
-        this.selectedCostCenterAssignment.set(assignment);
-        this.idsToDelete.set([assignment.id]);
-        this.compositeKeysToDelete.set([]);
-        this.showDeleteModal.set(true);
-    }
+  requestDeleteCostCenterAssignment(assignment: CostCenterAssignmentItem): void {
+    this.deleteContext.set('costCenters');
+    this.associationToDelete.set(null);
+    this.selectedCostCenterAssignment.set(assignment);
+    this.idsToDelete.set([assignment.id]);
+    this.showDeleteModal.set(true);
+  }
 
-    requestBulkDeleteCostCenters(ids: number[]): void {
+  requestBulkDeleteCostCenters(ids: number[]): void {
     if (!ids.length) {
-        return;
+      return;
     }
 
+    this.deleteContext.set('costCenters');
     this.associationToDelete.set(null);
     this.selectedCostCenterAssignment.set(null);
     this.idsToDelete.set(ids);
     this.showDeleteModal.set(true);
-    }
+  }
 
-    openCreatePeopleForm(): void {
+  openCreatePeopleForm(): void {
     if (!this.hasCoordinationFilter()) {
      return;
     }
-        
+    
+    this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
-    }
+  }
 
-    openEditPeopleForm(item: PersonCoordinationItem): void {
+  openEditPeopleForm(item: PersonCoordinationItem): void {
+    this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(item);
     this.showForm.set(true);
-    }
+  }
 
-    async onSavePeopleCoordination(payload: PersonCoordinationFormData): Promise<void> {
+  async onSavePeopleCoordination(payload: PersonCoordinationFormData): Promise<void> {
     this.isSaving.set(true);
 
     try {
-        const selected = this.selectedPeopleCoordination();
+      const selected = this.selectedPeopleCoordination();
 
-        if (selected) {
+      if (selected?.id) {
         await firstValueFrom(
-            this.administrationService.updatePeopleCoordination(
-            selected.idPersonaGeneral,
-            selected.idCoordinacion,
-            payload,
-            ),
+          this.administrationService.updatePeopleCoordination(selected.id, payload),
         );
         } else {
-        await firstValueFrom(this.administrationService.savePeopleCoordination(payload));
+          await firstValueFrom(this.administrationService.savePeopleCoordination(payload));
         }
 
-        this.closeForm();
-        await this.refreshPeopleCoordinations();
+      this.closeForm();
+      await this.refreshPeopleCoordinations();
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isSaving.set(false);
+      this.isSaving.set(false);
     }
-    }
+  }
 
-    async refreshPeopleCoordinations(): Promise<void> {
+  async refreshPeopleCoordinations(): Promise<void> {
     this.isLoading.set(true);
 
     try {
-        const rows = await firstValueFrom(this.administrationService.listPeopleCoordinations());
-        this.peopleCoordinations.set(rows ?? []);
+      const rows = await firstValueFrom(this.administrationService.listPeopleCoordinations());
+      this.peopleCoordinations.set(rows ?? []);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     } finally {
-        this.isLoading.set(false);
+      this.isLoading.set(false);
     }
-    }
+  }
 
-    requestDeletePeopleCoordination(item: PersonCoordinationItem): void {
+  requestDeletePeopleCoordination(item: PersonCoordinationItem): void {
     this.deleteContext.set('people');
-    this.compositeKeysToDelete.set([
-        {
-        idPersonaGeneral: item.idPersonaGeneral,
-        idCoordinacion: item.idCoordinacion,
-        },
-    ]);
+    this.associationToDelete.set(null);
+    this.selectedPeopleCoordination.set(item);
+    this.idsToDelete.set([item.id]);
     this.showDeleteModal.set(true);
-    }
+  }
 
-    requestBulkDeletePeople(keys: PersonCoordinationKey[]): void {
-    if (!keys.length) {
-        return;
+  requestBulkDeletePeople(ids: number[]): void {
+    if (!ids.length) {
+      return;
     }
 
     this.deleteContext.set('people');
-    this.compositeKeysToDelete.set(keys);
+    this.associationToDelete.set(null);
+    this.selectedPeopleCoordination.set(null);
+    this.idsToDelete.set(ids);
     this.showDeleteModal.set(true);
-    }
-
-    openCreatePlantProfessorForm(): void {
-
-    if (!this.hasCoordinationFilter()) {
-        return;
-    }    
-
-    this.selectedPlantProfessorCoordination.set(null);
-    this.showForm.set(true);
-    }
-
-    openEditPlantProfessorForm(item: PersonCoordinationItem): void {
-    this.selectedPlantProfessorCoordination.set(item);
-    this.showForm.set(true);
-    }
-
-    async onSavePlantProfessorCoordination(payload: PersonCoordinationFormData): Promise<void> {
-    this.isSaving.set(true);
-
-    try {
-        const selected = this.selectedPlantProfessorCoordination();
-
-        if (selected) {
-        await firstValueFrom(
-            this.administrationService.updatePlantProfessorCoordination(
-            selected.idPersonaGeneral,
-            selected.idCoordinacion,
-            payload,
-            ),
-        );
-        } else {
-        await firstValueFrom(
-            this.administrationService.savePlantProfessorCoordination(payload),
-        );
-        }
-
-        this.closeForm();
-        await this.refreshPlantProfessorCoordinations();
-    } catch (error) {
-        console.error(error);
-    } finally {
-        this.isSaving.set(false);
-    }
-    }
-
-    async refreshPlantProfessorCoordinations(): Promise<void> {
-    this.isLoading.set(true);
-
-    try {
-        const rows = await firstValueFrom(
-        this.administrationService.listPlantProfessorCoordinations(),
-        );
-        this.plantProfessorCoordinations.set(rows ?? []);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        this.isLoading.set(false);
-    }
-    }
-
-    requestDeletePlantProfessorCoordination(item: PersonCoordinationItem): void {
-    this.deleteContext.set('careerProfessors');
-    this.compositeKeysToDelete.set([
-        {
-        idPersonaGeneral: item.idPersonaGeneral,
-        idCoordinacion: item.idCoordinacion,
-        },
-    ]);
-    this.showDeleteModal.set(true);
-    }
-
-    requestBulkDeletePlantProfessors(keys: PersonCoordinationKey[]): void {
-    if (!keys.length) {
-        return;
-    }
-
-    this.deleteContext.set('careerProfessors');
-    this.compositeKeysToDelete.set(keys);
-    this.showDeleteModal.set(true);
-    }    
-
-
-  
+  }
 }

@@ -14,22 +14,6 @@
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div>
-      <app-label>Coordinación</app-label>
-      <app-select
-        formControlName="idCoordinacion"
-        [options]="coordinationOptions"
-        placeholder="Seleccione la coordinación"
-        [disabled]="true"
-      />
-
-      @if (form.controls.idCoordinacion.touched && form.controls.idCoordinacion.invalid) {
-        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-          La coordinación es obligatoria.
-        </p>
-      }
-    </div>
-
-    <div>
       <app-label>Centro de costo</app-label>
       <app-select
         formControlName="idCentroCosto"

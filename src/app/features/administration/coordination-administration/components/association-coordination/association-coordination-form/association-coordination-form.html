@@ -8,57 +8,36 @@
       {{ association() ? 'Editar asociación coordinación' : 'Nueva asociación coordinación' }}
     </h4>
     <p class="text-xs text-gray-500 dark:text-gray-400">
-      Define si la asociación aplica por programa o materia.
+      Define si la asociación aplica por programa.
     </p>
   </div>
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
       <div class="mb-2">
-        <app-checkbox
-          label="Programa"
-          [checked]="form.controls.usarPrograma.value"
-          (checkedChange)="onProgramCheckChange($event)"
-        />
+        <app-label>Programa</app-label>
       </div>
 
       <app-select
         formControlName="idPrograma"
         [options]="programOptions"
         placeholder="Seleccione el programa"
-        [disabled]="!form.controls.usarPrograma.value"
       />
     </div>
 
     <div class="rounded-lg border border-gray-100 p-3 dark:border-white/10">
       <div class="mb-2">
-        <app-checkbox
-          label="Materia"
-          [checked]="form.controls.usarMateria.value"
-          (checkedChange)="onSubjectCheckChange($event)"
-        />
+        <app-label>Centro de costo</app-label>
       </div>
 
       <app-select
-        formControlName="codigoMateria"
-        [options]="subjectOptions"
-        placeholder="Seleccione la materia"
-        [disabled]="!form.controls.usarMateria.value"
+        formControlName="idCentroCosto"
+        [options]="costCenterOptions"
+        placeholder="Seleccione el centro de costo"
       />
+      
+      <p class="mt-1 text-xs text-gray-400">Opcional.</p>
     </div>
-  </div>
-
-  <div class="mt-4">
-    <app-label>Centro de costo</app-label>
-    <app-select
-      formControlName="idCentroCosto"
-      [options]="costCenterOptions"
-      placeholder="Seleccione el centro de costo"
-      [disabled]="!isCostCenterEnabled"
-    />
-    <p class="mt-1 text-xs text-gray-400">
-      Opcional. Solo se habilita cuando la asociación aplica por programa.
-    </p>
   </div>
 
   <div class="mt-4 rounded-lg border border-gray-100 p-3 dark:border-white/10">

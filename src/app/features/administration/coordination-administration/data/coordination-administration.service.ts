@@ -12,7 +12,6 @@ import {
   PersonCoordinationFormData,
   PersonCoordinationItem,
   DeleteBulkPersonCoordinationRequest,
-  CoordinationManagementCatalogs,
   CoordinationManagementFormData,
   CoordinationManagementItem,
   DeleteBulkCoordinationsRequest,
@@ -23,8 +22,7 @@ import {
 export class CoordinationAdministrationService {
   private readonly webRequestService = inject(WebRequestService);
 
-  private readonly endpoint =
-    '/configuration/administration/coordination-management';
+  private readonly endpoint = '/configuration/administration/coordination-management';
 
   /**
    * Obtiene los catálogos requeridos para administrar asociaciones de coordinaciones.
@@ -72,10 +70,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
   */
 
-  updateAssociation(
-    id: number,
-    payload: CoordinationAssociationFormData,
-  ): Observable<void> {
+  updateAssociation(id: number, payload: CoordinationAssociationFormData): Observable<void> {
     return this.webRequestService.put<void>(
       `${this.endpoint}/coordination-associations/update/${id}`,
       payload,
@@ -102,9 +97,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
    */
 
-  deleteBulk(
-    payload: DeleteBulkCoordinationAssociationRequest,
-  ): Observable<void> {
+  deleteBulkAssociations(payload: DeleteBulkCoordinationAssociationRequest): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/coordination-associations/delete-bulk`,
       payload,
@@ -130,9 +123,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando el registro finaliza correctamente.
   */
 
-  saveCostCenterAssignment(
-    payload: CostCenterAssignmentFormData,
-  ): Observable<void> {
+  saveCostCenterAssignment(payload: CostCenterAssignmentFormData): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/cost-centers/save`,
       payload,
@@ -147,10 +138,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
   */
 
-  updateCostCenterAssignment(
-    id: number,
-    payload: CostCenterAssignmentFormData,
-  ): Observable<void> {
+  updateCostCenterAssignment(id: number, payload: CostCenterAssignmentFormData): Observable<void> {
     return this.webRequestService.put<void>(
       `${this.endpoint}/cost-centers/update/${id}`,
       payload,
@@ -177,9 +165,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
   */
 
-  deleteBulkCostCenterAssignments(
-    payload: DeleteBulkCostCenterAssignmentRequest,
-  ): Observable<void> {
+  deleteBulkCostCenterAssignments(payload: DeleteBulkCostCenterAssignmentRequest): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/cost-centers/delete-bulk`,
       payload,
@@ -205,9 +191,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando el registro finaliza correctamente.
   */
 
-  savePeopleCoordination(
-    payload: PersonCoordinationFormData,
-  ): Observable<void> {
+  savePeopleCoordination(payload: PersonCoordinationFormData): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/people/save`,
       payload,
@@ -217,19 +201,14 @@ export class CoordinationAdministrationService {
   /**
    * Actualiza una asociación existente entre una persona y una coordinación.
    *
-   * @param idPersonaGeneral Identificador de la persona.
-   * @param idCoordinacion Identificador de la coordinación.
+   * @param id Identificador de la asignación.
    * @param payload Información actualizada de la asociación.
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
   */
 
-  updatePeopleCoordination(
-    idPersonaGeneral: number,
-    idCoordinacion: number,
-    payload: PersonCoordinationFormData,
-  ): Observable<void> {
+  updatePeopleCoordination(id: number, payload: PersonCoordinationFormData): Observable<void> {
     return this.webRequestService.put<void>(
-      `${this.endpoint}/people/update/${idPersonaGeneral}/${idCoordinacion}`,
+      `${this.endpoint}/people/update/${id}`,
       payload,
     );
   }
@@ -237,17 +216,13 @@ export class CoordinationAdministrationService {
   /**
    * Elimina la asociación entre una persona y una coordinación.
    *
-   * @param idPersonaGeneral Identificador de la persona.
-   * @param idCoordinacion Identificador de la coordinación.
+   * @param id Identificador de la asignación.
    * @returns Observable sin contenido cuando la eliminación finaliza correctamente.
   */
 
-  deletePeopleCoordination(
-    idPersonaGeneral: number,
-    idCoordinacion: number,
-  ): Observable<void> {
+  deletePeopleCoordination(id: number): Observable<void> {
     return this.webRequestService.delete<void>(
-      `${this.endpoint}/people/delete/${idPersonaGeneral}/${idCoordinacion}`,
+      `${this.endpoint}/people/delete/${id}`,
     );
   }
 
@@ -258,105 +233,10 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
   */
 
-  deleteBulkPeopleCoordinations(
-    payload: DeleteBulkPersonCoordinationRequest,
-  ): Observable<void> {
+  deleteBulkPeopleCoordinations(payload: DeleteBulkPersonCoordinationRequest): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/people/delete-bulk`,
       payload,
-    );
-  }
-
-  /**
-   * Lista las asociaciones entre docentes de planta y coordinaciones.
-   *
-   * @returns Observable con las asociaciones registradas.
-  */
-
-  listPlantProfessorCoordinations(): Observable<PersonCoordinationItem[]> {
-    return this.webRequestService.get<PersonCoordinationItem[]>(
-      `${this.endpoint}/plant-professors/list`,
-    );
-  }
-
-  /**
-   * Asocia un docente de planta a una coordinación.
-   *
-   * @param payload Información de la asociación docente-coordinación.
-   * @returns Observable sin contenido cuando el registro finaliza correctamente.
-  */
-
-  savePlantProfessorCoordination(
-    payload: PersonCoordinationFormData,
-  ): Observable<void> {
-    return this.webRequestService.post<void>(
-      `${this.endpoint}/plant-professors/save`,
-      payload,
-    );
-  }
-
-  /**
-   * Actualiza la asociación entre un docente de planta y una coordinación.
-   *
-   * @param idPersonaGeneral Identificador del docente.
-   * @param idCoordinacion Identificador de la coordinación.
-   * @param payload Información actualizada de la asociación.
-   * @returns Observable sin contenido cuando la actualización finaliza correctamente.
-  */
-
-  updatePlantProfessorCoordination(
-    idPersonaGeneral: number,
-    idCoordinacion: number,
-    payload: PersonCoordinationFormData,
-  ): Observable<void> {
-    return this.webRequestService.put<void>(
-      `${this.endpoint}/plant-professors/update/${idPersonaGeneral}/${idCoordinacion}`,
-      payload,
-    );
-  }
-
-  /**
-   * Elimina la asociación entre un docente de planta y una coordinación.
-   *
-   * @param idPersonaGeneral Identificador del docente.
-   * @param idCoordinacion Identificador de la coordinación.
-   * @returns Observable sin contenido cuando la eliminación finaliza correctamente.
-  */
-
-  deletePlantProfessorCoordination(
-    idPersonaGeneral: number,
-    idCoordinacion: number,
-  ): Observable<void> {
-    return this.webRequestService.delete<void>(
-      `${this.endpoint}/plant-professors/delete/${idPersonaGeneral}/${idCoordinacion}`,
-    );
-  }
-
-  /**
-   * Elimina varias asociaciones de docentes de planta con coordinaciones.
-   *
-   * @param payload Asociaciones que se desean eliminar.
-   * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
-  */
-
-  deleteBulkPlantProfessorCoordinations(
-    payload: DeleteBulkPersonCoordinationRequest,
-  ): Observable<void> {
-    return this.webRequestService.post<void>(
-      `${this.endpoint}/plant-professors/delete-bulk`,
-      payload,
-    );
-  }
-
-  /**
-   * Obtiene los catálogos requeridos para crear o editar coordinaciones.
-   *
-   * @returns Observable con los catálogos de administración de coordinaciones.
-  */
-
-  getCoordinationCatalogs(): Observable<CoordinationManagementCatalogs> {
-    return this.webRequestService.get<CoordinationManagementCatalogs>(
-        `${this.endpoint}/coordinations/catalogs`,
     );
   }
 
@@ -370,7 +250,7 @@ export class CoordinationAdministrationService {
 
   searchUnits(term: string): Observable<CatalogOptionItem[]> {
     return this.webRequestService.get<CatalogOptionItem[]>(
-        `${this.endpoint}/coordinations/units/search?term=${encodeURIComponent(term)}`,
+      `${this.endpoint}/coordinations/units/search?term=${encodeURIComponent(term)}`,
     );
   }
   
@@ -382,7 +262,7 @@ export class CoordinationAdministrationService {
 
   listParentCoordinations(): Observable<CoordinationManagementItem[]> {
     return this.webRequestService.get<CoordinationManagementItem[]>(
-        `${this.endpoint}/coordinations/parents/list`,
+      `${this.endpoint}/coordinations/parents/list`,
     );
   }
 
@@ -395,7 +275,7 @@ export class CoordinationAdministrationService {
 
   listChildCoordinations(idPadre: number): Observable<CoordinationManagementItem[]> {
     return this.webRequestService.get<CoordinationManagementItem[]>(
-        `${this.endpoint}/coordinations/${idPadre}/children/list`,
+      `${this.endpoint}/coordinations/${idPadre}/children/list`,
     );
   }
 
@@ -408,8 +288,8 @@ export class CoordinationAdministrationService {
 
   saveParentCoordination(payload: CoordinationManagementFormData): Observable<void> {
     return this.webRequestService.post<void>(
-        `${this.endpoint}/coordinations/parents/save`,
-        payload,
+      `${this.endpoint}/coordinations/parents/save`,
+      payload,
     );
   }
 
@@ -421,13 +301,10 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando el registro finaliza correctamente.
   */
 
-  saveChildCoordination(
-    idPadre: number,
-    payload: CoordinationManagementFormData,
-    ): Observable<void> {
+  saveChildCoordination(idPadre: number, payload: CoordinationManagementFormData): Observable<void> {
     return this.webRequestService.post<void>(
-        `${this.endpoint}/coordinations/${idPadre}/children/save`,
-        payload,
+      `${this.endpoint}/coordinations/${idPadre}/children/save`,
+      payload,
     );
   }
 
@@ -439,13 +316,10 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
   */
 
-  updateCoordination(
-    id: number,
-    payload: CoordinationManagementFormData,
-    ): Observable<void> {
+  updateCoordination(id: number, payload: CoordinationManagementFormData): Observable<void> {
     return this.webRequestService.put<void>(
-        `${this.endpoint}/coordinations/update/${id}`,
-        payload,
+      `${this.endpoint}/coordinations/update/${id}`,
+      payload,
     );
   }
 
@@ -458,7 +332,7 @@ export class CoordinationAdministrationService {
 
   deleteCoordination(id: number): Observable<void> {
     return this.webRequestService.delete<void>(
-        `${this.endpoint}/coordinations/delete/${id}`,
+      `${this.endpoint}/coordinations/delete/${id}`,
     );
   }
 
@@ -469,12 +343,10 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
   */
 
-  deleteBulkCoordinations(
-    payload: DeleteBulkCoordinationsRequest,
-    ): Observable<void> {
+  deleteBulkCoordinations(payload: DeleteBulkCoordinationsRequest): Observable<void> {
     return this.webRequestService.post<void>(
-        `${this.endpoint}/coordinations/delete-bulk`,
-        payload,
+      `${this.endpoint}/coordinations/delete-bulk`,
+      payload,
     );
   }
 

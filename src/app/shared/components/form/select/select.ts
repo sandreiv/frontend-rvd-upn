@@ -79,7 +79,7 @@ export class Select implements ControlValueAccessor {
   value = model<string>('');
   private readonly selectedValues = signal<string[]>([]);
 
-  @Output() valueChange = new EventEmitter<string>();
+  valueChange = new EventEmitter<string>();
   @Output() searchChange = new EventEmitter<string>();
 
   private onChangeFn: (value: string | string[]) => void = () => {};

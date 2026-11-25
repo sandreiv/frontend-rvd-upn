@@ -8,7 +8,6 @@ import {
 } from '../../../../../../shared/ui/data-table/table.types';
 import {
   PersonCoordinationItem,
-  PersonCoordinationKey,
 } from '../../../model/coordination-administration.model';
 
 @Component({
@@ -29,10 +28,9 @@ export class PersonCoordinationTable {
   @Output() addAssignment = new EventEmitter<void>();
   @Output() editAssignment = new EventEmitter<PersonCoordinationItem>();
   @Output() deleteAssignment = new EventEmitter<PersonCoordinationItem>();
-  @Output() deleteAll = new EventEmitter<PersonCoordinationKey[]>();
+  @Output() deleteAll = new EventEmitter<number[]>();
 
-  readonly rowIdentity = (row: PersonCoordinationItem): string =>
-    this.keyToString(row.idPersonaGeneral, row.idCoordinacion);
+  readonly rowIdentity = (row: PersonCoordinationItem): string => String(row.id);
 
   readonly columns: DataTableColumn<PersonCoordinationItem>[] = [
     {
@@ -87,8 +85,8 @@ export class PersonCoordinationTable {
     if (event.actionId === 'deleteAll') {
       this.deleteAll.emit(
         event.selectedIds
-          .map((key) => this.stringToKey(String(key)))
-          .filter((key): key is PersonCoordinationKey => key != null),
+          .map((id) => Number(id))
+          .filter((id) => Number.isFinite(id)),
       );
     }
   }
@@ -110,16 +108,6 @@ export class PersonCoordinationTable {
 
   private keyToString(idPersonaGeneral: number, idCoordinacion: number): string {
     return `${idPersonaGeneral}-${idCoordinacion}`;
-  }
-
-  private stringToKey(value: string): PersonCoordinationKey | null {
-    const [idPersonaGeneral, idCoordinacion] = value.split('-').map(Number);
-
-    if (!Number.isFinite(idPersonaGeneral) || !Number.isFinite(idCoordinacion)) {
-      return null;
-    }
-
-    return { idPersonaGeneral, idCoordinacion };
   }
 
   private formatStatus(value: string): string {
