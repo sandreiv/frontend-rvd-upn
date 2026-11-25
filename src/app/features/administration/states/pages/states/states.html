@@ -7,6 +7,7 @@
 
   <div>
 
+    <!-- Formulario de creación y edición -->
     @if (showForm()) {
 
       <app-states-form
@@ -16,6 +17,22 @@
         (saveState)="onSaveState($event)"
       />
 
+    <!-- Formulario de estados siguientes -->
+    } @else if (nextStatesOrigin(); as origin) {
+
+      <app-next-states-form
+        [originState]="origin"
+        [states]="states()"
+        [initialNextStates]="initialNextStates()"
+        [isLoading]="isLoadingNextStates()"
+        [isSaving]="isSavingNextStates()"
+        [canSave]="nextStatesLoaded()"
+        [errorMessage]="nextStatesError()"
+        (cancel)="closeNextStatesForm()"
+        (saveNextStates)="onSaveNextStates($event)"
+      />
+
+    <!-- Tabla principal -->
     } @else {
 
       <app-states-table
@@ -25,6 +42,7 @@
         (refreshStates)="refreshStates()"
         (addState)="openCreateForm()"
         (editState)="openEditForm($event)"
+        (nextStates)="openNextStatesForm($event)"
         (deleteState)="requestDeleteState($event)"
         (deleteAll)="requestBulkDelete($event)"
       />

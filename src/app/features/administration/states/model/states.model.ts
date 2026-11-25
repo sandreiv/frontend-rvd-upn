@@ -12,3 +12,7 @@ export interface StateFormData {
   tipo: string;
   orden: string;
 }
+
+export interface NextStatesFormData {
+  estadosDestinoIds: number[];
+}

@@ -18,6 +18,8 @@ import { SectionFrame } from '../../../../../shared/ui/section-frame/section-fra
 
 import { StatesForm } from '../../components/states-form/states-form';
 
+import { NextStatesForm } from '../../components/next-states-form/next-states-form';
+
 import { StatesTable } from '../../components/states-table/states-table';
 
 import { StatesService } from '../../data/states.service';
@@ -25,6 +27,7 @@ import { StatesService } from '../../data/states.service';
 import {
   StateFormData,
   StateItem,
+  NextStatesFormData,
 } from '../../model/states.model';
 
 @Component({
@@ -33,6 +36,7 @@ import {
     SectionFrame,
     StatesTable,
     StatesForm,
+    NextStatesForm,
     NewModal,
   ],
   templateUrl: './states.html',
@@ -53,6 +57,20 @@ export class States implements OnInit, OnDestroy {
   readonly selectedState = signal<StateItem | null>(null);
 
   readonly showForm = signal(false);
+
+  readonly nextStatesOrigin = signal<StateItem | null>(null);
+
+  readonly initialNextStates = signal<StateItem[]>([]);
+
+  readonly isLoadingNextStates = signal(false);
+
+  readonly isSavingNextStates = signal(false);
+
+  readonly nextStatesError = signal('');
+
+  readonly nextStatesLoaded = signal(false);
+
+  private nextStatesRequestId = 0;
 
   readonly showDeleteModal = signal(false);
 
@@ -121,6 +139,126 @@ export class States implements OnInit, OnDestroy {
     this.showForm.set(false);
 
     this.selectedState.set(null);
+  }
+
+  async openNextStatesForm(state: StateItem): Promise<void> {
+
+    const requestId = ++this.nextStatesRequestId;
+
+    this.initialNextStates.set([]);
+
+    this.nextStatesError.set('');
+
+    this.nextStatesLoaded.set(false);
+
+    this.isLoadingNextStates.set(true);
+
+    this.nextStatesOrigin.set(state);
+
+    try {
+
+        const rows = await firstValueFrom(
+        this.statesService.listNextStates(state.id),
+        );
+
+        if (requestId !== this.nextStatesRequestId) {
+        return;
+        }
+
+        this.initialNextStates.set(rows ?? []);
+
+        this.nextStatesLoaded.set(true);
+
+    } catch (error) {
+
+        if (requestId !== this.nextStatesRequestId) {
+        return;
+        }
+
+        console.error(error);
+
+        this.nextStatesError.set(
+        'No fue posible consultar los estados siguientes. Cancela e intenta nuevamente.',
+        );
+
+    } finally {
+
+        if (requestId === this.nextStatesRequestId) {
+
+        this.isLoadingNextStates.set(false);
+
+        }
+    }
+  }
+
+  closeNextStatesForm(): void {
+
+    if (this.isSavingNextStates()) {
+        return;
+    }
+
+    this.resetNextStatesForm();
+  }
+
+  private resetNextStatesForm(): void {
+
+    this.nextStatesRequestId++;
+
+    this.nextStatesOrigin.set(null);
+
+    this.initialNextStates.set([]);
+
+    this.nextStatesError.set('');
+
+    this.nextStatesLoaded.set(false);
+
+    this.isLoadingNextStates.set(false);
+  }
+
+  async onSaveNextStates(
+    payload: NextStatesFormData,
+    ): Promise<void> {
+
+    const origin = this.nextStatesOrigin();
+
+    if (
+        !origin ||
+        this.isSavingNextStates() ||
+        this.isLoadingNextStates() ||
+        !this.nextStatesLoaded()
+    ) {
+        return;
+    }
+
+    this.isSavingNextStates.set(true);
+
+    this.nextStatesError.set('');
+
+    try {
+
+        await firstValueFrom(
+        this.statesService.saveNextStates(
+            origin.id,
+            payload,
+        ),
+        );
+
+        this.resetNextStatesForm();
+
+        await this.refreshStates();
+
+    } catch (error) {
+
+        console.error(error);
+
+        this.nextStatesError.set(
+        'No fue posible guardar los estados siguientes.',
+        );
+
+    } finally {
+
+        this.isSavingNextStates.set(false);
+    }
   }
 
   async onSaveState(

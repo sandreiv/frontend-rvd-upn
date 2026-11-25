@@ -6,6 +6,7 @@ import { WebRequestService } from '../../../../core/service/web-request-service'
 import {
   StateFormData,
   StateItem,
+  NextStatesFormData,
 } from '../model/states.model';
 
 @Injectable({
@@ -78,4 +79,28 @@ export class StatesService {
       ids,
     );
   }
+
+  /**
+     * Consulta los estados siguientes asociados
+     * al estado de origen.
+   */
+   listNextStates(id: number): Observable<StateItem[]> {
+    return this.webRequestService.get<StateItem[]>(
+        `${this.endpoint}/${id}/next-states`,
+        );
+   }
+
+   /**
+     * Guarda las relaciones de estados siguientes
+     * del estado de origen.
+    */
+    saveNextStates(
+        id: number,
+        payload: NextStatesFormData,
+        ): Observable<void> {
+        return this.webRequestService.put<void>(
+            `${this.endpoint}/${id}/next-states`,
+            payload,
+        );
+    }
 }

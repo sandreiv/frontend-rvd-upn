@@ -36,6 +36,8 @@ export class StatesTable {
 
   @Output() editState = new EventEmitter<StateItem>();
 
+  @Output() nextStates = new EventEmitter<StateItem>();
+
   @Output() deleteState = new EventEmitter<StateItem>();
 
   @Output() deleteAll = new EventEmitter<number[]>();
@@ -61,15 +63,20 @@ export class StatesTable {
 
   readonly rowActions: DataTableRowAction<StateItem>[] = [
     {
-      id: 'edit',
-      label: 'Editar',
-      icon: 'pencil',
+        id: 'edit',
+        label: 'Editar',
+        icon: 'pencil',
     },
     {
-      id: 'delete',
-      label: 'Eliminar',
-      icon: 'delete',
-      className: 'text-red-500',
+        id: 'nextStates',
+        label: 'Estado siguiente',
+        icon: 'paperAirplane',
+    },
+    {
+        id: 'delete',
+        label: 'Eliminar',
+        icon: 'delete',
+        className: 'text-red-500',
     },
   ];
 
@@ -99,19 +106,24 @@ export class StatesTable {
     }
   }
 
-  onRowAction(
-    event: DataTableActionEvent<StateItem>,
-  ): void {
+onRowAction(
+  event: DataTableActionEvent<StateItem>,
+): void {
 
-    if (event.actionId === 'edit') {
-      this.editState.emit(event.row);
-      return;
-    }
-
-    if (event.actionId === 'delete') {
-      this.deleteState.emit(event.row);
-    }
+  if (event.actionId === 'edit') {
+    this.editState.emit(event.row);
+    return;
   }
+
+  if (event.actionId === 'nextStates') {
+    this.nextStates.emit(event.row);
+    return;
+  }
+
+  if (event.actionId === 'delete') {
+    this.deleteState.emit(event.row);
+  }
+}
 
   onSelectedIdsChange(
     keys: Array<string | number>,
