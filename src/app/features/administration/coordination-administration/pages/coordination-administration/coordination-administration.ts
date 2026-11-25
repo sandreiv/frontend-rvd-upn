@@ -38,7 +38,7 @@ type CoordinationSwitchItem = {
 
 @Component({
   selector: 'app-coordination-administration',
-  imports: [ReactiveFormsModule, SectionFrame, AssociationCoordinationTable, AssociationCoordinationForm, NewModal, PersonCoordinationTable, PersonCoordinationForm, NewModal, Button, CoordinationManagementTable, CoordinationManagementForm, Icon],
+  imports: [ReactiveFormsModule, SectionFrame, AssociationCoordinationTable, AssociationCoordinationForm, NewModal, PersonCoordinationTable, PersonCoordinationForm, NewModal, Button, CoordinationManagementTable, CoordinationManagementForm, Icon, CostCenterAssignmentForm, CostCenterAssignmentTable],
   templateUrl: './coordination-administration.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -525,20 +525,23 @@ export class CoordinationAdministration implements OnInit {
         catalogs,
         associations,
         peopleCoordinations,
+        costCenterAssignments,
         parentCoordinations,
         ] = await Promise.all([
         firstValueFrom(this.administrationService.getCatalogs()),
         firstValueFrom(this.administrationService.listAssociations()),
         firstValueFrom(this.administrationService.listPeopleCoordinations()),
+        firstValueFrom(this.administrationService.listCostCenterAssignments()),
         firstValueFrom(this.administrationService.listParentCoordinations()),
       ]);
 
       this.coordinations.set(catalogs.coordinaciones ?? []);
       this.programs.set(catalogs.programas ?? []);
       this.costCenters.set(catalogs.centrosCosto ?? []);
-      this.associations.set(associations ?? []);
       this.people.set(catalogs.personas ?? []);
+      this.associations.set(associations ?? []);
       this.peopleCoordinations.set(peopleCoordinations ?? []);
+      this.costCenterAssignments.set(costCenterAssignments ?? []);
       this.managedCoordinations.set(parentCoordinations ?? []);
     } catch (error) {
       console.error(error);
@@ -550,7 +553,11 @@ export class CoordinationAdministration implements OnInit {
   selectTab(tabId: CoordinationAdministrationTabId): void {
     this.selectedTab.set(tabId);
     this.closeForm();
-   }
+
+    this.selectedAssociationIds.set([]);
+    this.selectedCostCenterAssignmentIds.set([]);
+    this.selectedPeopleCoordinationIds.set([]);
+  }
 
   openCreateForm(): void {
     if (!this.hasCoordinationFilter()) {
@@ -558,11 +565,15 @@ export class CoordinationAdministration implements OnInit {
     }
 
     this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
   openEditForm(association: CoordinationAssociationItem): void {
     this.selectedAssociation.set(association);
+    this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
@@ -571,8 +582,8 @@ export class CoordinationAdministration implements OnInit {
     this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(null);
-   }
-   
+  }
+  
 
   async onSaveAssociation(payload: CoordinationAssociationFormData): Promise<void> {
     this.isSaving.set(true);
@@ -704,12 +715,16 @@ export class CoordinationAdministration implements OnInit {
       return;
     }
 
+    this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(null);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
   openEditCostCenterForm(assignment: CostCenterAssignmentItem): void {
+    this.selectedAssociation.set(null);
     this.selectedCostCenterAssignment.set(assignment);
+    this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
@@ -778,12 +793,16 @@ export class CoordinationAdministration implements OnInit {
     if (!this.hasCoordinationFilter()) {
      return;
     }
-        
+    
+    this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(null);
     this.showForm.set(true);
   }
 
   openEditPeopleForm(item: PersonCoordinationItem): void {
+    this.selectedAssociation.set(null);
+    this.selectedCostCenterAssignment.set(null);
     this.selectedPeopleCoordination.set(item);
     this.showForm.set(true);
   }
@@ -794,13 +813,9 @@ export class CoordinationAdministration implements OnInit {
     try {
       const selected = this.selectedPeopleCoordination();
 
-      if (selected) {
+      if (selected?.id) {
         await firstValueFrom(
-          this.administrationService.updatePeopleCoordination(
-            selected.idPersonaGeneral,
-            selected.idCoordinacion,
-            payload,
-          ),
+          this.administrationService.updatePeopleCoordination(selected.id, payload),
         );
         } else {
           await firstValueFrom(this.administrationService.savePeopleCoordination(payload));

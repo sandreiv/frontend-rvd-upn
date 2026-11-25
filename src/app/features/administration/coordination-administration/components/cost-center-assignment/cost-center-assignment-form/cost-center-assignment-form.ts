@@ -41,20 +41,10 @@ export class CostCenterAssignmentForm implements OnChanges {
   @Output() saveAssignment = new EventEmitter<CostCenterAssignmentFormData>();
 
   readonly form: CostCenterForm = new FormGroup({
-    idCoordinacion: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    idCentroCosto: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
+    idCoordinacion: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    idCentroCosto: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     estado: new FormControl(true, { nonNullable: true }),
   });
-
-  get coordinationOptions(): Option[] {
-    return this.toOptions(this.coordinations());
-  }
 
   get costCenterOptions(): Option[] {
     return this.toOptions(this.costCenters());
@@ -68,12 +58,11 @@ export class CostCenterAssignmentForm implements OnChanges {
 
   onSubmit(): void {
     this.form.markAllAsTouched();
+    const raw = this.form.getRawValue();
 
-    if (this.form.invalid) {
+    if (!raw.idCoordinacion || this.form.invalid) {
       return;
     }
-
-    const raw = this.form.getRawValue();
 
     this.saveAssignment.emit({
       id: this.assignment()?.id ?? null,

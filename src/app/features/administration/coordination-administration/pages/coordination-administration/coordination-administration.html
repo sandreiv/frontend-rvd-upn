@@ -172,6 +172,32 @@
             (deleteAll)="requestBulkDeletePeople($event)"
           />
         }
+      } @else if (selectedTabId() === 'costCenters') {
+        @if (showForm()) {
+          <app-cost-center-assignment-form
+            [assignment]="selectedCostCenterAssignment()"
+            [selectedCoordinationId]="appliedCoordinationFilterId()"
+            [coordinations]="internalCoordinationOptions()"
+            [costCenters]="costCenters()"
+            [isSaving]="isSaving()"
+            (cancel)="closeForm()"
+            (saveAssignment)="onSaveCostCenterAssignment($event)"
+          />
+        } @else {
+          <app-cost-center-assignment-table
+            [assignments]="filteredCostCenterAssignments()"
+            [selectedAssignmentIds]="selectedCostCenterAssignmentIds()"
+            [canAdd]="canManageCurrentCoordination()"
+            [emptyMessage]="costCenterEmptyMessage()"
+            searchPlaceholder="Buscar centro de costo..."
+            (selectedAssignmentIdsChange)="selectedCostCenterAssignmentIds.set($event)"
+            (refreshAssignments)="refreshCostCenterAssignments()"
+            (addAssignment)="openCreateCostCenterForm()"
+            (editAssignment)="openEditCostCenterForm($event)"
+            (deleteAssignment)="requestDeleteCostCenterAssignment($event)"
+            (deleteAll)="requestBulkDeleteCostCenters($event)"
+          />
+        }
       }
     }
   </div>

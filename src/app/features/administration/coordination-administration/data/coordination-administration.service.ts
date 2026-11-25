@@ -201,15 +201,14 @@ export class CoordinationAdministrationService {
   /**
    * Actualiza una asociación existente entre una persona y una coordinación.
    *
-   * @param idPersonaGeneral Identificador de la persona.
-   * @param idCoordinacion Identificador de la coordinación.
+   * @param id Identificador de la asignación.
    * @param payload Información actualizada de la asociación.
    * @returns Observable sin contenido cuando la actualización finaliza correctamente.
   */
 
-  updatePeopleCoordination(idPersonaGeneral: number, idCoordinacion: number, payload: PersonCoordinationFormData): Observable<void> {
+  updatePeopleCoordination(id: number, payload: PersonCoordinationFormData): Observable<void> {
     return this.webRequestService.put<void>(
-      `${this.endpoint}/people/update/${idPersonaGeneral}/${idCoordinacion}`,
+      `${this.endpoint}/people/update/${id}`,
       payload,
     );
   }
