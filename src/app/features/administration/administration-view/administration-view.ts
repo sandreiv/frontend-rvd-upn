@@ -60,6 +60,11 @@ export class AdministrationView {
           icon: 'newspaper',
           path: 'tablas-basicas/novedades',
         },
+        {
+      label: 'Estados',
+      icon: 'adjustmentsHorizontal',
+      path: 'estados',
+        },
       ],
     },
   ];

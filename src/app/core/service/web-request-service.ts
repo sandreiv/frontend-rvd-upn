@@ -207,6 +207,20 @@ export class WebRequestService {
   }
 
   /**
+   * DELETE con cuerpo JSON.
+   * Permite realizar eliminaciones múltiples.
+   */
+  deleteWithBody<T = any>(
+    endpoint: string,
+    payload: any,
+  ): Observable<T> {
+    return this.http.delete<T>(`${this.baseUrl}${endpoint}`, {
+      body: payload,
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  /**
    * DELETE con headers personalizados
    */
   deleteWithHeaders<T = any>(endpoint: string, customHeaders?: any, params?: any): Observable<T> {

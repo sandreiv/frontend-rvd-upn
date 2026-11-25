@@ -1,0 +1,47 @@
+<app-section-frame
+  title="Estados"
+  description="Administra los estados utilizados en los diferentes procesos del sistema."
+  iconName="adjustmentsHorizontal"
+  iconVariant="brand"
+>
+
+  <div>
+
+    @if (showForm()) {
+
+      <app-states-form
+        [state]="selectedState()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveState)="onSaveState($event)"
+      />
+
+    } @else {
+
+      <app-states-table
+        [states]="states()"
+        [selectedStateIds]="selectedStateIds()"
+        (selectedStateIdsChange)="onSelectedIdsChange($event)"
+        (refreshStates)="refreshStates()"
+        (addState)="openCreateForm()"
+        (editState)="openEditForm($event)"
+        (deleteState)="requestDeleteState($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+
+    }
+
+  </div>
+
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>
