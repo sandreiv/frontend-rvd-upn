@@ -6,9 +6,12 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { activityHoursRangeLabel } from '../../../../model/hours-limit.model';
+import {
+  activityAssignedHoursLabel,
+  activityHoursRangeLabel,
+} from '../../../../model/hours-limit.model';
+import { ActivityHoursBadges } from '../activity-hours-badges/activity-hours-badges';
 import { CollapsibleSection } from '../../../../../../../shared/components/form/collapsible-section/collapsible-section';
-import { Badge } from '../../../../../../../shared/ui/badge/badge';
 import {
   ActivityTypeNode,
   activityComponentKey,
@@ -29,7 +32,7 @@ import { ResearchProject } from '../research/components/research-project/researc
   selector: 'app-activity-card',
   imports: [
     CollapsibleSection,
-    Badge,
+    ActivityHoursBadges,
     Subject,
     Support,
     DegreeWork,
@@ -64,5 +67,9 @@ export class ActivityCard {
       this.activity(),
       this.activityTree().length ? this.activityTree() : [this.activity()],
     ),
+  );
+
+  readonly assignedHours = computed(() =>
+    activityAssignedHoursLabel(this.activity(), this.savedDetails()),
   );
 }

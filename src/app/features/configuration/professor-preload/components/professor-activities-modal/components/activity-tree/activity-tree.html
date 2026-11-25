@@ -12,18 +12,18 @@
             <app-icon [name]="icon.name" size="sm" [classes]="icon.iconClass" />
           </span>
           <h4
-            class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
+            class="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-white/90"
           >
-            <span class="min-w-0 break-words">{{ node.nombre }}</span>
-            @if (hoursRange(node); as range) {
-              <app-badge variant="neutral" size="xs" className="normal-case tracking-normal">
-                {{ range }}
-              </app-badge>
-            }
+            <span class="break-words">{{ node.nombre }}</span>
           </h4>
-          <div class="ml-auto shrink-0">
+          <div class="shrink-0">
             <ng-content select="[activityTreeActions]" />
           </div>
+          <app-activity-hours-badges
+            class="mr-[3.25rem] sm:mr-[3.75rem]"
+            [range]="hoursRange(node)"
+            [assigned]="assignedHours(node)"
+          />
         </div>
         <div class="flex flex-col gap-3">
           @if (showAsSection(node)) {
@@ -62,16 +62,18 @@
       </section>
     } @else if (showAsSection(node)) {
       <section class="flex flex-col gap-3">
-        <h5
-          class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300"
-        >
-          <span class="min-w-0 break-words">{{ node.nombre }}</span>
-          @if (hoursRange(node); as range) {
-            <app-badge variant="neutral" size="xs" className="normal-case tracking-normal">
-              {{ range }}
-            </app-badge>
-          }
-        </h5>
+        <div class="flex items-center gap-3">
+          <h5
+            class="min-w-0 flex-1 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300"
+          >
+            <span class="break-words">{{ node.nombre }}</span>
+          </h5>
+          <app-activity-hours-badges
+            class="mr-[3.25rem] sm:mr-[3.75rem]"
+            [range]="hoursRange(node)"
+            [assigned]="assignedHours(node)"
+          />
+        </div>
         <app-activity-tree
           class="block"
           [nodes]="node.hijos"

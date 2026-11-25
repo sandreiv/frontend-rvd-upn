@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, map, Observable } from 'rxjs';
 import { forNext } from '../../../../../../../core/utils/for-next.function';
 import { Checkbox } from '../../../../../../../shared/components/form/input/checkbox';
 import { Select } from '../../../../../../../shared/components/form/select/select';
@@ -69,6 +69,8 @@ export class ProjectTable {
   readonly savedDetails = input<ProfessorLoadDetailItem[]>([]);
   readonly activityTree = input<ActivityTypeNode[]>([]);
   readonly hoursLimit = input<number | null>(null);
+  /** Elimina cada detalle con el servicio unitario, sin el borrado masivo. */
+  readonly deleteIndividually = input(false);
   readonly detailSaved = output<void>();
 
   private readonly selectedIds = signal<number[]>([]);
@@ -201,7 +203,7 @@ export class ProjectTable {
     }
 
     this.isSaving.set(true);
-    firstValueFrom(this.coordinationService.deleteDetailProfessorLoadBulk({ ids }))
+    firstValueFrom(this.deleteRequest(ids))
       .then(() => {
         this.selectedIds.set([]);
         this.detailSaved.emit();
@@ -277,6 +279,18 @@ export class ProjectTable {
     return { idCargaDocente, detalles };
   }
 
+  private deleteRequest(ids: number[]): Observable<void> {
+    if (!this.deleteIndividually()) {
+      return this.coordinationService.deleteDetailProfessorLoadBulk({ ids });
+    }
+
+    const requests: Observable<void>[] = [];
+    forNext(ids, (id) => {
+      requests.push(this.coordinationService.deleteDetailProfessorLoad(id));
+    });
+    return forkJoin(requests).pipe(map(() => undefined));
+  }
+
   private selectedDetailIds(): number[] {
     const selected = new Set(this.selectedIds());
     const links = this.projectLinks();
@@ -346,11 +360,14 @@ export class ProjectTable {
     sameHours: boolean,
   ): number | null {
     const horas = this.parseHours(project.horas);
-    const programId = project.idPrograma ?? null;
     let match: number | null = null;
 
     forNext(available, (detail) => {
-      if (match != null || used.includes(detail.id) || detail.idPrograma !== programId) {
+      if (
+        match != null ||
+        used.includes(detail.id) ||
+        !this.matchesProgram(project, detail.idPrograma)
+      ) {
         return;
       }
 
@@ -386,11 +403,14 @@ export class ProjectTable {
 
   private sameRelation(project: ProfessorProjectItem, detailId: number): boolean {
     const horas = this.parseHours(project.horas);
-    const programId = project.idPrograma ?? null;
     let same = false;
 
     forNext(this.activityDetails(), (detail) => {
-      if (detail.id === detailId && detail.horas === horas && detail.idPrograma === programId) {
+      if (
+        detail.id === detailId &&
+        detail.horas === horas &&
+        this.matchesProgram(project, detail.idPrograma)
+      ) {
         same = true;
       }
     });
@@ -421,6 +441,29 @@ export class ProjectTable {
     });
 
     return details;
+  }
+
+  private matchesProgram(project: ProfessorProjectItem, programId: number | null): boolean {
+    const candidates = this.programCandidates(project);
+    if (candidates.length === 0) {
+      return programId == null;
+    }
+
+    return programId != null && candidates.includes(programId);
+  }
+
+  private programCandidates(project: ProfessorProjectItem): number[] {
+    const ids: number[] = [];
+    const saved = this.programId(project);
+    const own = project.idPrograma;
+    if (saved != null) {
+      ids.push(saved);
+    }
+    if (own != null && Number.isInteger(own) && own > 0 && !ids.includes(own)) {
+      ids.push(own);
+    }
+
+    return ids;
   }
 
   private programId(item: ProfessorProjectItem): number | undefined {

@@ -6,9 +6,12 @@ import {
 } from '../../../../model/professor-activities.model';
 import { ProfessorLoadDetailItem } from '../../../../model/professor-load-detail.model';
 import { ProfessorProjectItem } from '../../../../model/professor-project.model';
-import { activityHoursRangeLabel } from '../../../../model/hours-limit.model';
-import { Badge } from '../../../../../../../shared/ui/badge/badge';
+import {
+  activityAssignedHoursLabel,
+  activityHoursRangeLabel,
+} from '../../../../model/hours-limit.model';
 import { Icon } from '../../../../../../../shared/ui/icon/icon';
+import { ActivityHoursBadges } from '../activity-hours-badges/activity-hours-badges';
 import { AppIconName } from '../../../../../../../shared/ui/icon/icons';
 import { ActivityCard } from '../activity-card/activity-card';
 
@@ -49,7 +52,7 @@ const DEFAULT_SECTION_ICON: ActivitySectionIcon = {
 
 @Component({
   selector: 'app-activity-tree',
-  imports: [ActivityTree, ActivityCard, Badge, Icon],
+  imports: [ActivityTree, ActivityCard, ActivityHoursBadges, Icon],
   templateUrl: './activity-tree.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -85,8 +88,15 @@ export class ActivityTree {
   }
 
   hoursRange(node: ActivityTypeNode): string | null {
-    const tree = this.activityTree().length ? this.activityTree() : this.nodes();
-    return activityHoursRangeLabel(node, tree);
+    return activityHoursRangeLabel(node, this.rangeTree());
+  }
+
+  assignedHours(node: ActivityTypeNode): string {
+    return activityAssignedHoursLabel(node, this.savedDetails());
+  }
+
+  private rangeTree(): ActivityTypeNode[] {
+    return this.activityTree().length ? this.activityTree() : this.nodes();
   }
 
   sectionIcon(node: ActivityTypeNode): ActivitySectionIcon {

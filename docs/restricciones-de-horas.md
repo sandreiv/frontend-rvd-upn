@@ -28,14 +28,12 @@ Tutoría de estudiantes cuenta contra su máximo (2), contra apoyo a la docencia
 
 ## Cómo se ve en títulos y tarjetas
 
-Cada título de sección y cada tarjeta muestra el rango de horas de ese tipo:
+En los títulos de sección los badges quedan en una columna a la derecha. En las actividades con desplegable aparecen dentro de la tarjeta, en esa misma columna, al abrirla. Cada nivel muestra dos datos:
 
-- Con mínimo y máximo: `1 – 4 h`.
-- Solo máximo: `Hasta 4 h`.
-- Solo mínimo: `Desde 1 h`.
-- Si son iguales: `4 h`.
+- **Rango:** el rango permitido. `1 – 4 h`, `Hasta 4 h`, `Desde 1 h` o `4 h` si mínimo y máximo coinciden.
+- **Total:** las horas ya asignadas en ese nivel, sumando el nodo y sus descendientes.
 
-Si el nodo no trae uno de los dos valores, se toma el del primer ancestro del árbol que sí lo tenga. Encargo muestra `1 – 4 h` porque lo trae propio. Coordinación de énfasis no trae límites, ni su padre de predeterminadas, así que muestra el rango de gestión institucional: `10 – 14 h`.
+Si el nodo no trae uno de los dos límites, se toma el del primer ancestro del árbol que sí lo tenga. Encargo muestra `1 – 4 h` porque lo trae propio. Coordinación de énfasis no trae límites, ni su padre de predeterminadas, así que muestra el rango de gestión institucional: `10 – 14 h`.
 
 ## Dónde se aplica
 
