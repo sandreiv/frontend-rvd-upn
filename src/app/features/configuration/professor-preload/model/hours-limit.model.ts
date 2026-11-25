@@ -89,6 +89,22 @@ export function activityHoursRangeLabel(
   return `Desde ${formatHours(minimo ?? 0)} h`;
 }
 
+/** Horas ya guardadas en el nodo y en sus descendientes. */
+export function activityAssignedHours(
+  node: ActivityTypeNode,
+  details: ProfessorLoadDetailItem[] | null | undefined,
+): number {
+  return subtreeHours(node, hoursByActivity(details).byType);
+}
+
+/** Texto de las horas ya asignadas en el nivel. */
+export function activityAssignedHoursLabel(
+  node: ActivityTypeNode,
+  details: ProfessorLoadDetailItem[] | null | undefined,
+): string {
+  return `${formatHours(activityAssignedHours(node, details))} h`;
+}
+
 /** Texto del aviso cuando un guardado supera un máximo. */
 export function hoursLimitMessage(violation: HoursLimitViolation): string {
   const maximo = formatHours(violation.maximo);
