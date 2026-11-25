@@ -26,7 +26,6 @@ import {
   CostCenterAssignmentItem,
   PersonCoordinationFormData,
   PersonCoordinationItem,
-  PersonCoordinationKey,
   CoordinationManagementFormData,
   CoordinationManagementItem,
 } from '../../model/coordination-administration.model';
@@ -55,7 +54,7 @@ export class CoordinationAdministration implements OnInit {
     },
     {
       id: 'people',
-      label: 'Asociar coordinador',
+      label: 'Asociar director',
       icon: 'user',
     },
     {
@@ -96,7 +95,6 @@ export class CoordinationAdministration implements OnInit {
   readonly selectedPeopleCoordinationIds = signal<string[]>([]);
   readonly selectedPeopleCoordination = signal<PersonCoordinationItem | null>(null);
 
-  readonly compositeKeysToDelete = signal<PersonCoordinationKey[]>([]);
   readonly deleteContext = signal<'associationCoordinations' | 'costCenters' | 'people'>('associationCoordinations');
   
   
@@ -601,7 +599,6 @@ export class CoordinationAdministration implements OnInit {
     this.deleteContext.set('associationCoordinations');
     this.associationToDelete.set(association);
     this.idsToDelete.set([association.id]);
-    this.compositeKeysToDelete.set([]);
     this.showDeleteModal.set(true);
   }
 
@@ -610,6 +607,7 @@ export class CoordinationAdministration implements OnInit {
       return;
     }
 
+    this.deleteContext.set('associationCoordinations');
     this.associationToDelete.set(null);
     this.idsToDelete.set(ids);
     this.showDeleteModal.set(true);
@@ -621,81 +619,72 @@ export class CoordinationAdministration implements OnInit {
     this.associationToDelete.set(null);
   }
 
-    async confirmDelete(): Promise<void> {
-        this.isDeleting.set(true);
+  async confirmDelete(): Promise<void> {
+    const ids = this.idsToDelete();
+    if (!ids.length) {
+      return;
+    }
 
-        try {
-          if (this.deleteContext() === 'people') {
-            const registros = this.compositeKeysToDelete();
+    this.isDeleting.set(true);
 
-            if (!registros.length) {
-              return;
-            }
+    try {
+      if (ids.length === 1) {
+        const id = ids[0];
 
-            if (registros.length === 1) {
-              await firstValueFrom(
-                this.administrationService.deletePeopleCoordination(
-                    registros[0].idPersonaGeneral,
-                    registros[0].idCoordinacion,
-                ),
-              );
-            } else {
-              await firstValueFrom(
-                this.administrationService.deleteBulkPeopleCoordinations({
-                  registros,
-                }),
-              );
-            }
+        switch (this.deleteContext()) {
+          case 'people':
+            await firstValueFrom(this.administrationService.deletePeopleCoordination(id));
+            break;
 
-            this.selectedPeopleCoordinationIds.set([]);
-            this.compositeKeysToDelete.set([]);
-            this.closeDeleteModal();
-            await this.refreshPeopleCoordinations();
-            return;
-          }
+          case 'costCenters':
+            await firstValueFrom(this.administrationService.deleteCostCenterAssignment(id));
+            break;
 
-          const ids = this.idsToDelete();
+          default:
+            await firstValueFrom(this.administrationService.deleteAssociation(id));
+            break;
+        }
+      } else {
+        switch (this.deleteContext()) {
+          case 'people':
+            await firstValueFrom(this.administrationService.deleteBulkPeopleCoordinations({ ids })            );
+            break;
 
-          if (!ids.length) {
-            return;
-          }
+          case 'costCenters':
+            await firstValueFrom(this.administrationService.deleteBulkCostCenterAssignments({ ids }));
+            break;
 
-          if (this.deleteContext() === 'costCenters') {
-            if (ids.length === 1) {
-              await firstValueFrom(
-                this.administrationService.deleteCostCenterAssignment(ids[0]),
-              );
-            } else {
-              await firstValueFrom(
-                this.administrationService.deleteBulkCostCenterAssignments({ ids }),
-              );
-            }
+          default:
+            await firstValueFrom(this.administrationService.deleteBulkAssociations({ ids }));
+            break;
+        }
+      }
 
-            this.selectedCostCenterAssignmentIds.set([]);
-            this.closeDeleteModal();
-            await this.refreshCostCenterAssignments();
-            return;
-          }
+      switch (this.deleteContext()) {
+        case 'people':
+          this.selectedPeopleCoordinationIds.set([]);
+          this.closeDeleteModal();
+          await this.refreshPeopleCoordinations();
+          break;
 
-          if (ids.length === 1) {
-            await firstValueFrom(
-              this.administrationService.deleteAssociation(ids[0]),
-            );
-          } else {
-            await firstValueFrom(
-              this.administrationService.deleteBulk({ ids }),
-            );
-          }
+        case 'costCenters':
+          this.selectedCostCenterAssignmentIds.set([]);
+          this.closeDeleteModal();
+          await this.refreshCostCenterAssignments();
+          break;
 
+        default:
           this.selectedAssociationIds.set([]);
           this.closeDeleteModal();
           await this.refreshAssociations();
-        } catch (error) {
-          console.error(error);
-        } finally {
-          this.isDeleting.set(false);
-        }
+          break;
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.isDeleting.set(false);
     }
+  }
 
   async refreshAssociations(): Promise<void> {
     this.isLoading.set(true);
@@ -770,7 +759,6 @@ export class CoordinationAdministration implements OnInit {
     this.associationToDelete.set(null);
     this.selectedCostCenterAssignment.set(assignment);
     this.idsToDelete.set([assignment.id]);
-    this.compositeKeysToDelete.set([]);
     this.showDeleteModal.set(true);
   }
 
@@ -779,6 +767,7 @@ export class CoordinationAdministration implements OnInit {
       return;
     }
 
+    this.deleteContext.set('costCenters');
     this.associationToDelete.set(null);
     this.selectedCostCenterAssignment.set(null);
     this.idsToDelete.set(ids);
@@ -841,22 +830,21 @@ export class CoordinationAdministration implements OnInit {
 
   requestDeletePeopleCoordination(item: PersonCoordinationItem): void {
     this.deleteContext.set('people');
-    this.compositeKeysToDelete.set([
-      {
-        idPersonaGeneral: item.idPersonaGeneral,
-        idCoordinacion: item.idCoordinacion,
-      },
-    ]);
+    this.associationToDelete.set(null);
+    this.selectedPeopleCoordination.set(item);
+    this.idsToDelete.set([item.id]);
     this.showDeleteModal.set(true);
   }
 
-  requestBulkDeletePeople(keys: PersonCoordinationKey[]): void {
-    if (!keys.length) {
+  requestBulkDeletePeople(ids: number[]): void {
+    if (!ids.length) {
       return;
     }
 
     this.deleteContext.set('people');
-    this.compositeKeysToDelete.set(keys);
+    this.associationToDelete.set(null);
+    this.selectedPeopleCoordination.set(null);
+    this.idsToDelete.set(ids);
     this.showDeleteModal.set(true);
   }
 }

@@ -97,7 +97,7 @@ export class CoordinationAdministrationService {
    * @returns Observable sin contenido cuando la eliminación masiva finaliza correctamente.
    */
 
-  deleteBulk(payload: DeleteBulkCoordinationAssociationRequest): Observable<void> {
+  deleteBulkAssociations(payload: DeleteBulkCoordinationAssociationRequest): Observable<void> {
     return this.webRequestService.post<void>(
       `${this.endpoint}/coordination-associations/delete-bulk`,
       payload,
@@ -217,14 +217,13 @@ export class CoordinationAdministrationService {
   /**
    * Elimina la asociación entre una persona y una coordinación.
    *
-   * @param idPersonaGeneral Identificador de la persona.
-   * @param idCoordinacion Identificador de la coordinación.
+   * @param id Identificador de la asignación.
    * @returns Observable sin contenido cuando la eliminación finaliza correctamente.
   */
 
-  deletePeopleCoordination(idPersonaGeneral: number, idCoordinacion: number): Observable<void> {
+  deletePeopleCoordination(id: number): Observable<void> {
     return this.webRequestService.delete<void>(
-      `${this.endpoint}/people/delete/${idPersonaGeneral}/${idCoordinacion}`,
+      `${this.endpoint}/people/delete/${id}`,
     );
   }
 

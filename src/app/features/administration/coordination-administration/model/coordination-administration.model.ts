@@ -96,13 +96,8 @@ export interface PersonCoordinationFormData {
   estado: '1' | '0';
 }
 
-export interface PersonCoordinationKey {
-  idPersonaGeneral: number;
-  idCoordinacion: number;
-}
-
 export interface DeleteBulkPersonCoordinationRequest {
-  registros: PersonCoordinationKey[];
+  ids: number[];
 }
 
 export interface CoordinationManagementItem {
