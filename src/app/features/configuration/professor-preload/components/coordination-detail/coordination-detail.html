@@ -3,7 +3,7 @@
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">
-          Preasignación de horas académicas
+          Asignación de horas académicas
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400">
           Asigna materias y carga horaria a los docentes del período activo.
@@ -20,12 +20,15 @@
       </app-button>
     </div>
 
-    <div class="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+    <div class="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12">
       <app-coordination-summary
-        class="block h-full min-w-0"
+        class="block h-full min-w-0 lg:col-span-4"
         [coordination]="coordination()"
       />
-      <app-total-coordination class="block h-full min-w-0" />
+      <app-total-coordination
+        class="block h-full min-w-0 lg:col-span-8"
+        [coordination]="coordination()"
+      />
     </div>
 
     <app-linkage-type [coordination]="coordination()" />
