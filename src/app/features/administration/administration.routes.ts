@@ -58,6 +58,15 @@ export const administrationRoutes: Routes = [
         path: 'coordinaciones',
         component: CoordinationAdministration,
       },
+      {
+        path: 'vinculacion-actividades',
+        loadComponent: () =>
+          import(
+            './vinculacion-actividades/pages/vinculacion-actividades/vinculacion-actividades'
+          ).then(
+            (m) => m.VinculacionActividades,
+          ),
+      },
     ],
   },
 ];

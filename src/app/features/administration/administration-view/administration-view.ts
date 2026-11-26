@@ -70,6 +70,11 @@ export class AdministrationView {
           icon: 'home',
           path: 'coordinaciones',
         },
+        {
+          label: 'Vinculación actividades',
+          icon: 'academicCap',
+          path: 'vinculacion-actividades',
+        },
       ],
     },
   ];

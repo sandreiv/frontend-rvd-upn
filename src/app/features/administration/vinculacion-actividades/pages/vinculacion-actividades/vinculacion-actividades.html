@@ -1,0 +1,41 @@
+<app-section-frame
+  title="Vinculación actividades"
+  description="Administra las actividades permitidas por tipo de vinculación."
+  iconName="academicCap"
+  iconVariant="brand"
+>
+  <div>
+    @if (showForm()) {
+      <app-vinculacion-actividades-form
+        [item]="selectedItem()"
+        [isSaving]="isSaving()"
+        [tiposVinculacion]="tiposVinculacion()"
+        [tiposActividad]="tiposActividad()"
+        (cancel)="closeForm()"
+        (saveItem)="onSave($event)"
+      />
+    } @else {
+      <app-vinculacion-actividades-table
+        [items]="items()"
+        [selectedIds]="selectedIds()"
+        (selectedIdsChange)="onSelectedIdsChange($event)"
+        (refreshItems)="refresh()"
+        (addItem)="openCreateForm()"
+        (editItem)="openEditForm($event)"
+        (deleteItem)="requestDelete($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+    }
+  </div>
+</app-section-frame>
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

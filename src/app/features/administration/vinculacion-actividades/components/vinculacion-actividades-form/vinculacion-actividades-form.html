@@ -1,0 +1,127 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  class="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/3"
+>
+  <div class="mb-4 flex flex-col gap-1">
+    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+      {{
+        item()
+          ? 'Editar vinculación de actividad'
+          : 'Nueva vinculación de actividad'
+      }}
+    </h4>
+
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+      Relaciona un tipo de vinculación con una actividad del catálogo
+      RVDIES.TIPOACTIVIDADES.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div>
+      <app-label>Tipo de vinculación</app-label>
+
+      <app-select
+        formControlName="idTipoVinculacion"
+        [options]="tipoVinculacionOptions()"
+        placeholder="Seleccione el tipo de vinculación"
+        searchPlaceholder="Buscar tipo de vinculación..."
+      />
+
+      @if (form.controls.idTipoVinculacion.touched && form.controls.idTipoVinculacion.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El tipo de vinculación es obligatorio.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Actividad</app-label>
+
+      <app-select
+        formControlName="idTipoActividad"
+        [options]="tipoActividadOptions()"
+        placeholder="Seleccione la actividad"
+        searchPlaceholder="Buscar actividad..."
+      />
+
+      @if (form.controls.idTipoActividad.touched && form.controls.idTipoActividad.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          La actividad es obligatoria.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Horas mínimas</app-label>
+
+      <app-input-field
+        formControlName="minimoHoras"
+        placeholder="Ej. 1"
+      />
+
+      @if (form.controls.minimoHoras.touched && form.controls.minimoHoras.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          Debe ser un valor numérico (máximo 30 caracteres).
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Horas máximas</app-label>
+
+      <app-input-field
+        formControlName="maximoHoras"
+        placeholder="Ej. 8"
+      />
+
+      @if (form.controls.maximoHoras.touched && form.controls.maximoHoras.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          Debe ser un valor numérico (máximo 30 caracteres).
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label>Estado</app-label>
+
+      <app-select
+        formControlName="estado"
+        [options]="estadoOptions"
+        [enableSearch]="false"
+        [labelFormat]="'none'"
+        placeholder="Seleccione el estado"
+      />
+
+      @if (form.controls.estado.touched && form.controls.estado.invalid) {
+        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+          El estado es obligatorio.
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-5 flex justify-end gap-3">
+    <app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      (btnClick)="cancel.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button
+      type="submit"
+      size="sm"
+      [disabled]="form.invalid || isSaving()"
+    >
+      {{
+        isSaving()
+          ? 'Guardando...'
+          : 'Guardar'
+      }}
+    </app-button>
+  </div>
+</form>
