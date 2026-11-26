@@ -36,6 +36,7 @@ import {
   CoordinationCostCenters,
 } from '../model/coordination-cost-centers.model';
 import { LinkageTypeItem, LinkageTypeListResponse } from '../model/linkage-type.model';
+import { CoordinationLoadTotal } from '../model/coordination-load-total.model';
 import { ContractHours, ContractValue, ContractValueQuery } from '../model/professor-form.config';
 
 @Injectable({
@@ -92,6 +93,24 @@ export class CoordinationService {
     return this.webRequestService
       .get<CoordinationApiItem[]>(`${this.endpoint}/list`, params)
       .pipe(map((items) => items.map(normalizeCoordinationItem)));
+  }
+
+  /**
+   * Obtiene el total de la carga de una coordinación en una convocatoria.
+   * Incluye docentes, prestaciones, contratos, preasignación y horas por actividad padre.
+   *
+   * @param idCoordinacion Identificador de la coordinación.
+   * @param idConvocatoria Identificador de la convocatoria.
+   * @returns Observable con los totales. En cero si no hay cargas vigentes.
+   */
+  getCoordinationLoadTotal(
+    idCoordinacion: number,
+    idConvocatoria: number,
+  ): Observable<CoordinationLoadTotal> {
+    return this.webRequestService.get<CoordinationLoadTotal>(
+      `${this.endpoint}/total-coordination`,
+      { idCoordinacion, idConvocatoria },
+    );
   }
 
   /**
