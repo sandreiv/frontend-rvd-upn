@@ -1,11 +1,7 @@
 import { Routes } from '@angular/router';
 
-
 import { AdministrationView } from './administration-view/administration-view';
-
-
 import { ActivityTypesPage } from './activity-types/pages/activity-types-page/activity-types-page';
-import { CoordinationAdministration } from './coordination-administration/pages/coordination-administration/coordination-administration';
 
 export const administrationRoutes: Routes = [
   {
@@ -65,7 +61,23 @@ export const administrationRoutes: Routes = [
       },
       {
         path: 'coordinaciones',
-        component: CoordinationAdministration,
+        loadComponent: () =>
+          import(
+            './coordination-administration/pages/coordination-administration/coordination-administration'
+          )
+          .then(
+            (m) => m.CoordinationAdministration,
+          ),
+      },
+      {
+        path: 'tipos-documentos',
+        loadComponent: () =>
+          import(
+            './document-types/pages/document-types/document-types'
+          )
+          .then(
+            (m) => m.DocumentTypes,
+          ),
       },
       {
         path: 'vinculacion-actividades',

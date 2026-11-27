@@ -80,6 +80,11 @@ export class AdministrationView {
           icon: 'academicCap',
           path: 'vinculacion-actividades',
         },
+        {
+          label: 'Tipos de documentos',
+          icon: 'file',
+          path: 'tipos-documentos',
+        },
       ],
     },
   ];
