@@ -194,6 +194,27 @@ export class DependentActivitySelect {
     return formatSentenceValue(value);
   }
 
+  isCoordinationGroup(group: string): boolean {
+    const value = group.toLocaleLowerCase('es-CO');
+    return (
+      value.startsWith('coordinación') ||
+      value.startsWith('coordinacion') ||
+      value.startsWith('facultad') ||
+      value.startsWith('decanatura') ||
+      value.startsWith('departamento')
+    );
+  }
+
+  isProgramGroup(group: string): boolean {
+    return group.toLocaleLowerCase('es-CO').startsWith('programa');
+  }
+
+  cleanGroupName(group: string): string {
+    return group
+      .replace(/^(coordinaci[oó]n|programa|facultad|departamento):\s*/i, '')
+      .trim();
+  }
+
   isAddDisabled(): boolean {
     if (this.isSaving() || this.idCargaDocente() == null || this.idCoordinacion() == null) {
       return true;
@@ -367,9 +388,35 @@ export class DependentActivitySelect {
     const base =
       query && remote != null
         ? this.toCostCenterOptions(remote)
-        : coordinationCostCenterOptions(this.costCentersResource.value());
+        : this.withCostCenterGroups(
+            coordinationCostCenterOptions(this.costCentersResource.value()),
+          );
 
     return this.withSelectedCostCenters(query && remote == null ? [] : base);
+  }
+
+  private withCostCenterGroups(options: Option[]): Option[] {
+    const coordination = formatSentenceValue(
+      this.costCentersResource.value()?.nombre?.trim() || 'Coordinación',
+    );
+    const grouped: Option[] = [];
+
+    forNext(options, (option) => {
+      grouped.push({
+        ...option,
+        group: this.costCenterGroupName(option.group, coordination),
+      });
+    });
+
+    return grouped;
+  }
+
+  private costCenterGroupName(group: string | undefined, coordination: string): string {
+    if (group === coordination) {
+      return `Coordinación: ${group}`;
+    }
+
+    return `Programa: ${group ?? 'Programa'}`;
   }
 
   private toCostCenterOptions(centers: CoordinationCostCenter[]): Option[] {
@@ -384,6 +431,7 @@ export class DependentActivitySelect {
       options.push({
         value: String(center.id),
         label: formatSentenceValue(center.descripcion),
+        group: 'Otros centros de costo',
       });
     });
     return options;
@@ -425,7 +473,11 @@ export class DependentActivitySelect {
       }
 
       present.add(value);
-      extra.push({ value, label: known[value] ?? value });
+      extra.push({
+        value,
+        label: known[value] ?? value,
+        group: 'Otros centros de costo',
+      });
     });
 
     return extra.length ? [...extra, ...options] : options;
