@@ -1,0 +1,13 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="profiles()"
+  [rowIdentity]="rowIdentity"
+  [rowActions]="rowActions"
+  [enableSelection]="true"
+  [selectedRowKeys]="selectedProfileIds()"
+  emptyMessage="No hay perfiles registrados."
+  searchPlaceholder="Buscar perfil..."
+  (toolbarAction)="onToolbarAction($event)"
+  (rowAction)="onRowAction($event)"
+  (selectedRowKeysChange)="onSelectedIdsChange($event)"
+/>

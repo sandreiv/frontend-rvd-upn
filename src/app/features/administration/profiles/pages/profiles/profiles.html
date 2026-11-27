@@ -1,0 +1,107 @@
+<app-section-frame
+  title="Perfiles"
+  description="Administra los perfiles utilizados en los diferentes procesos del sistema."
+  iconName="userCircle"
+  iconVariant="brand"
+>
+
+  <div>
+
+    <!-- Mensajes de error generales -->
+
+    @if (errorMessage()) {
+
+      <div
+        role="alert"
+        class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
+      >
+
+        {{ errorMessage() }}
+
+      </div>
+
+    }
+
+    <!-- Formulario de creación y edición -->
+
+    @if (showForm()) {
+
+      <app-profiles-form
+        [profile]="selectedProfile()"
+        [isSaving]="isSaving()"
+        (cancel)="closeForm()"
+        (saveProfile)="onSaveProfile($event)"
+      />
+
+    <!-- Formulario para relacionar estados -->
+
+    } @else if (statesProfile(); as profile) {
+
+    <app-profile-states-form
+        [profile]="profile"
+        [states]="availableStates()"
+        [initialStates]="initialProfileStates()"
+        [isLoading]="isLoadingProfileStates()"
+        [isSaving]="isSavingProfileStates()"
+        [canSave]="profileStatesLoaded()"
+        [errorMessage]="profileStatesError()"
+        (cancel)="closeProfileStatesForm()"
+        (saveStates)="onSaveProfileStates($event)"
+    />
+
+    } @else if (personsProfile(); as profile) {
+
+    <app-profile-persons-form
+        [profile]="profile"
+        [initialPersons]="initialProfilePersons()"
+        [isLoading]="isLoadingProfilePersons()"
+        [isSaving]="isSavingProfilePersons()"
+        [canSave]="profilePersonsLoaded()"
+        [errorMessage]="profilePersonsError()"
+        (cancel)="closeProfilePersonsForm()"
+        (savePersons)="onSaveProfilePersons($event)"
+    />
+
+    } @else {
+
+      @if (isLoading()) {
+
+        <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+
+          Cargando perfiles...
+
+        </p>
+
+      }
+
+      <app-profiles-table
+        [profiles]="profiles()"
+        [selectedProfileIds]="selectedProfileIds()"
+        (selectedProfileIdsChange)="onSelectedIdsChange($event)"
+        (refreshProfiles)="refreshProfiles()"
+        (addProfile)="openCreateForm()"
+        (editProfile)="openEditForm($event)"
+        (relateStates)="openProfileStatesForm($event)"
+        (relatePersons)="openProfilePersonsForm($event)"
+        (deleteProfile)="requestDeleteProfile($event)"
+        (deleteAll)="requestBulkDelete($event)"
+      />
+
+    }
+
+  </div>
+
+</app-section-frame>
+
+<!-- Modal de confirmación de eliminación -->
+
+<app-new-modal
+  [isOpen]="showDeleteModal()"
+  [title]="deleteModalTitle()"
+  [message]="deleteModalMessage()"
+  [buttonText]="deleteModalButtonText()"
+  [showCancelButton]="true"
+  cancelButtonText="No, cancelar"
+  (confirm)="confirmDelete()"
+  (close)="closeDeleteModal()"
+/>

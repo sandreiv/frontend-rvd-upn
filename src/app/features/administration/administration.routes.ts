@@ -55,6 +55,15 @@ export const administrationRoutes: Routes = [
           ),
       },
       {
+        path: 'perfiles',
+        loadComponent: () =>
+          import(
+            './profiles/pages/profiles/profiles'
+          ).then(
+            (m) => m.Profiles,
+          ),
+      },
+      {
         path: 'coordinaciones',
         component: CoordinationAdministration,
       },

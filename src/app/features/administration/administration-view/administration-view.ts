@@ -61,9 +61,14 @@ export class AdministrationView {
           path: 'tablas-basicas/novedades',
         },
         {
-      label: 'Estados',
-      icon: 'adjustmentsHorizontal',
-      path: 'estados',
+          label: 'Estados',
+          icon: 'adjustmentsHorizontal',
+          path: 'estados',
+        },
+        {
+          label: 'Perfiles',
+          icon: 'userCircle',
+          path: 'perfiles',
         },
         {
           label: 'Coordinaciones',

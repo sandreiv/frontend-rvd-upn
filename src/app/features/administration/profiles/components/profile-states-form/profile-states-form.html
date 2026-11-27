@@ -1,0 +1,158 @@
+<form
+  (ngSubmit)="onSubmit()"
+  class="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/3"
+>
+
+  <!-- Encabezado -->
+
+  <div
+    class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5"
+  >
+
+    <h4
+      class="text-sm font-semibold text-gray-900 dark:text-white"
+    >
+      Estados asociados al perfil: {{ profile().nombre }}
+    </h4>
+
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+
+      Selecciona los estados que estarán asociados
+      al perfil.
+
+    </p>
+
+  </div>
+
+  @if (isLoading()) {
+
+    <div class="py-6 text-center">
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+
+        Cargando estados asociados...
+
+      </p>
+
+    </div>
+
+  } @else {
+
+    <!-- Selector de estados -->
+
+    <div
+      class="rounded-lg border border-gray-100 p-3 dark:border-white/10"
+    >
+
+      <app-label>
+
+        Estados
+
+      </app-label>
+
+      <div class="mt-2">
+
+        <app-select
+          [formControl]="stateControl"
+          [options]="stateOptions()"
+          [disabled]="isSaving() || !canSave()"
+          [enableSearch]="true"
+          placeholder="Seleccione un estado"
+          searchPlaceholder="Buscar estado..."
+          emptyText="No hay más estados disponibles"
+          (valueChange)="onStateSelected($event)"
+        />
+
+      </div>
+
+      <!-- Estados seleccionados -->
+
+      @if (selectedStates().length > 0) {
+
+        <div class="mt-3 flex flex-wrap gap-2">
+
+          @for (state of selectedStates(); track state.id) {
+
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-1 text-xs font-medium text-green-700"
+            >
+
+              {{ state.nombre }}
+
+              <button
+                type="button"
+                class="text-green-700 hover:text-red-600 disabled:opacity-50"
+                [disabled]="isSaving() || !canSave()"
+                [attr.aria-label]="'Quitar estado ' + state.nombre"
+                (click)="removeState(state.id)"
+              >
+
+                ×
+
+              </button>
+
+            </span>
+
+          }
+
+        </div>
+
+      } @else {
+
+        <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+
+          No hay estados seleccionados.
+
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+  <!-- Mensajes de error -->
+
+  @if (errorMessage()) {
+
+    <p
+      role="alert"
+      class="mt-3 text-xs font-medium text-red-600 dark:text-red-400"
+    >
+
+      {{ errorMessage() }}
+
+    </p>
+
+  }
+
+  <!-- Botones -->
+
+  <div class="mt-5 flex justify-end gap-3">
+
+    <app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="isSaving()"
+      (btnClick)="cancel.emit()"
+    >
+
+      Cancelar
+
+    </app-button>
+
+    <app-button
+      type="button"
+      size="sm"
+      [disabled]="isSaving() || isLoading() || !canSave()"
+      (btnClick)="onSubmit()"
+    >
+
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+
+    </app-button>
+
+  </div>
+
+</form>
