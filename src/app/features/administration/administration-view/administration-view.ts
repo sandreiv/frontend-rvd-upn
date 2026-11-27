@@ -70,6 +70,11 @@ export class AdministrationView {
           icon: 'home',
           path: 'coordinaciones',
         },
+        {
+          label: 'Tipos de documentos',
+          icon: 'file',
+          path: 'tipos-documentos',
+        },
       ],
     },
   ];

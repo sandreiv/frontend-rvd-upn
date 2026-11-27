@@ -60,6 +60,16 @@ export const administrationRoutes: Routes = [
             (m) => m.CoordinationAdministration,
           ),
       },
+      {
+        path: 'tipos-documentos',
+        loadComponent: () =>
+          import(
+            './document-types/pages/document-types/document-types'
+          )
+          .then(
+            (m) => m.DocumentTypes,
+          ),
+      },
     ],
   },
 ];
